@@ -3,16 +3,23 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import os
 import sys
+from database import init_db
 
 # Usage: python src/migrate.py "postgresql://user:pass@host:port/dbname"
 
 def migrate(pg_url):
+    # Set environment variable so get_db uses PG
+    os.environ['DATABASE_URL'] = pg_url
+    
     sqlite_path = os.path.join(os.path.dirname(__file__), 'itpc.db')
     if not os.path.exists(sqlite_path):
         print(f"❌ SQLite database not found at: {sqlite_path}")
         return
 
-    print("🚀 Starting migration from SQLite to PostgreSQL...")
+    print("🚀 Initializing schema in PostgreSQL...")
+    init_db()
+    
+    print("🚀 Starting data migration...")
     
     try:
         sl_conn = sqlite3.connect(sqlite_path)

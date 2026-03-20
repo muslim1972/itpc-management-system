@@ -3,8 +3,10 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import os
 
-DATABASE_URL = os.environ.get('DATABASE_URL')
-DB_PATH = os.path.join(os.path.dirname(__file__), 'itpc.db')
+def get_config():
+    url = os.environ.get('DATABASE_URL')
+    path = os.path.join(os.path.dirname(__file__), 'itpc.db')
+    return url, path
 
 class DbWrapper:
     def __init__(self, conn, is_postgres):
@@ -40,29 +42,36 @@ class DbWrapper:
         return self.conn.total_changes if not self.is_postgres else 1 # Simple fallback
 
 def get_db():
-    if DATABASE_URL:
+    database_url, db_path = get_config()
+    if database_url:
         # PostgreSQL
-        conn = psycopg2.connect(DATABASE_URL)
+        conn = psycopg2.connect(database_url)
         return DbWrapper(conn, True)
     else:
         # Local SQLite
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(db_path)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
         return DbWrapper(conn, False)
 
 def init_db():
+    database_url, db_path = get_config()
     conn = get_db()
     cursor = conn.cursor()
     
     # التحويل التلقائي للأوامر SQL لتتوافق مع Postgres إذا لزم الأمر
-    is_postgres = (DATABASE_URL is not None)
+    is_postgres = (database_url is not None)
 
     def run_sql(sql):
         if is_postgres:
             sql = sql.replace("AUTOINCREMENT", "") # Postgres uses SERIAL / IDENTITY implicitly or we use SERIAL
             sql = sql.replace("INTEGER PRIMARY KEY AUTOINCREMENT", "SERIAL PRIMARY KEY")
             sql = sql.replace("datetime('now')", "CURRENT_TIMESTAMP")
+        
+        # If it's a SELECT COUNT, ensure we have an alias for easy dict access
+        if is_postgres and "COUNT(*)" in sql.upper() and " AS " not in sql.upper():
+            sql = sql.replace("COUNT(*)", "COUNT(*) AS count")
+            
         cursor.execute(sql)
 
     # ─────────────────────────────────────────────────────────────
@@ -260,7 +269,10 @@ def init_db():
     # SEED USERS
     # ─────────────────────────────────────────────────────────────
     cursor.execute("SELECT COUNT(*) FROM users")
-    if cursor.fetchone()[0] == 0:
+    row = cursor.fetchone()
+    # Handle both tuple (SQLite) and dict (Postgres RealDictCursor)
+    count = row[0] if row and not isinstance(row, dict) else (row.get('count') if row else 0)
+    if count == 0:
         placeholder = "%s" if is_postgres else "?"
         cursor.executemany(f"""
             INSERT INTO users (username, password, role)
@@ -274,7 +286,9 @@ def init_db():
     # SEED PROVIDER COMPANIES
     # ─────────────────────────────────────────────────────────────
     cursor.execute("SELECT COUNT(*) FROM provider_companies")
-    if cursor.fetchone()[0] == 0:
+    row = cursor.fetchone()
+    count = row[0] if row and not isinstance(row, dict) else (row.get('count') if row else 0)
+    if count == 0:
         placeholder = "%s" if is_postgres else "?"
         cursor.executemany(f"""
             INSERT INTO provider_companies (name)
@@ -290,7 +304,9 @@ def init_db():
     # SEED ORGANIZATIONS
     # ─────────────────────────────────────────────────────────────
     cursor.execute("SELECT COUNT(*) FROM organizations")
-    if cursor.fetchone()[0] == 0:
+    row = cursor.fetchone()
+    count = row[0] if row and not isinstance(row, dict) else (row.get('count') if row else 0)
+    if count == 0:
         placeholder = "%s" if is_postgres else "?"
         cursor.executemany(f"""
             INSERT INTO organizations (name, phone, address, location, status)
@@ -301,9 +317,10 @@ def init_db():
             ('Modern Business Solutions', '+9647506789012', '987 Modern Street', 'Karbala', 'pending')
         ])
 
+    database_url, db_path = get_config()
     conn.commit()
     conn.close()
-    print(f"✅ Database initialized at: {DB_PATH}")
+    print(f"✅ Database initialized at: {database_url if database_url else db_path}")
 
 
 if __name__ == '__main__':
