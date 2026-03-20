@@ -3,11 +3,14 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import os
 
+# السطر الذي سيحل مشكلة الـ ImportError في Render
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
 def get_config():
-    url = os.environ.get('DATABASE_URL')
+    # نستخدم المتغير العالمي الذي عرفناه في الأعلى
+    url = DATABASE_URL 
     path = os.path.join(os.path.dirname(__file__), 'itpc.db')
     return url, path
-
 class DbWrapper:
     def __init__(self, conn, is_postgres):
         self.conn = conn
