@@ -1,8 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
 import LoginPage from './pages/LoginPage';
 import MainPage from './pages/MainPage';
 import AdminPage from './pages/AdminPage';
+import CompanyDetailsPage from './pages/CompanyDetailsPage';
 import AddPage from './pages/AddPage';
 import StatisticsPage from './pages/StatisticsPage';
 import HistoryPage from './pages/HistoryPage';
@@ -13,16 +15,26 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Login */}
         <Route path="/" element={<LoginPage />} />
+
+        {/* Main pages */}
         <Route path="/main" element={<MainPage />} />
-        <Route path="/admin" element={<AdminPage />} />
         <Route path="/add" element={<AddPage />} />
         <Route path="/new-contract" element={<NewContractPage />} />
         <Route path="/statistics" element={<StatisticsPage />} />
         <Route path="/history" element={<HistoryPage />} />
+
+        {/* Detail / payment / edit */}
         <Route path="/detail/:id" element={<DetailPage />} />
         <Route path="/payment/:id" element={<DetailPage />} />
         <Route path="/edit/:id" element={<DetailPage />} />
+
+        {/* Admin */}
+        <Route path="/admin" element={<AdminPage />} />
+        <Route path="/admin/company/:id" element={<CompanyDetailsPage />} />
+
+        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
@@ -30,4 +42,3 @@ function App() {
 }
 
 export default App;
-

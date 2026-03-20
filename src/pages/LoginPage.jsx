@@ -6,16 +6,23 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Check credentials
-    if (username === 'user1' && password === 'u123') {
-      // Redirect to main page
-      navigate('/main');
-    } else {
-      // Show alert for invalid credentials
-      alert('Invalid username or password');
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+        navigate('/main');
+      } else {
+        alert(data.error);
+      }
+    } catch {
+      alert('Cannot connect to server. Is the backend running?');
     }
   };
 

@@ -15,6 +15,7 @@ const SlideMenu = ({ isOpen, onClose }) => {
   };
 
   const menuItems = [
+    { label: 'لوحة التحكم الإدارية', path: '/admin' },
     { label: 'Add', path: '/add' },
     { label: 'Statistics', path: '/statistics' },
     { label: 'History', path: '/history' },
