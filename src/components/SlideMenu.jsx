@@ -5,12 +5,13 @@ const SlideMenu = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
 
   const handleNavigation = (path) => {
-    if (path === '/') {
-      // Logout - redirect to login
-      navigate('/');
-    } else {
-      navigate(path);
+    if (path === 'logout') {
+      // Redirect to the main portal (InfTeleKarbala launcher)
+      localStorage.removeItem('user');
+      window.location.href = 'https://inf-tele-karbala.vercel.app/';
+      return;
     }
+    navigate(path);
     onClose();
   };
 
@@ -19,7 +20,7 @@ const SlideMenu = ({ isOpen, onClose }) => {
     { label: 'Add', path: '/add' },
     { label: 'Statistics', path: '/statistics' },
     { label: 'History', path: '/history' },
-    { label: 'Logout', path: '/' },
+    { label: 'Logout', path: 'logout' },
   ];
 
   return (

@@ -28,6 +28,17 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-blue-100 to-white flex items-center justify-center px-4 sm:px-6 lg:px-8 relative">
+      {/* Home button at top-left corner */}
+      <div className="absolute top-6 left-6 sm:top-8 sm:left-8">
+        <a
+          href="https://inf-tele-karbala.vercel.app/"
+          className="flex items-center gap-2 text-blue-700 hover:text-blue-800 font-medium text-sm sm:text-base transition-all duration-200 hover:underline bg-white/80 hover:bg-white px-3 py-1.5 rounded-lg shadow-sm"
+        >
+          <span>🏠</span>
+          <span>الرئيسية</span>
+        </a>
+      </div>
+
       {/* Admin link at top-right corner */}
       <div className="absolute top-6 right-6 sm:top-8 sm:right-8">
         <Link
