@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import BrandLogo from '../components/BrandLogo';
+import PageFooter from '../components/PageFooter';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
@@ -8,18 +10,26 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
+
       const data = await res.json();
+
       if (res.ok) {
         localStorage.setItem('user', JSON.stringify(data.user));
-        navigate('/main');
+
+        if (data.user?.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/main');
+        }
       } else {
-        alert(data.error);
+        alert(data.error || 'Login failed');
       }
     } catch {
       alert('Cannot connect to server. Is the backend running?');
@@ -27,85 +37,91 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 via-blue-100 to-white flex items-center justify-center px-4 sm:px-6 lg:px-8 relative">
-      {/* Home button at top-left corner */}
-      <div className="absolute top-6 left-6 sm:top-8 sm:left-8">
-        <a
-          href="https://inf-tele-karbala.vercel.app/"
-          className="flex items-center gap-2 text-blue-700 hover:text-blue-800 font-medium text-sm sm:text-base transition-all duration-200 hover:underline bg-white/80 hover:bg-white px-3 py-1.5 rounded-lg shadow-sm"
-        >
-          <span>🏠</span>
-          <span>الرئيسية</span>
-        </a>
-      </div>
-
-      {/* Admin link at top-right corner */}
-      <div className="absolute top-6 right-6 sm:top-8 sm:right-8">
-        <Link
-          to="/admin"
-          className="text-blue-700 hover:text-blue-800 font-medium text-sm sm:text-base transition-all duration-200 hover:underline"
-        >
-          Admin
-        </Link>
-      </div>
-
-      {/* Centered login card */}
-      <div className="max-w-md w-full">
-        <div className="bg-white rounded-xl shadow-lg p-8 sm:p-10 md:p-12">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">ITPC Management System</h1>
-            <p className="text-gray-600 text-sm sm:text-base">Sign in to your account</p>
+    <div className="app-shell min-h-screen flex flex-col justify-between px-4 sm:px-6 lg:px-8 py-10">
+      <div className="w-full max-w-6xl mx-auto grid lg:grid-cols-[1.05fr_0.95fr] gap-6 lg:gap-8 items-stretch">
+        <section className="hidden lg:flex page-hero flex-col justify-between min-h-[560px]">
+          <div>
+            <div className="brand-chip">الهوية البصرية الرسمية</div>
+            <div className="mt-6 flex items-center gap-4">
+              <BrandLogo className="h-24 w-24 rounded-[28px] brand-glow" imageClassName="scale-[1.04]" />
+              <div>
+                <h1 className="text-3xl xl:text-4xl font-bold leading-tight">
+                   اتصالات ومعلوماتية كربلاء
+                </h1>
+                <p className="mt-2 text-indigo-100/95 text-base">نظام إدارة العقود والدفعات والجهات</p>
+              </div>
+            </div>
+            <p className="mt-6 text-blue-50/95 text-base leading-8 max-w-xl">
+              واجهة دخول أوضح وهوية موحدة مستندة إلى شعار المركز، مع تجربة أبسط للوصول السريع إلى الجهات، العقود، الإحصائيات، والسجل.
+            </p>
           </div>
-          
-          <form className="space-y-6" onSubmit={handleSubmit}>
+
+          <div className="grid sm:grid-cols-3 gap-4">
+            <div className="rounded-2xl bg-white/12 border border-white/15 p-4">
+              <div className="text-sm text-indigo-100">الهوية</div>
+              <div className="mt-2 text-2xl font-bold">موحدة</div>
+            </div>
+            <div className="rounded-2xl bg-white/12 border border-white/15 p-4">
+              <div className="text-sm text-indigo-100">الواجهة</div>
+              <div className="mt-2 text-2xl font-bold">أوضح</div>
+            </div>
+            <div className="rounded-2xl bg-white/12 border border-white/15 p-4">
+              <div className="text-sm text-indigo-100">التنقل</div>
+              <div className="mt-2 text-2xl font-bold">أسرع</div>
+            </div>
+          </div>
+        </section>
+
+        <section className="surface-card p-6 sm:p-8 lg:p-10 self-center">
+          <div className="text-center mb-8">
+            <BrandLogo className="mx-auto h-20 w-20 rounded-[24px] brand-glow mb-4" imageClassName="scale-[1.04]" />
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
+              تسجيل الدخول
+            </h2>
+            <p className="text-slate-500 text-sm sm:text-base">
+              للوصول إلى نظام اتصالات ومعلوماتية كربلاء
+            </p>
+          </div>
+
+          <form className="space-y-5" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-                Username
-              </label>
+              <label className="field-label">اسم المستخدم</label>
               <input
-                id="username"
-                name="username"
                 type="text"
-                autoComplete="username"
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all duration-200 hover:border-gray-400"
-                placeholder="Enter your username"
+                className="input-modern"
+                placeholder="أدخل اسم المستخدم"
               />
             </div>
-            
+
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
+              <label className="field-label">كلمة المرور</label>
               <input
-                id="password"
-                name="password"
                 type="password"
-                autoComplete="current-password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all duration-200 hover:border-gray-400"
-                placeholder="Enter your password"
+                className="input-modern"
+                placeholder="أدخل كلمة المرور"
               />
             </div>
-            
-            <div className="pt-2">
-              <button
-                type="submit"
-                className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:-translate-y-0.5"
-              >
-                Login
-              </button>
-            </div>
+
+            <button type="submit" className="btn-primary w-full">
+              دخول
+            </button>
           </form>
-        </div>
+
+          <div className="mt-6 rounded-2xl bg-indigo-50 border border-indigo-100 px-4 py-3 text-sm text-slate-600">
+            يتم توجيه المدير إلى لوحة التحكم، والمستخدم العادي إلى الواجهة الرئيسية تلقائياً.
+          </div>
+        </section>
       </div>
+
+      <PageFooter />
     </div>
   );
 };
 
 export default LoginPage;
-

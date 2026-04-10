@@ -2,8 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import SlideMenu from '../components/SlideMenu';
+import PageFooter from '../components/PageFooter';
+import PriceHistoryDropdown from '../components/PriceHistoryDropdown';
+import { getAuthHeaders } from '../utils/auth';
 
-const API = '/api';
+const API = 'http://127.0.0.1:5000/api';
 
 const SERVICE_TYPES = ['Wireless', 'FTTH', 'Optical', 'Other'];
 const ITEM_CATEGORIES = ['Line', 'Bundle', 'Other'];
@@ -15,6 +18,59 @@ const emptyForm = {
   price: '',
   unit_label: '',
 };
+
+const emptyImpactModal = {
+  open: false,
+  subId: null,
+  oldPrice: 0,
+  newPrice: 0,
+  organizations: [],
+  selectedIds: [],
+  official_book_date: '',
+  official_book_description: '',
+};
+
+const inputClassName =
+  'w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100';
+
+const secondaryButtonClassName =
+  'rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50';
+
+const statCardTone = {
+  blue: 'border-blue-200 bg-blue-50 text-blue-700',
+  green: 'border-green-200 bg-green-50 text-green-700',
+  amber: 'border-amber-200 bg-amber-50 text-amber-700',
+  slate: 'border-slate-200 bg-slate-50 text-slate-700',
+};
+
+const formatMoney = (value) => {
+  const amount = Number(value || 0);
+  if (!Number.isFinite(amount)) return '0';
+  return amount.toLocaleString('en-US');
+};
+
+const SummaryCard = ({ label, value, tone = 'slate', hint }) => (
+  <div className={`rounded-2xl border p-4 shadow-sm ${statCardTone[tone] || statCardTone.slate}`}>
+    <div className="text-xs font-semibold opacity-80">{label}</div>
+    <div className="mt-2 text-2xl font-bold">{value}</div>
+    {hint ? <div className="mt-1 text-xs opacity-70">{hint}</div> : null}
+  </div>
+);
+
+const SectionCard = ({ title, subtitle, actions, children, className = '' }) => (
+  <section className={`rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6 ${className}`}>
+    {(title || subtitle || actions) && (
+      <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          {title ? <h2 className="text-xl font-bold text-slate-900">{title}</h2> : null}
+          {subtitle ? <p className="mt-1 text-sm text-slate-500">{subtitle}</p> : null}
+        </div>
+        {actions ? <div className="flex flex-wrap gap-3">{actions}</div> : null}
+      </div>
+    )}
+    {children}
+  </section>
+);
 
 const CompanyDetailsPage = () => {
   const { id } = useParams();
@@ -33,30 +89,23 @@ const CompanyDetailsPage = () => {
 
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState(emptyForm);
+  const [impactModal, setImpactModal] = useState(emptyImpactModal);
 
   const loadCompanyDetails = async () => {
     try {
       setLoading(true);
       setError('');
 
-      const [companyRes, subsRes] = await Promise.all([
-        fetch(`${API}/provider-companies/${id}`),
-        fetch(`${API}/provider-companies/${id}/subscriptions`),
-      ]);
-
-      const companyData = await companyRes.json();
-      const subsData = await subsRes.json();
+      const companyRes = await fetch(`${API}/provider-companies/${id}`);
+      const companyData = await companyRes.json().catch(() => ({}));
 
       if (!companyRes.ok) {
         throw new Error(companyData.error || 'فشل تحميل بيانات الشركة');
       }
 
-      if (!subsRes.ok) {
-        throw new Error(subsData.error || 'فشل تحميل الاشتراكات');
-      }
-
-      setCompany(companyData.provider_company || null);
-      setSubscriptions(subsData.subscriptions || []);
+      const providerCompany = companyData.provider_company || null;
+      setCompany(providerCompany);
+      setSubscriptions(providerCompany?.subscriptions || []);
     } catch (err) {
       console.error(err);
       setError(err.message || 'حدث خطأ أثناء تحميل البيانات');
@@ -92,8 +141,47 @@ const CompanyDetailsPage = () => {
     });
   }, [subscriptions, search]);
 
+  const totalSubscriptions = subscriptions.length;
+  const totalFilteredSubscriptions = filteredSubscriptions.length;
+  const lastPriceHistoryEntry = useMemo(() => {
+    const allHistory = subscriptions.flatMap((sub) => sub.price_history || []);
+    if (!allHistory.length) return null;
+    return allHistory[0];
+  }, [subscriptions]);
+
+  const groupedStats = useMemo(() => {
+    const stats = {
+      Wireless: 0,
+      FTTH: 0,
+      Optical: 0,
+      Other: 0,
+    };
+
+    subscriptions.forEach((sub) => {
+      if (stats[sub.service_type] !== undefined) {
+        stats[sub.service_type] += 1;
+      }
+    });
+
+    return stats;
+  }, [subscriptions]);
+
   const resetCreateForm = () => {
     setForm(emptyForm);
+  };
+
+  const resetImpactModal = () => setImpactModal(emptyImpactModal);
+
+  const toggleImpactOrg = (organizationId) => {
+    setImpactModal((prev) => {
+      const exists = prev.selectedIds.includes(organizationId);
+      return {
+        ...prev,
+        selectedIds: exists
+          ? prev.selectedIds.filter((selectedId) => selectedId !== organizationId)
+          : [...prev.selectedIds, organizationId],
+      };
+    });
   };
 
   const handleCreate = async () => {
@@ -108,7 +196,7 @@ const CompanyDetailsPage = () => {
 
       const res = await fetch(`${API}/provider-companies/${id}/subscriptions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           service_type: form.service_type,
           item_category: form.item_category,
@@ -118,7 +206,7 @@ const CompanyDetailsPage = () => {
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
         throw new Error(data.error || 'فشل إضافة الاشتراك');
@@ -145,11 +233,13 @@ const CompanyDetailsPage = () => {
       price: sub.price ?? '',
       unit_label: sub.unit_label || '',
     });
+    setError('');
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setEditForm(emptyForm);
+    resetImpactModal();
   };
 
   const handleSaveEdit = async (subId) => {
@@ -162,9 +252,9 @@ const CompanyDetailsPage = () => {
       setSaving(true);
       setError('');
 
-      const res = await fetch(`${API}/provider-subscriptions/${subId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+      const impactRes = await fetch(`${API}/provider-subscriptions/${subId}/impact`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           service_type: editForm.service_type,
           item_category: editForm.item_category,
@@ -174,12 +264,63 @@ const CompanyDetailsPage = () => {
         }),
       });
 
-      const data = await res.json();
+      const impactData = await impactRes.json().catch(() => ({}));
+      if (!impactRes.ok) {
+        throw new Error(impactData.error || 'فشل جلب الجهات المتأثرة');
+      }
+
+      setImpactModal({
+        open: true,
+        subId,
+        oldPrice: impactData.old_price,
+        newPrice: impactData.new_price,
+        organizations: impactData.affected_organizations || [],
+        selectedIds: (impactData.affected_organizations || []).map((org) => org.organization_id),
+        official_book_date: new Date().toISOString().split('T')[0],
+        official_book_description: '',
+      });
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'حدث خطأ أثناء تجهيز التعديل');
+      alert(err.message || 'حدث خطأ أثناء تجهيز التعديل');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const confirmSaveEdit = async () => {
+    if (!impactModal.subId) return;
+    if (!impactModal.official_book_date || !String(impactModal.official_book_description || '').trim()) {
+      alert('يرجى إدخال تاريخ الكتاب الرسمي ووصفه');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError('');
+
+      const res = await fetch(`${API}/provider-subscriptions/${impactModal.subId}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          service_type: editForm.service_type,
+          item_category: editForm.item_category,
+          item_name: editForm.item_name.trim(),
+          price: Number(editForm.price || 0),
+          unit_label: editForm.unit_label.trim() || null,
+          selected_organization_ids: impactModal.selectedIds,
+          official_book_date: impactModal.official_book_date,
+          official_book_description: String(impactModal.official_book_description || '').trim(),
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
         throw new Error(data.error || 'فشل تحديث الاشتراك');
       }
 
+      resetImpactModal();
       cancelEdit();
       await loadCompanyDetails();
       alert('تم تحديث الاشتراك بنجاح');
@@ -202,9 +343,10 @@ const CompanyDetailsPage = () => {
 
       const res = await fetch(`${API}/provider-subscriptions/${subId}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
         throw new Error(data.error || 'فشل حذف الاشتراك');
@@ -222,109 +364,74 @@ const CompanyDetailsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 via-blue-100 to-white">
+    <div className="app-shell min-h-screen bg-slate-50">
       <Navbar onMenuClick={() => setIsMenuOpen(true)} />
       <SlideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8">
-          {loading ? (
-            <div className="text-center py-12 text-gray-600 text-lg">
-              جاري تحميل بيانات الشركة...
-            </div>
-          ) : (
-            <>
-              <div className="bg-gradient-to-r from-blue-600 to-blue-400 rounded-xl p-6 mb-8 text-white">
-                <h1 className="text-2xl sm:text-3xl font-bold mb-2">تفاصيل الشركة</h1>
-                <p className="text-lg opacity-90">
-                  {company?.name || 'شركة غير معروفة'}
-                </p>
-                <p className="text-sm opacity-80 mt-1">
-                  الهاتف: {company?.phone || '-'} | البريد: {company?.email || '-'}
-                </p>
+      <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+        {loading ? (
+          <div className="rounded-[28px] border border-slate-200 bg-white p-12 text-center text-lg text-slate-600 shadow-sm">
+            جاري تحميل بيانات الشركة...
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
+              <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <div className="mb-2 inline-flex rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+                    صفحة الشركة المجهزة
+                  </div>
+                  <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">تفاصيل الشركة</h1>
+                  <p className="mt-3 text-lg font-semibold text-slate-800">
+                    {company?.name || 'شركة غير معروفة'}
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-semibold text-slate-700">
+                      الهاتف: {company?.phone || '-'}
+                    </span>
+                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-semibold text-slate-700">
+                      البريد: {company?.email || '-'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid w-full gap-3 sm:grid-cols-2 lg:w-[420px]">
+                  <SummaryCard label="إجمالي الاشتراكات" value={totalSubscriptions} tone="blue" />
+                  <SummaryCard
+                    label="آخر تعديل سعر"
+                    value={lastPriceHistoryEntry ? formatMoney(lastPriceHistoryEntry.new_price || lastPriceHistoryEntry.price || 0) : '-'}
+                    tone="amber"
+                    hint={lastPriceHistoryEntry?.changed_at || lastPriceHistoryEntry?.created_at || ''}
+                  />
+                </div>
               </div>
+            </section>
 
-              {error && (
-                <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
-                  {error}
-                </div>
-              )}
+            {error ? (
+              <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                {error}
+              </div>
+            ) : null}
 
-              <div className="mb-8 bg-blue-50 border border-blue-200 rounded-xl p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">إضافة اشتراك جديد</h2>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <SummaryCard label="Wireless" value={groupedStats.Wireless} tone="blue" />
+              <SummaryCard label="FTTH" value={groupedStats.FTTH} tone="green" />
+              <SummaryCard label="Optical" value={groupedStats.Optical} tone="amber" />
+              <SummaryCard label="Other" value={groupedStats.Other} tone="slate" />
+            </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">نوع الخدمة</label>
-                    <select
-                      value={form.service_type}
-                      onChange={(e) => setForm((prev) => ({ ...prev, service_type: e.target.value }))}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white"
-                    >
-                      {SERVICE_TYPES.map((item) => (
-                        <option key={item} value={item}>
-                          {item}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">التصنيف</label>
-                    <select
-                      value={form.item_category}
-                      onChange={(e) => setForm((prev) => ({ ...prev, item_category: e.target.value }))}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white"
-                    >
-                      {ITEM_CATEGORIES.map((item) => (
-                        <option key={item} value={item}>
-                          {item}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">اسم الاشتراك</label>
-                    <input
-                      type="text"
-                      value={form.item_name}
-                      onChange={(e) => setForm((prev) => ({ ...prev, item_name: e.target.value }))}
-                      placeholder="مثال: Premium / Gold"
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">السعر</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={form.price}
-                      onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">الوحدة</label>
-                    <input
-                      type="text"
-                      value={form.unit_label}
-                      onChange={(e) => setForm((prev) => ({ ...prev, unit_label: e.target.value }))}
-                      placeholder="مثال: line / bundle"
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-3">
+            <SectionCard
+              title="إضافة اشتراك جديد"
+              subtitle="إدخال بيانات الاشتراك الجديد بشكل منظم وواضح"
+              className="border-blue-200 bg-gradient-to-b from-blue-50 to-white"
+              actions={
+                <>
                   <button
                     type="button"
                     onClick={handleCreate}
                     disabled={saving}
-                    className={`px-6 py-3 rounded-lg text-white font-semibold ${
-                      saving ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
+                    className={`rounded-xl px-5 py-3 text-sm font-semibold text-white transition ${
+                      saving ? 'cursor-not-allowed bg-slate-400' : 'bg-green-600 hover:bg-green-700'
                     }`}
                   >
                     {saving ? 'جاري الحفظ...' : 'إضافة الاشتراك'}
@@ -334,7 +441,7 @@ const CompanyDetailsPage = () => {
                     type="button"
                     onClick={resetCreateForm}
                     disabled={saving}
-                    className="px-6 py-3 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 font-semibold"
+                    className={secondaryButtonClassName}
                   >
                     تفريغ
                   </button>
@@ -342,188 +449,371 @@ const CompanyDetailsPage = () => {
                   <button
                     type="button"
                     onClick={() => navigate(-1)}
-                    className="px-6 py-3 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 font-semibold"
+                    className={secondaryButtonClassName}
                   >
                     رجوع
                   </button>
+                </>
+              }
+            >
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">نوع الخدمة</label>
+                  <select
+                    value={form.service_type}
+                    onChange={(e) => setForm((prev) => ({ ...prev, service_type: e.target.value }))}
+                    className={inputClassName}
+                  >
+                    {SERVICE_TYPES.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">التصنيف</label>
+                  <select
+                    value={form.item_category}
+                    onChange={(e) => setForm((prev) => ({ ...prev, item_category: e.target.value }))}
+                    className={inputClassName}
+                  >
+                    {ITEM_CATEGORIES.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">اسم الاشتراك</label>
+                  <input
+                    type="text"
+                    value={form.item_name}
+                    onChange={(e) => setForm((prev) => ({ ...prev, item_name: e.target.value }))}
+                    placeholder="مثال: Premium / Gold"
+                    className={inputClassName}
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">السعر</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={form.price}
+                    onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
+                    placeholder="0"
+                    className={inputClassName}
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">الوحدة</label>
+                  <input
+                    type="text"
+                    value={form.unit_label}
+                    onChange={(e) => setForm((prev) => ({ ...prev, unit_label: e.target.value }))}
+                    placeholder="مثال: خط / حزمة"
+                    className={inputClassName}
+                  />
                 </div>
               </div>
+            </SectionCard>
 
-              <div className="mb-4 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
-                <h2 className="text-xl font-bold text-gray-900">قائمة الاشتراكات</h2>
-
-                <div className="w-full md:max-w-sm">
+            <SectionCard
+              title="قائمة الاشتراكات"
+              subtitle={`النتائج الظاهرة: ${totalFilteredSubscriptions} من أصل ${totalSubscriptions}`}
+              actions={
+                <div className="relative w-full md:w-[320px]">
+                  <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-400">
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-4.35-4.35m1.85-5.15a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
+                    </svg>
+                  </span>
                   <input
                     type="text"
                     placeholder="ابحث في الاشتراكات..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                    className="w-full rounded-xl border border-slate-300 bg-white py-3 pr-12 pl-4 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  />
+                </div>
+              }
+            >
+              {filteredSubscriptions.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 py-12 text-center text-slate-500">
+                  لا توجد اشتراكات حالياً لهذه الشركة
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  {filteredSubscriptions.map((sub) => {
+                    const isEditing = editingId === sub.id;
+
+                    return (
+                      <div key={sub.id} className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full bg-white text-sm">
+                            <thead className="bg-slate-100 text-slate-700">
+                              <tr>
+                                <th className="px-4 py-4 text-right font-semibold">نوع الخدمة</th>
+                                <th className="px-4 py-4 text-right font-semibold">التصنيف</th>
+                                <th className="px-4 py-4 text-right font-semibold">اسم الاشتراك</th>
+                                <th className="px-4 py-4 text-right font-semibold">السعر</th>
+                                <th className="px-4 py-4 text-right font-semibold">الوحدة</th>
+                                <th className="px-4 py-4 text-right font-semibold">الإجراءات</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr className="border-t border-slate-200 transition hover:bg-slate-50/80">
+                                <td className="px-4 py-4 font-medium text-slate-800">
+                                  {isEditing ? (
+                                    <select
+                                      value={editForm.service_type}
+                                      onChange={(e) =>
+                                        setEditForm((prev) => ({ ...prev, service_type: e.target.value }))
+                                      }
+                                      className={inputClassName}
+                                    >
+                                      {SERVICE_TYPES.map((item) => (
+                                        <option key={item} value={item}>
+                                          {item}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  ) : (
+                                    sub.service_type
+                                  )}
+                                </td>
+
+                                <td className="px-4 py-4 text-slate-700">
+                                  {isEditing ? (
+                                    <select
+                                      value={editForm.item_category}
+                                      onChange={(e) =>
+                                        setEditForm((prev) => ({ ...prev, item_category: e.target.value }))
+                                      }
+                                      className={inputClassName}
+                                    >
+                                      {ITEM_CATEGORIES.map((item) => (
+                                        <option key={item} value={item}>
+                                          {item}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  ) : (
+                                    sub.item_category
+                                  )}
+                                </td>
+
+                                <td className="px-4 py-4 text-slate-800">
+                                  {isEditing ? (
+                                    <input
+                                      type="text"
+                                      value={editForm.item_name}
+                                      onChange={(e) =>
+                                        setEditForm((prev) => ({ ...prev, item_name: e.target.value }))
+                                      }
+                                      className={inputClassName}
+                                    />
+                                  ) : (
+                                    <span className="font-semibold">{sub.item_name}</span>
+                                  )}
+                                </td>
+
+                                <td className="px-4 py-4 font-semibold text-slate-900">
+                                  {isEditing ? (
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      value={editForm.price}
+                                      onChange={(e) =>
+                                        setEditForm((prev) => ({ ...prev, price: e.target.value }))
+                                      }
+                                      className={inputClassName}
+                                    />
+                                  ) : (
+                                    `${formatMoney(sub.price)}`
+                                  )}
+                                </td>
+
+                                <td className="px-4 py-4 text-slate-700">
+                                  {isEditing ? (
+                                    <input
+                                      type="text"
+                                      value={editForm.unit_label}
+                                      onChange={(e) =>
+                                        setEditForm((prev) => ({ ...prev, unit_label: e.target.value }))
+                                      }
+                                      className={inputClassName}
+                                    />
+                                  ) : (
+                                    sub.unit_label || '-'
+                                  )}
+                                </td>
+
+                                <td className="px-4 py-4">
+                                  <div className="flex flex-wrap gap-2">
+                                    {isEditing ? (
+                                      <>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleSaveEdit(sub.id)}
+                                          disabled={saving}
+                                          className={`rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition ${
+                                            saving ? 'cursor-not-allowed bg-slate-400' : 'bg-blue-600 hover:bg-blue-700'
+                                          }`}
+                                        >
+                                          حفظ
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={cancelEdit}
+                                          disabled={saving}
+                                          className={secondaryButtonClassName}
+                                        >
+                                          إلغاء
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <button
+                                          type="button"
+                                          onClick={() => startEdit(sub)}
+                                          className="rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-600"
+                                        >
+                                          تعديل
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDelete(sub.id)}
+                                          className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
+                                        >
+                                          حذف
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {!!sub.price_history?.length && (
+                          <div className="border-t border-slate-200 bg-slate-50 px-4 py-4">
+                            <PriceHistoryDropdown
+                              history={sub.price_history}
+                              itemClassName="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm"
+                              latestItemClassName="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </SectionCard>
+          </div>
+        )}
+      </main>
+
+      {impactModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-2xl">
+            <div className="border-b border-blue-200 bg-gradient-to-r from-blue-700 to-blue-500 px-6 py-5 text-white">
+              <h3 className="text-2xl font-bold">الجهات المتأثرة</h3>
+              <p className="mt-1 text-sm text-blue-50">
+                السعر القديم: {formatMoney(impactModal.oldPrice)} | السعر الجديد: {formatMoney(impactModal.newPrice)}
+              </p>
+            </div>
+
+            <div className="max-h-[65vh] overflow-y-auto p-6">
+              <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">تاريخ الكتاب الرسمي</label>
+                  <input
+                    type="date"
+                    value={impactModal.official_book_date || ''}
+                    onChange={(e) => setImpactModal((prev) => ({ ...prev, official_book_date: e.target.value }))}
+                    className={inputClassName}
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">وصف الكتاب الرسمي</label>
+                  <input
+                    type="text"
+                    value={impactModal.official_book_description || ''}
+                    onChange={(e) => setImpactModal((prev) => ({ ...prev, official_book_description: e.target.value }))}
+                    className={inputClassName}
                   />
                 </div>
               </div>
 
-              {filteredSubscriptions.length === 0 ? (
-                <div className="text-center py-10 text-gray-500 border border-dashed border-gray-300 rounded-xl">
-                  لا توجد اشتراكات حالياً لهذه الشركة
+              {impactModal.organizations.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 py-10 text-center text-slate-600">
+                  لا توجد جهات متأثرة بهذا التعديل.
                 </div>
               ) : (
-                <div className="overflow-x-auto border border-gray-200 rounded-xl">
-                  <table className="min-w-full bg-white">
-                    <thead className="bg-gray-100">
-                      <tr>
-                        <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">نوع الخدمة</th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">التصنيف</th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">اسم الاشتراك</th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">السعر</th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">الوحدة</th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">الإجراءات</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredSubscriptions.map((sub) => {
-                        const isEditing = editingId === sub.id;
+                <div className="space-y-3">
+                  {impactModal.organizations.map((org) => {
+                    const checked = impactModal.selectedIds.includes(org.organization_id);
+                    return (
+                      <div
+                        key={org.organization_id}
+                        className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div>
+                          <p className="font-bold text-slate-900">{org.organization_name}</p>
+                          <p className="mt-1 text-sm text-slate-600">
+                            عدد الخدمات المتأثرة: {org.affected_services_count || 0}
+                          </p>
+                        </div>
 
-                        return (
-                          <tr key={sub.id} className="border-t border-gray-200">
-                            <td className="px-4 py-3">
-                              {isEditing ? (
-                                <select
-                                  value={editForm.service_type}
-                                  onChange={(e) =>
-                                    setEditForm((prev) => ({ ...prev, service_type: e.target.value }))
-                                  }
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white"
-                                >
-                                  {SERVICE_TYPES.map((item) => (
-                                    <option key={item} value={item}>
-                                      {item}
-                                    </option>
-                                  ))}
-                                </select>
-                              ) : (
-                                sub.service_type
-                              )}
-                            </td>
-
-                            <td className="px-4 py-3">
-                              {isEditing ? (
-                                <select
-                                  value={editForm.item_category}
-                                  onChange={(e) =>
-                                    setEditForm((prev) => ({ ...prev, item_category: e.target.value }))
-                                  }
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white"
-                                >
-                                  {ITEM_CATEGORIES.map((item) => (
-                                    <option key={item} value={item}>
-                                      {item}
-                                    </option>
-                                  ))}
-                                </select>
-                              ) : (
-                                sub.item_category
-                              )}
-                            </td>
-
-                            <td className="px-4 py-3">
-                              {isEditing ? (
-                                <input
-                                  type="text"
-                                  value={editForm.item_name}
-                                  onChange={(e) =>
-                                    setEditForm((prev) => ({ ...prev, item_name: e.target.value }))
-                                  }
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                />
-                              ) : (
-                                sub.item_name
-                              )}
-                            </td>
-
-                            <td className="px-4 py-3">
-                              {isEditing ? (
-                                <input
-                                  type="number"
-                                  min="0"
-                                  value={editForm.price}
-                                  onChange={(e) =>
-                                    setEditForm((prev) => ({ ...prev, price: e.target.value }))
-                                  }
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                />
-                              ) : (
-                                sub.price
-                              )}
-                            </td>
-
-                            <td className="px-4 py-3">
-                              {isEditing ? (
-                                <input
-                                  type="text"
-                                  value={editForm.unit_label}
-                                  onChange={(e) =>
-                                    setEditForm((prev) => ({ ...prev, unit_label: e.target.value }))
-                                  }
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                />
-                              ) : (
-                                sub.unit_label || '-'
-                              )}
-                            </td>
-
-                            <td className="px-4 py-3">
-                              <div className="flex flex-wrap gap-2">
-                                {isEditing ? (
-                                  <>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleSaveEdit(sub.id)}
-                                      disabled={saving}
-                                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                                    >
-                                      حفظ
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={cancelEdit}
-                                      disabled={saving}
-                                      className="px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50"
-                                    >
-                                      إلغاء
-                                    </button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <button
-                                      type="button"
-                                      onClick={() => startEdit(sub)}
-                                      className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600"
-                                    >
-                                      تعديل
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDelete(sub.id)}
-                                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                                    >
-                                      حذف
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                        <button
+                          type="button"
+                          onClick={() => toggleImpactOrg(org.organization_id)}
+                          className={`min-w-[96px] rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition ${
+                            checked ? 'bg-green-600 hover:bg-green-700' : 'bg-slate-500 hover:bg-slate-600'
+                          }`}
+                        >
+                          {checked ? 'ON' : 'OFF'}
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
-            </>
-          )}
+            </div>
+
+            <div className="flex flex-wrap justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4">
+              <button
+                type="button"
+                onClick={resetImpactModal}
+                disabled={saving}
+                className={secondaryButtonClassName}
+              >
+                إلغاء
+              </button>
+              <button
+                type="button"
+                onClick={confirmSaveEdit}
+                disabled={saving}
+                className={`rounded-xl px-5 py-3 text-sm font-semibold text-white transition ${
+                  saving ? 'cursor-not-allowed bg-slate-400' : 'bg-blue-600 hover:bg-blue-700'
+                }`}
+              >
+                {saving ? 'جاري الحفظ...' : 'تأكيد التعديل'}
+              </button>
+            </div>
+          </div>
         </div>
-      </main>
+      )}
+
+      <PageFooter />
     </div>
   );
 };

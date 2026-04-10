@@ -2,11 +2,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import SlideMenu from '../components/SlideMenu';
+import PageFooter from '../components/PageFooter';
 
-const API = '/api';
+const API = 'http://127.0.0.1:5000/api';
 
-const WIRELESS_BUNDLE_TYPES = ['انترنت', 'انترانيت', 'دولي', 'fna', 'gcc'];
-const PAYMENT_METHODS = ['شهري', 'كل 3 أشهر', 'سنوي'];
+const WIRELESS_BUNDLE_TYPES = ['انترنت', 'انترانيت', 'دولي', 'fna', 'gcc', 'LTE'];
+const PAYMENT_METHODS = ['يومي', 'شهري', 'كل 3 أشهر', 'سنوي'];
+const CONTRACT_DURATION_UNITS = ['يومي', 'شهري', 'سنوي'];
 const DEVICE_UI_OPTIONS = ['مدفوع الثمن', 'ايجار'];
 
 const emptySubscriptionRow = () => ({
@@ -23,6 +25,7 @@ const emptyBundleRow = () => ({
   subscription_id: '',
   amount: '',
   unit_price: 0,
+  total_price: 0,
 });
 
 const emptyOtherRow = () => ({
@@ -41,16 +44,78 @@ const formatMoney = (value) => {
   return Number.isFinite(n) ? n.toFixed(2) : '0.00';
 };
 
+const addMonthsToDate = (dateString, monthsToAdd) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return '';
+  const result = new Date(date);
+  result.setMonth(result.getMonth() + monthsToAdd);
+  return result.toISOString().split('T')[0];
+};
+
+const addDaysToDate = (dateString, daysToAdd) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return '';
+  const result = new Date(date);
+  result.setDate(result.getDate() + Number(daysToAdd || 0));
+  return result.toISOString().split('T')[0];
+};
+
+const calculateContractTotal = (baseMonthlyPrice, durationUnit, durationValue) => {
+  const base = Number(baseMonthlyPrice || 0);
+  const value = Number(durationValue || 1);
+
+  if (!value || value < 1) return base;
+
+  if (durationUnit === 'يومي') {
+    return (base / 30) * value;
+  }
+
+  if (durationUnit === 'شهري') {
+    return base * value;
+  }
+
+  if (durationUnit === 'سنوي') {
+    return base * 12 * value;
+  }
+
+  return base;
+};
+
+const calculateNextDueDate = (baseDate, paymentMethod, paymentIntervalDays) => {
+  if (!baseDate) return '';
+
+  if (paymentMethod === 'يومي') {
+    return addDaysToDate(baseDate, paymentIntervalDays || 1);
+  }
+
+  if (paymentMethod === 'شهري') {
+    return addMonthsToDate(baseDate, 1);
+  }
+
+  if (paymentMethod === 'كل 3 أشهر') {
+    return addMonthsToDate(baseDate, 3);
+  }
+
+  if (paymentMethod === 'سنوي') {
+    return addMonthsToDate(baseDate, 12);
+  }
+
+  return '';
+};
+
 const mapDeviceChoiceToBackend = (value) => {
-  // because backend currently accepts: الشركة / المنظمة / الوزارة
-  // while UI you want: مدفوع الثمن / ايجار
   if (value === 'ايجار') return 'الشركة';
   return 'المنظمة';
 };
 
-const getRangePrice = (ranges, serviceName, amount) => {
+const getRangePricing = (ranges, serviceName, amount) => {
   const numericAmount = parseInt(amount, 10);
-  if (!numericAmount || !serviceName) return 0;
+
+  if (!numericAmount || !serviceName) {
+    return { unitPrice: 0, totalPrice: 0 };
+  }
 
   const matched = ranges.find((item) => {
     const sameService =
@@ -64,7 +129,14 @@ const getRangePrice = (ranges, serviceName, amount) => {
     );
   });
 
-  return matched ? Number(matched.price || 0) : 0;
+  if (!matched) {
+    return { unitPrice: 0, totalPrice: 0 };
+  }
+
+  const unitPrice = Number(matched.price || 0);
+  const totalPrice = numericAmount * unitPrice;
+
+  return { unitPrice, totalPrice };
 };
 
 const rowTotal = (quantity, unitPrice) => toNumber(quantity) * toNumber(unitPrice);
@@ -111,6 +183,11 @@ const NewContractPage = () => {
   const [deviceChoice, setDeviceChoice] = useState('مدفوع الثمن');
   const [useCurrentDate, setUseCurrentDate] = useState(true);
   const [contractDate, setContractDate] = useState('');
+  const [contractDurationUnit, setContractDurationUnit] = useState('شهري');
+  const [contractDurationValue, setContractDurationValue] = useState(1);
+  const [paymentIntervalDays, setPaymentIntervalDays] = useState(1);
+  const [officialBookDate, setOfficialBookDate] = useState('');
+  const [officialBookDescription, setOfficialBookDescription] = useState('');
 
   useEffect(() => {
     if (useCurrentDate) {
@@ -209,6 +286,11 @@ const NewContractPage = () => {
         subscription_id: '',
         unit_price: 0,
       };
+
+      if ('total_price' in next[index]) {
+        next[index].total_price = 0;
+      }
+
       return next;
     });
   };
@@ -224,6 +306,11 @@ const NewContractPage = () => {
         subscription_id: subscriptionId,
         unit_price: selected ? Number(selected.price || 0) : 0,
       };
+
+      if ('total_price' in next[index] && next[index].bundle_type === 'انترنت') {
+        next[index].total_price = rowTotal(next[index].quantity, next[index].unit_price);
+      }
+
       return next;
     });
   };
@@ -241,6 +328,32 @@ const NewContractPage = () => {
         subscription_id: '',
         amount: '',
         unit_price: 0,
+        total_price: 0,
+      };
+
+      return next;
+    });
+  };
+
+  const handleInternetBundleQuantityChange = (index, quantity) => {
+    setWirelessBundleRows((prev) => {
+      const next = [...prev];
+      const current = next[index];
+      const internetUnitPrice =
+        current.provider_company_id && current.subscription_id
+          ? Number(
+              (
+                (subscriptionCache[current.provider_company_id] || []).find(
+                  (sub) => String(sub.id) === String(current.subscription_id)
+                ) || {}
+              ).price || 0
+            )
+          : 0;
+
+      next[index] = {
+        ...current,
+        quantity,
+        total_price: rowTotal(quantity, internetUnitPrice),
       };
 
       return next;
@@ -251,12 +364,14 @@ const NewContractPage = () => {
     setWirelessBundleRows((prev) => {
       const next = [...prev];
       const current = next[index];
-      const unitPrice = getRangePrice(serviceRanges, current.bundle_type, amount);
+      const pricing = getRangePricing(serviceRanges, current.bundle_type, amount);
 
       next[index] = {
         ...current,
         amount,
-        unit_price: unitPrice,
+        quantity: amount,
+        unit_price: pricing.unitPrice,
+        total_price: pricing.totalPrice,
       };
 
       return next;
@@ -284,7 +399,7 @@ const NewContractPage = () => {
         if (row.bundle_type === 'انترنت') {
           return sum + rowTotal(row.quantity, row.unit_price);
         }
-        return sum + toNumber(row.unit_price || 0);
+        return sum + toNumber(row.total_price || 0);
       }, 0),
     [wirelessBundleRows]
   );
@@ -298,9 +413,39 @@ const NewContractPage = () => {
     [otherRows]
   );
 
+  const wirelessBaseMonthlyTotal = useMemo(
+    () => wirelessLineTotal + wirelessBundleTotal,
+    [wirelessLineTotal, wirelessBundleTotal]
+  );
+
+  const wirelessContractTotal = useMemo(
+    () => calculateContractTotal(wirelessBaseMonthlyTotal, contractDurationUnit, contractDurationValue),
+    [wirelessBaseMonthlyTotal, contractDurationUnit, contractDurationValue]
+  );
+
+  const ftthContractTotal = useMemo(
+    () => calculateContractTotal(ftthTotal, contractDurationUnit, contractDurationValue),
+    [ftthTotal, contractDurationUnit, contractDurationValue]
+  );
+
+  const otherContractTotal = useMemo(
+    () => calculateContractTotal(otherTotal, contractDurationUnit, contractDurationValue),
+    [otherTotal, contractDurationUnit, contractDurationValue]
+  );
+
+  const baseMonthlyTotal = useMemo(
+    () => wirelessBaseMonthlyTotal + ftthTotal + otherTotal,
+    [wirelessBaseMonthlyTotal, ftthTotal, otherTotal]
+  );
+
   const grandTotal = useMemo(
-    () => wirelessLineTotal + wirelessBundleTotal + ftthTotal + otherTotal,
-    [wirelessLineTotal, wirelessBundleTotal, ftthTotal, otherTotal]
+    () => wirelessContractTotal + ftthContractTotal + otherContractTotal,
+    [wirelessContractTotal, ftthContractTotal, otherContractTotal]
+  );
+
+  const resolvedDueDate = useMemo(
+    () => calculateNextDueDate(contractDate, paymentMethod, paymentIntervalDays),
+    [contractDate, paymentMethod, paymentIntervalDays]
   );
 
   const createService = async (orgId, serviceType, amount) => {
@@ -312,10 +457,16 @@ const NewContractPage = () => {
       body: JSON.stringify({
         service_type: serviceType,
         payment_method: paymentMethod,
+        payment_interval_days: paymentMethod === 'يومي' ? Number(paymentIntervalDays || 1) : 1,
         device_ownership: mapDeviceChoiceToBackend(deviceChoice),
-        annual_amount: amount,
-        due_date: contractDate,
+        annual_amount: Number(amount || 0),
+        contract_created_at: contractDate,
+        contract_duration_unit: contractDurationUnit,
+        contract_duration_value: Number(contractDurationValue || 1),
+        due_date: resolvedDueDate,
         notes: serviceNotes,
+        official_book_date: officialBookDate,
+        official_book_description: officialBookDescription.trim(),
       }),
     });
 
@@ -351,6 +502,14 @@ const NewContractPage = () => {
 
     if (!contractDate) {
       return 'يرجى اختيار تاريخ العقد';
+    }
+
+    if (!officialBookDate) {
+      return 'يرجى اختيار تاريخ الكتاب الرسمي';
+    }
+
+    if (!officialBookDescription.trim()) {
+      return 'يرجى إدخال وصف الكتاب الرسمي';
     }
 
     if (!wireless && !ftth && !optical && !other) {
@@ -391,7 +550,7 @@ const NewContractPage = () => {
           if (!row.amount) {
             return `يرجى إدخال مقدار الحزمة لخدمة ${row.bundle_type}`;
           }
-          if (!row.unit_price) {
+          if (!row.unit_price || !row.total_price) {
             return `لا يوجد سعر مطابق في الرينجات لخدمة ${row.bundle_type}`;
           }
         }
@@ -404,6 +563,14 @@ const NewContractPage = () => {
           return 'يرجى إكمال جميع حقول خدمة أخرى';
         }
       }
+    }
+
+    if (!contractDurationValue || Number(contractDurationValue) < 1) {
+      return 'يرجى إدخال مدة العقد بشكل صحيح';
+    }
+
+    if (paymentMethod === 'يومي' && (!paymentIntervalDays || Number(paymentIntervalDays) < 1)) {
+      return 'يرجى إدخال عدد الأيام لآلية الدفع اليومي';
     }
 
     return '';
@@ -426,7 +593,7 @@ const NewContractPage = () => {
       setError('');
 
       if (wireless) {
-        const wirelessAmount = wirelessLineTotal + wirelessBundleTotal;
+        const wirelessAmount = wirelessContractTotal;
         const wirelessService = await createService(
           organizationId,
           'Wireless',
@@ -447,7 +614,7 @@ const NewContractPage = () => {
               line_type: sub?.item_name || '',
               quantity: toNumber(row.quantity),
               unit_price: toNumber(row.unit_price),
-              notes: `Wireless Line`,
+              notes: 'Wireless Line',
             });
           }
         }
@@ -467,16 +634,16 @@ const NewContractPage = () => {
                 bundle_type: 'انترنت',
                 quantity: toNumber(row.quantity),
                 unit_price: toNumber(row.unit_price),
-                notes: `Wireless Bundle - انترنت`,
+                notes: 'Wireless Bundle - انترنت',
               });
             } else {
               await createServiceItem(wirelessService.id, {
                 item_category: 'Bundle',
                 item_name: `${row.bundle_type} - ${row.amount}`,
                 bundle_type: row.bundle_type,
-                quantity: 1,
+                quantity: toNumber(row.amount),
                 unit_price: toNumber(row.unit_price),
-                notes: `مقدار الحزمة: ${row.amount}`,
+                notes: `مقدار الحزمة: ${row.amount} | المجموع: ${row.total_price}`,
               });
             }
           }
@@ -484,7 +651,11 @@ const NewContractPage = () => {
       }
 
       if (ftth) {
-        const ftthService = await createService(organizationId, 'FTTH', ftthTotal);
+        const ftthService = await createService(
+          organizationId,
+          'FTTH',
+          calculateContractTotal(ftthTotal, contractDurationUnit, contractDurationValue)
+        );
 
         for (const row of ftthLineRows) {
           const companyId = row.provider_company_id;
@@ -499,13 +670,17 @@ const NewContractPage = () => {
             line_type: sub?.item_name || '',
             quantity: toNumber(row.quantity),
             unit_price: toNumber(row.unit_price),
-            notes: `FTTH Line`,
+            notes: 'FTTH Line',
           });
         }
       }
 
       if (other) {
-        const otherService = await createService(organizationId, 'Other', otherTotal);
+        const otherService = await createService(
+          organizationId,
+          'Other',
+          calculateContractTotal(otherTotal, contractDurationUnit, contractDurationValue)
+        );
 
         for (const row of otherRows) {
           await createServiceItem(otherService.id, {
@@ -513,7 +688,7 @@ const NewContractPage = () => {
             item_name: row.service_name,
             quantity: toNumber(row.quantity),
             unit_price: toNumber(row.unit_price),
-            notes: `Custom service`,
+            notes: 'Custom service',
           });
         }
       }
@@ -563,20 +738,28 @@ const NewContractPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 via-blue-100 to-white">
+    <div className="app-shell">
       <Navbar onMenuClick={() => setIsMenuOpen(true)} />
       <SlideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8">
-          <div className="bg-gradient-to-r from-blue-600 to-blue-400 rounded-xl p-6 mb-8 text-white">
-            <h1 className="text-2xl sm:text-3xl font-bold mb-2">عقد جديد</h1>
-            <p className="text-base sm:text-lg opacity-90">
-              {organizationName ? `المنظمة: ${organizationName}` : 'لم يتم تحديد المنظمة'}
-            </p>
-            <p className="text-sm opacity-80 mt-1">
-              {organizationId ? `ID: ${organizationId}` : 'يرجى تمرير organizationId من AddPage.jsx'}
-            </p>
+      <main className="page-container space-y-6">
+        <div className="surface-card p-6 sm:p-8">
+          <div className="page-hero mb-8">
+            <div className="relative z-10 flex flex-col gap-4">
+              <div className="brand-chip">العقود الجديدة</div>
+              <h1 className="hero-title">عقد جديد</h1>
+              <p className="hero-subtitle">{organizationName ? `الجهة: ${organizationName}` : 'لم يتم تحديد الجهة بعد'}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="hero-stat-tile">
+                  <div className="hero-stat-label">الجهة المحددة</div>
+                  <div className="mt-2 text-base sm:text-lg font-semibold text-white">{organizationName || 'غير محددة'}</div>
+                </div>
+                <div className="hero-stat-tile">
+                  <div className="hero-stat-label">المعرف</div>
+                  <div className="mt-2 text-base sm:text-lg font-semibold text-white">{organizationId || '-'}</div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {error && (
@@ -586,11 +769,11 @@ const NewContractPage = () => {
           )}
 
           {loading ? (
-            <div className="text-center py-10 text-gray-600">جاري تحميل البيانات...</div>
+            <div className="empty-state">جاري تحميل البيانات...</div>
           ) : (
             <>
               <div className="mb-8">
-                <h2 className="text-lg font-semibold text-gray-700 mb-4">نوع الخدمة</h2>
+                <h2 className="text-lg font-semibold text-slate-700 mb-4">نوع الخدمة</h2>
 
                 <div className="flex flex-wrap gap-4">
                   {[
@@ -604,7 +787,7 @@ const NewContractPage = () => {
                       className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
                         item.value
                           ? 'border-blue-600 bg-blue-50'
-                          : 'border-gray-200 bg-white hover:bg-blue-50'
+                          : 'border-slate-200 bg-white hover:bg-blue-50'
                       }`}
                     >
                       <input
@@ -613,7 +796,7 @@ const NewContractPage = () => {
                         onChange={(e) => item.setter(e.target.checked)}
                         className="w-5 h-5 text-blue-600"
                       />
-                      <span className="ml-3 font-medium text-gray-900">{item.label}</span>
+                      <span className="ml-3 font-medium text-slate-900">{item.label}</span>
                     </label>
                   ))}
                 </div>
@@ -621,14 +804,14 @@ const NewContractPage = () => {
 
               {wireless && (
                 <div className="mb-8 border-2 border-blue-200 rounded-xl p-6 bg-blue-50/30">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">Wireless</h3>
+                  <h3 className="text-xl font-semibold text-slate-900 mb-4">Wireless</h3>
 
                   <div className="flex flex-wrap gap-4 mb-6">
                     <label
                       className={`flex items-center p-3 border-2 rounded-lg cursor-pointer ${
                         wirelessLine
                           ? 'border-blue-600 bg-blue-50'
-                          : 'border-gray-200 bg-white'
+                          : 'border-slate-200 bg-white'
                       }`}
                     >
                       <input
@@ -644,7 +827,7 @@ const NewContractPage = () => {
                       className={`flex items-center p-3 border-2 rounded-lg cursor-pointer ${
                         wirelessBundle
                           ? 'border-blue-600 bg-blue-50'
-                          : 'border-gray-200 bg-white'
+                          : 'border-slate-200 bg-white'
                       }`}
                     >
                       <input
@@ -658,7 +841,7 @@ const NewContractPage = () => {
                   </div>
 
                   {wirelessLine && (
-                    <div className="mb-8 p-4 bg-white rounded-lg shadow-sm">
+                    <div className="mb-8 p-4 surface-card-soft">
                       <h4 className="font-semibold text-lg mb-4">Wireless - خط</h4>
 
                       {wirelessLineRows.map((row, index) => {
@@ -669,7 +852,7 @@ const NewContractPage = () => {
                         const currentTotal = rowTotal(row.quantity, currentUnitPrice);
 
                         return (
-                          <div key={index} className="mb-4 p-4 bg-gray-50 rounded-lg">
+                          <div key={index} className="mb-4 p-4 soft-panel">
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-4">
                               <div>
                                 <label className="block text-sm font-medium mb-2">عدد الخطوط</label>
@@ -680,7 +863,7 @@ const NewContractPage = () => {
                                   onChange={(e) =>
                                     updateRow(setWirelessLineRows, index, 'quantity', e.target.value)
                                   }
-                                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
                                 />
                               </div>
 
@@ -697,7 +880,7 @@ const NewContractPage = () => {
                                       'Line'
                                     )
                                   }
-                                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white"
+                                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
                                 >
                                   {renderProviderOptions()}
                                 </select>
@@ -715,7 +898,7 @@ const NewContractPage = () => {
                                       e.target.value
                                     )
                                   }
-                                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white"
+                                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
                                   disabled={!row.provider_company_id}
                                 >
                                   {renderSubscriptionOptions(
@@ -732,7 +915,7 @@ const NewContractPage = () => {
                                   type="number"
                                   readOnly
                                   value={currentUnitPrice}
-                                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
+                                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-100"
                                 />
                               </div>
 
@@ -742,7 +925,7 @@ const NewContractPage = () => {
                                   type="number"
                                   readOnly
                                   value={formatMoney(currentTotal)}
-                                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
+                                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-100"
                                 />
                               </div>
                             </div>
@@ -751,7 +934,7 @@ const NewContractPage = () => {
                               <button
                                 type="button"
                                 onClick={() => addRow(setWirelessLineRows, emptySubscriptionRow)}
-                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                                className="btn-success px-4 py-2.5 text-sm hover:bg-green-700"
                               >
                                 اضافة خط اخر
                               </button>
@@ -773,7 +956,7 @@ const NewContractPage = () => {
                   )}
 
                   {wirelessBundle && (
-                    <div className="p-4 bg-white rounded-lg shadow-sm">
+                    <div className="p-4 surface-card-soft">
                       <h4 className="font-semibold text-lg mb-4">Wireless - حزمة</h4>
 
                       {wirelessBundleRows.map((row, index) => {
@@ -785,16 +968,16 @@ const NewContractPage = () => {
                         const currentTotal =
                           row.bundle_type === 'انترنت'
                             ? rowTotal(row.quantity, internetUnitPrice)
-                            : toNumber(row.unit_price);
+                            : toNumber(row.total_price);
 
                         return (
-                          <div key={index} className="mb-4 p-4 bg-gray-50 rounded-lg">
+                          <div key={index} className="mb-4 p-4 soft-panel">
                             <div className="mb-4">
                               <label className="block text-sm font-medium mb-2">نوع الحزمة</label>
                               <select
                                 value={row.bundle_type}
                                 onChange={(e) => handleBundleTypeChange(index, e.target.value)}
-                                className="w-full md:w-72 px-4 py-2.5 border border-gray-300 rounded-lg bg-white"
+                                className="w-full md:w-72 px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
                               >
                                 <option value="">اختر نوع الحزمة</option>
                                 {WIRELESS_BUNDLE_TYPES.map((type) => (
@@ -814,14 +997,9 @@ const NewContractPage = () => {
                                     min="1"
                                     value={row.quantity}
                                     onChange={(e) =>
-                                      updateRow(
-                                        setWirelessBundleRows,
-                                        index,
-                                        'quantity',
-                                        e.target.value
-                                      )
+                                      handleInternetBundleQuantityChange(index, e.target.value)
                                     }
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
                                   />
                                 </div>
 
@@ -838,7 +1016,7 @@ const NewContractPage = () => {
                                         'Bundle'
                                       )
                                     }
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white"
+                                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
                                   >
                                     {renderProviderOptions()}
                                   </select>
@@ -856,7 +1034,7 @@ const NewContractPage = () => {
                                         e.target.value
                                       )
                                     }
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white"
+                                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
                                     disabled={!row.provider_company_id}
                                   >
                                     {renderSubscriptionOptions(
@@ -873,7 +1051,7 @@ const NewContractPage = () => {
                                     type="number"
                                     readOnly
                                     value={internetUnitPrice}
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
+                                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-100"
                                   />
                                 </div>
 
@@ -883,59 +1061,58 @@ const NewContractPage = () => {
                                     type="number"
                                     readOnly
                                     value={formatMoney(currentTotal)}
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
+                                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-100"
                                   />
                                 </div>
                               </div>
                             )}
 
-                            {row.bundle_type &&
-                              row.bundle_type !== 'انترنت' && (
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                  <div>
-                                    <label className="block text-sm font-medium mb-2">
-                                      مقدار الحزمة
-                                    </label>
-                                    <input
-                                      type="number"
-                                      min="1"
-                                      value={row.amount}
-                                      onChange={(e) =>
-                                        handleRangeAmountChange(index, e.target.value)
-                                      }
-                                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <label className="block text-sm font-medium mb-2">
-                                      سعر الحزمة
-                                    </label>
-                                    <input
-                                      type="number"
-                                      readOnly
-                                      value={row.unit_price}
-                                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <label className="block text-sm font-medium mb-2">المجموع</label>
-                                    <input
-                                      type="number"
-                                      readOnly
-                                      value={formatMoney(currentTotal)}
-                                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
-                                    />
-                                  </div>
+                            {row.bundle_type && row.bundle_type !== 'انترنت' && (
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">
+                                    مقدار الحزمة
+                                  </label>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    value={row.amount}
+                                    onChange={(e) =>
+                                      handleRangeAmountChange(index, e.target.value)
+                                    }
+                                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+                                  />
                                 </div>
-                              )}
+
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">
+                                    سعر الـ Mb
+                                  </label>
+                                  <input
+                                    type="number"
+                                    readOnly
+                                    value={row.unit_price}
+                                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-100"
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">المجموع</label>
+                                  <input
+                                    type="number"
+                                    readOnly
+                                    value={formatMoney(currentTotal)}
+                                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-100"
+                                  />
+                                </div>
+                              </div>
+                            )}
 
                             <div className="flex flex-wrap gap-2">
                               <button
                                 type="button"
                                 onClick={() => addRow(setWirelessBundleRows, emptyBundleRow)}
-                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                                className="btn-success px-4 py-2.5 text-sm hover:bg-green-700"
                               >
                                 اضافة حزمة اخرى
                               </button>
@@ -960,7 +1137,7 @@ const NewContractPage = () => {
 
               {ftth && (
                 <div className="mb-8 border-2 border-blue-200 rounded-xl p-6 bg-blue-50/30">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">FTTH - خط</h3>
+                  <h3 className="text-xl font-semibold text-slate-900 mb-4">FTTH - خط</h3>
 
                   {ftthLineRows.map((row, index) => {
                     const currentUnitPrice = subscriptionPriceFromCache(
@@ -970,7 +1147,7 @@ const NewContractPage = () => {
                     const currentTotal = rowTotal(row.quantity, currentUnitPrice);
 
                     return (
-                      <div key={index} className="mb-4 p-4 bg-white rounded-lg shadow-sm">
+                      <div key={index} className="mb-4 p-4 surface-card-soft">
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-4">
                           <div>
                             <label className="block text-sm font-medium mb-2">عدد الخطوط</label>
@@ -981,7 +1158,7 @@ const NewContractPage = () => {
                               onChange={(e) =>
                                 updateRow(setFtthLineRows, index, 'quantity', e.target.value)
                               }
-                              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
                             />
                           </div>
 
@@ -998,7 +1175,7 @@ const NewContractPage = () => {
                                   'Line'
                                 )
                               }
-                              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white"
+                              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
                             >
                               {renderProviderOptions()}
                             </select>
@@ -1016,7 +1193,7 @@ const NewContractPage = () => {
                                   e.target.value
                                 )
                               }
-                              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white"
+                              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
                               disabled={!row.provider_company_id}
                             >
                               {renderSubscriptionOptions(
@@ -1033,7 +1210,7 @@ const NewContractPage = () => {
                               type="number"
                               readOnly
                               value={currentUnitPrice}
-                              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
+                              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-100"
                             />
                           </div>
 
@@ -1043,7 +1220,7 @@ const NewContractPage = () => {
                               type="number"
                               readOnly
                               value={formatMoney(currentTotal)}
-                              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
+                              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-100"
                             />
                           </div>
                         </div>
@@ -1052,7 +1229,7 @@ const NewContractPage = () => {
                           <button
                             type="button"
                             onClick={() => addRow(setFtthLineRows, emptySubscriptionRow)}
-                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                            className="btn-success px-4 py-2.5 text-sm hover:bg-green-700"
                           >
                             اضافة خط اخر
                           </button>
@@ -1075,7 +1252,7 @@ const NewContractPage = () => {
 
               {optical && (
                 <div className="mb-8 border-2 border-amber-200 rounded-xl p-6 bg-amber-50">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Optical</h3>
+                  <h3 className="text-xl font-semibold text-slate-900 mb-2">Optical</h3>
                   <p className="text-amber-700">
                     هذا القسم محجوز مؤقتاً لأنك قلت Optical coming soon.
                   </p>
@@ -1084,13 +1261,13 @@ const NewContractPage = () => {
 
               {other && (
                 <div className="mb-8 border-2 border-blue-200 rounded-xl p-6 bg-blue-50/30">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">اخرى</h3>
+                  <h3 className="text-xl font-semibold text-slate-900 mb-4">اخرى</h3>
 
                   {otherRows.map((row, index) => {
                     const currentTotal = rowTotal(row.quantity, row.unit_price);
 
                     return (
-                      <div key={index} className="mb-4 p-4 bg-white rounded-lg shadow-sm">
+                      <div key={index} className="mb-4 p-4 surface-card-soft">
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
                           <div>
                             <label className="block text-sm font-medium mb-2">اسم الخدمة</label>
@@ -1100,7 +1277,7 @@ const NewContractPage = () => {
                               onChange={(e) =>
                                 updateRow(setOtherRows, index, 'service_name', e.target.value)
                               }
-                              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
                             />
                           </div>
 
@@ -1113,7 +1290,7 @@ const NewContractPage = () => {
                               onChange={(e) =>
                                 updateRow(setOtherRows, index, 'quantity', e.target.value)
                               }
-                              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
                             />
                           </div>
 
@@ -1126,7 +1303,7 @@ const NewContractPage = () => {
                               onChange={(e) =>
                                 updateRow(setOtherRows, index, 'unit_price', e.target.value)
                               }
-                              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
                             />
                           </div>
 
@@ -1136,7 +1313,7 @@ const NewContractPage = () => {
                               type="number"
                               readOnly
                               value={formatMoney(currentTotal)}
-                              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
+                              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-100"
                             />
                           </div>
                         </div>
@@ -1145,7 +1322,7 @@ const NewContractPage = () => {
                           <button
                             type="button"
                             onClick={() => addRow(setOtherRows, emptyOtherRow)}
-                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                            className="btn-success px-4 py-2.5 text-sm hover:bg-green-700"
                           >
                             اضافة خدمة اخرى
                           </button>
@@ -1166,18 +1343,18 @@ const NewContractPage = () => {
                 </div>
               )}
 
-              <div className="border-2 border-gray-200 rounded-xl p-6 bg-gray-50">
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">تفاصيل العقد</h3>
+              <div className="border-2 border-slate-200 rounded-xl p-6 bg-slate-50/80">
+                <h3 className="text-xl font-semibold text-slate-900 mb-4">تفاصيل العقد</h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4 mb-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
                       عائدية الاجهزة
                     </label>
                     <select
                       value={deviceChoice}
                       onChange={(e) => setDeviceChoice(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white"
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
                     >
                       {DEVICE_UI_OPTIONS.map((option) => (
                         <option key={option} value={option}>
@@ -1188,13 +1365,13 @@ const NewContractPage = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
                       آلية الدفع
                     </label>
                     <select
                       value={paymentMethod}
                       onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white"
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
                     >
                       {PAYMENT_METHODS.map((option) => (
                         <option key={option} value={option}>
@@ -1204,8 +1381,23 @@ const NewContractPage = () => {
                     </select>
                   </div>
 
+                  {paymentMethod === 'يومي' && (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        كل كم يوم؟
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={paymentIntervalDays}
+                        onChange={(e) => setPaymentIntervalDays(e.target.value)}
+                        className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
+                      />
+                    </div>
+                  )}
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
                       تاريخ العقد
                     </label>
                     <input
@@ -1213,21 +1405,99 @@ const NewContractPage = () => {
                       value={contractDate}
                       onChange={(e) => setContractDate(e.target.value)}
                       disabled={useCurrentDate}
-                      className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg ${
-                        useCurrentDate ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'
+                      className={`w-full px-4 py-2.5 border border-slate-300 rounded-lg ${
+                        useCurrentDate ? 'bg-slate-100 cursor-not-allowed' : 'bg-white'
                       }`}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      مدة العقد
+                    </label>
+                    <select
+                      value={contractDurationUnit}
+                      onChange={(e) => setContractDurationUnit(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
+                    >
+                      {CONTRACT_DURATION_UNITS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      العدد
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={contractDurationValue}
+                      onChange={(e) => setContractDurationValue(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      تاريخ الاستحقاق القادم
+                    </label>
+                    <input
+                      type="date"
+                      readOnly
+                      value={resolvedDueDate}
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-100"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      تاريخ الكتاب الرسمي
+                    </label>
+                    <input
+                      type="date"
+                      value={officialBookDate}
+                      onChange={(e) => setOfficialBookDate(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      وصف الكتاب الرسمي
+                    </label>
+                    <textarea
+                      value={officialBookDescription}
+                      onChange={(e) => setOfficialBookDescription(e.target.value)}
+                      rows={3}
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      السعر الشهري الأساسي
+                    </label>
+                    <input
+                      type="number"
+                      readOnly
+                      value={formatMoney(baseMonthlyTotal)}
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-100"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
                       المجموع الكلي
                     </label>
                     <input
                       type="number"
                       readOnly
                       value={formatMoney(grandTotal)}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100 font-semibold"
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-100 font-semibold"
                     />
                   </div>
                 </div>
@@ -1244,7 +1514,7 @@ const NewContractPage = () => {
                     }}
                     className="w-5 h-5 text-blue-600"
                   />
-                  <span className="text-gray-800 font-medium">استخدام تاريخ اليوم تلقائياً</span>
+                  <span className="text-slate-900 font-medium">استخدام تاريخ اليوم تلقائياً</span>
                 </label>
 
                 <div className="flex flex-wrap gap-3">
@@ -1263,7 +1533,7 @@ const NewContractPage = () => {
                     type="button"
                     onClick={() => navigate(-1)}
                     disabled={saving}
-                    className="px-6 py-3 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 font-semibold"
+                    className="px-6 py-3 rounded-lg border border-slate-300 bg-white hover:bg-slate-50/80 font-semibold"
                   >
                     رجوع
                   </button>
@@ -1273,6 +1543,7 @@ const NewContractPage = () => {
           )}
         </div>
       </main>
+      <PageFooter />
     </div>
   );
 };

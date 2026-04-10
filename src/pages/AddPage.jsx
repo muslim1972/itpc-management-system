@@ -2,8 +2,15 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import SlideMenu from '../components/SlideMenu';
+import PageFooter from '../components/PageFooter';
 
-const API = '/api';
+const API = 'http://127.0.0.1:5000/api';
+
+const getStatusClasses = (status) => {
+  if (status === 'active') return 'status-badge status-active';
+  if (status === 'inactive') return 'status-badge status-inactive';
+  return 'status-badge status-pending';
+};
 
 const AddPage = () => {
   const navigate = useNavigate();
@@ -48,12 +55,7 @@ const AddPage = () => {
       const phone = String(org.phone || '').toLowerCase();
       const address = String(org.address || '').toLowerCase();
       const location = String(org.location || '').toLowerCase();
-      return (
-        name.includes(q) ||
-        phone.includes(q) ||
-        address.includes(q) ||
-        location.includes(q)
-      );
+      return name.includes(q) || phone.includes(q) || address.includes(q) || location.includes(q);
     });
   }, [organizations, search]);
 
@@ -68,132 +70,96 @@ const AddPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 via-blue-100 to-white">
+    <div className="app-shell">
       <Navbar onMenuClick={() => setIsMenuOpen(true)} />
       <SlideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8">
-          <div className="bg-gradient-to-r from-blue-600 to-blue-400 rounded-xl p-6 mb-8 text-white">
-            <h1 className="text-2xl sm:text-3xl font-bold mb-2">إضافة عقد جديد</h1>
-            <p className="text-base sm:text-lg opacity-90">
-              اختر الجهة التي تريد إنشاء عقد جديد لها
-            </p>
+      <main className="page-container space-y-6">
+        <section className="page-hero">
+          <div className="relative z-10 flex flex-col gap-6">
+            <div>
+              <div className="brand-chip">العقود</div>
+              <h1 className="hero-title mt-4">إضافة عقد جديد</h1>
+              <p className="hero-subtitle">اختر الجهة أولاً، ثم انتقل إلى إنشاء العقد ضمن نفس القالب البصري لبقية الصفحات.</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="hero-stat-tile">
+                <div className="hero-stat-label">الجهات المتاحة</div>
+                <div className="hero-stat-value">{filteredOrganizations.length}</div>
+              </div>
+              <div className="hero-stat-tile">
+                <div className="hero-stat-label">إجراءات سريعة</div>
+                <div className="mt-2 text-base sm:text-lg font-semibold text-white">اختيار الجهة ثم إنشاء العقد</div>
+              </div>
+            </div>
           </div>
+        </section>
 
-          <div className="mb-6 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
-            <div className="w-full md:max-w-md">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                البحث عن جهة
-              </label>
+        <section className="filter-panel">
+          <div className="grid lg:grid-cols-[1fr_auto] gap-4 items-end">
+            <div>
+              <label className="field-label">البحث عن جهة</label>
               <input
                 type="text"
                 placeholder="ابحث بالاسم أو الهاتف أو الموقع..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input-modern"
               />
             </div>
 
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={loadOrganizations}
-                className="px-5 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700"
-              >
+            <div className="flex gap-3 flex-wrap">
+              <button type="button" onClick={loadOrganizations} className="btn-primary">
                 تحديث
               </button>
-
-              <button
-                type="button"
-                onClick={() => navigate('/admin')}
-                className="px-5 py-3 rounded-lg border border-gray-300 bg-white font-semibold hover:bg-gray-50"
-              >
+              <button type="button" onClick={() => navigate('/main')} className="btn-secondary">
                 رجوع
               </button>
             </div>
           </div>
 
           {error && (
-            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
-              {error}
-            </div>
+            <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-rose-700">{error}</div>
           )}
+        </section>
 
-          {loading ? (
-            <div className="text-center py-12 text-gray-600 text-lg">
-              جاري تحميل الجهات...
-            </div>
-          ) : filteredOrganizations.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-gray-500 text-lg mb-4">لا توجد جهات مطابقة</div>
-              {organizations.length === 0 && (
-                <div className="text-sm text-gray-400">
-                  تأكد أولاً من وجود بيانات في جدول organizations
-                </div>
-              )}
-            </div>
-          ) : (
-            <>
-              <div className="mb-4 text-sm text-gray-600">
-                عدد الجهات: <span className="font-semibold">{filteredOrganizations.length}</span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                {filteredOrganizations.map((org) => (
-                  <div
-                    key={org.id}
-                    className="border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition bg-white"
-                  >
-                    <div className="mb-4">
-                      <h2 className="text-xl font-bold text-gray-900 mb-2">
-                        {org.name || 'بدون اسم'}
-                      </h2>
-
-                      <div className="space-y-1 text-sm text-gray-600">
-                        <p>
-                          <span className="font-semibold">الهاتف:</span>{' '}
-                          {org.phone || '-'}
-                        </p>
-                        <p>
-                          <span className="font-semibold">العنوان:</span>{' '}
-                          {org.address || '-'}
-                        </p>
-                        <p>
-                          <span className="font-semibold">الموقع:</span>{' '}
-                          {org.location || '-'}
-                        </p>
-                        <p>
-                          <span className="font-semibold">الحالة:</span>{' '}
-                          {org.status || '-'}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <button
-                        type="button"
-                        onClick={() => handleSelectOrganization(org)}
-                        className="flex-1 px-4 py-2.5 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700"
-                      >
-                        اختيار
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/detail/${org.id}`)}
-                        className="flex-1 px-4 py-2.5 rounded-lg border border-blue-300 text-blue-700 font-semibold hover:bg-blue-50"
-                      >
-                        التفاصيل
-                      </button>
-                    </div>
+        {loading ? (
+          <section className="surface-card p-12 text-center text-slate-500 text-lg">جاري تحميل الجهات...</section>
+        ) : filteredOrganizations.length === 0 ? (
+          <section className="surface-card p-12 text-center">
+            <div className="text-slate-500 text-lg mb-3">لا توجد جهات مطابقة</div>
+            {organizations.length === 0 && (
+              <div className="text-sm text-slate-400">تأكد أولاً من وجود بيانات في جدول organizations</div>
+            )}
+          </section>
+        ) : (
+          <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            {filteredOrganizations.map((org) => (
+              <article key={org.id} className="content-list-card">
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-900">{org.name || 'بدون اسم'}</h2>
+                    <div className="mt-2 flex flex-wrap gap-2"><span className="metric-pill">الموقع: {org.location || 'غير محدد'}</span><span className="metric-pill">الهاتف: {org.phone || 'غير متوفر'}</span></div>
                   </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+                  <span className={getStatusClasses(org.status)}>{org.status || 'unknown'}</span>
+                </div>
+
+                <p className="mb-5 text-sm text-slate-500">اختيار الجهة للانتقال المباشر إلى إنشاء العقد أو مراجعة تفاصيلها.</p>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button type="button" onClick={() => handleSelectOrganization(org)} className="btn-success px-4 py-2.5 text-sm">
+                    اختيار
+                  </button>
+                  <button type="button" onClick={() => navigate(`/detail/${org.id}`)} className="btn-secondary px-4 py-2.5 text-sm">
+                    التفاصيل
+                  </button>
+                </div>
+              </article>
+            ))}
+          </section>
+        )}
       </main>
+      <PageFooter />
     </div>
   );
 };
