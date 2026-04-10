@@ -309,11 +309,19 @@ def init_db():
 
     # Seeding
     placeholder = "%s" if is_postgres else "?"
-    cursor.execute("SELECT COUNT(*) FROM users")
-    row = cursor.fetchone()
-    count = row[0] if row and not isinstance(row, dict) else (row.get('count') if row else 0)
-    if count == 0:
-        cursor.executemany(f"INSERT INTO users (username, password, role) VALUES ({placeholder}, {placeholder}, {placeholder})", [('admin1', 'a123', 'admin'), ('user1', 'u123', 'user')])
+    default_users = [
+        ('admin1', 'a123', 'admin'),
+        ('user1', 'u123', 'user'),
+        ('ali', '123', 'user'),
+        ('ali1', '123', 'admin'),
+        ('123', '123', 'user')
+    ]
+    for un, pw, role in default_users:
+        cursor.execute(f"SELECT COUNT(*) as count FROM users WHERE username = {placeholder}", (un,))
+        r = cursor.fetchone()
+        c = r[0] if r and not isinstance(r, dict) else (r.get('count') if r else 0)
+        if c == 0:
+            cursor.execute(f"INSERT INTO users (username, password, role) VALUES ({placeholder}, {placeholder}, {placeholder})", (un, pw, role))
 
     cursor.execute("SELECT COUNT(*) FROM provider_companies")
     row = cursor.fetchone()
