@@ -81,30 +81,43 @@ def ensure_default_users_exist(conn):
             cursor.execute(f"INSERT INTO users (username, password, role) VALUES ({placeholder}, {placeholder}, {placeholder})", (un, pw, role))
     conn.commit()
 
-# ── Auth & Session ───────────────────────────────────────────────────────────
+# ── Auth & Session (Improved for Production) ──────────────────────────────────
 
 @app.route('/api/auth/login', methods=['POST'])
 def login():
-    data = request.json
-    username = data.get('username')
-    password = data.get('password')
-    
-    with get_db() as conn:
-        ensure_default_users_exist(conn) # Failsafe Check
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
-        cursor = conn.cursor()
-        cursor.execute(f"SELECT id, username, role FROM users WHERE username = {placeholder} AND password = {placeholder}", (username, password))
-        user = cursor.fetchone()
+    try:
+        data = request.json
+        username = data.get('username')
+        password = data.get('password')
         
-    if user:
-        user_dict = dict(user)
-        # Update last login
         with get_db() as conn:
-            conn.execute(f"UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = {placeholder}", (user_dict['id'],))
+            # دمج التأكد من وجود المستخدمين الافتراضيين مباشرة وبطريقة آمنة
+            is_pg = 'postgres' in str(type(conn)).lower() or not hasattr(conn, 'interrupt')
+            p = "%s" if is_pg else "?"
+            
+            cursor = conn.cursor()
+            # 1. التأكد من وجود الحسابات الأساسية لضمان عمل حساب ali1
+            default_users = [('ali1', '123', 'admin'), ('ali', '123', 'user'), ('123', '123', 'user')]
+            for un, pw, role in default_users:
+                cursor.execute(f"SELECT id FROM users WHERE username = {p}", (un,))
+                if not cursor.fetchone():
+                    cursor.execute(f"INSERT INTO users (username, password, role) VALUES ({p}, {p}, {p})", (un, pw, role))
             conn.commit()
-        return jsonify({'success': True, 'user': user_dict})
-    
-    return jsonify({'success': False, 'error': 'اسم المستخدم أو كلمة المرور غير صحيحة'}), 401
+
+            # 2. عملية تسجيل الدخول الحقيقية
+            cursor.execute(f"SELECT id, username, role FROM users WHERE username = {p} AND password = {p}", (username, password))
+            user = cursor.fetchone()
+            
+            if user:
+                user_dict = dict(user)
+                cursor.execute(f"UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = {p}", (user_dict['id'],))
+                conn.commit()
+                return jsonify({'success': True, 'user': user_dict})
+            
+        return jsonify({'success': False, 'error': 'اسم المستخدم أو كلمة المرور غير صحيحة'}), 401
+    except Exception as e:
+        print(f"❌ Login Error: {str(e)}")
+        return jsonify({'success': False, 'error': f'خطأ في النظام: {str(e)}'}), 500
 
 # ── Organizations Management ────────────────────────────────────────────────
 
