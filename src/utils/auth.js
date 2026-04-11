@@ -27,8 +27,9 @@ export const getUser = () => {
     if (returnUrl) {
       sessionStorage.removeItem('inftele_return_url');
       window.location.href = returnUrl;
-      return;
+      return true; // تم إعادة التوجيه خارجياً
     }
+    return false; // لم يتم إعادة توجيه — التعامل داخلياً
   };
   
   export const getAuthHeaders = () => {

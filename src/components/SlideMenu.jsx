@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import BrandLogo from './BrandLogo';
+import { logout } from '../utils/auth';
 
 const SlideMenu = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -17,7 +18,9 @@ const SlideMenu = ({ isOpen, onClose }) => {
 
   const handleNavigation = (path) => {
     if (path === '/') {
-      localStorage.removeItem('user');
+      // استخدام دالة logout المركزية — تتضمن إعادة التوجيه إلى InfTeleKarbala إن لزم
+      const redirected = logout();
+      if (redirected) return; // الصفحة ستتحول خارجياً، لا حاجة لـ navigate
       navigate('/');
     } else {
       navigate(path);
