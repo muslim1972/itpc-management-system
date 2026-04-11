@@ -18,9 +18,7 @@ const SlideMenu = ({ isOpen, onClose }) => {
 
   const handleNavigation = (path) => {
     if (path === '/') {
-      // استخدام دالة logout المركزية — تتضمن إعادة التوجيه إلى InfTeleKarbala إن لزم
-      const redirected = logout();
-      if (redirected) return; // الصفحة ستتحول خارجياً، لا حاجة لـ navigate
+      logout();
       navigate('/');
     } else {
       navigate(path);
