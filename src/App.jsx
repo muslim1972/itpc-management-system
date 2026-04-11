@@ -55,11 +55,10 @@ function App() {
           left: '50%',
           transform: 'translate(-50%, -50%)',
           width: 'min(500px, 80vw)',
-          opacity: 0.05,
+          opacity: 0.06, /* زيادة الشفافية قليلاً للألوان الطبيعية */
           zIndex: 0,
           pointerEvents: 'none',
           userSelect: 'none',
-          filter: 'grayscale(100%)'
         }}
       >
         <img src={logo} alt="Watermark" style={{ width: '100%', height: 'auto' }} />
