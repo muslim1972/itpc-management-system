@@ -1,12 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BrandLogo from '../components/BrandLogo';
 import PageFooter from '../components/PageFooter';
+
+/** عنوان العودة لتطبيق InfTeleKarbala */
+const INFTELE_URL = 'https://inf-tele-karbala.vercel.app';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
+
+  // اكتشاف إذا المستخدم قادم من InfTeleKarbala وحفظ عنوان العودة
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('from') === 'inftele') {
+      sessionStorage.setItem('inftele_return_url', INFTELE_URL);
+      // تنظيف المعامل من شريط العنوان
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -22,6 +22,13 @@ export const getUser = () => {
   
   export const logout = () => {
     localStorage.removeItem('user');
+    // إذا كان المستخدم قادماً من تطبيق InfTeleKarbala، أعده إلى هناك
+    const returnUrl = sessionStorage.getItem('inftele_return_url');
+    if (returnUrl) {
+      sessionStorage.removeItem('inftele_return_url');
+      window.location.href = returnUrl;
+      return;
+    }
   };
   
   export const getAuthHeaders = () => {
