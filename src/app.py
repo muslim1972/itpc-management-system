@@ -226,7 +226,7 @@ def get_provider_subscriptions(id):
     with get_db() as conn:
         cursor = conn.cursor()
         placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
-        cursor.execute(f"SELECT * FROM provider_subscriptions WHERE provider_company_id = {placeholder} ORDER BY bundle_name ASC", (id,))
+        cursor.execute(f"SELECT * FROM provider_subscriptions WHERE provider_company_id = {placeholder} ORDER BY item_name ASC", (id,))
         return jsonify({'subscriptions': rows_to_list(cursor.fetchall())})
 
 @app.route('/api/provider-companies/<int:id>/subscriptions', methods=['POST'])
@@ -237,9 +237,9 @@ def add_provider_subscription(id):
         placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
         cursor.execute(f"""
             INSERT INTO provider_subscriptions (
-                provider_company_id, bundle_name, line_type, bundle_type, buy_price, sell_price
+                provider_company_id, item_name, service_type, item_category, price, unit_label
             ) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
-        """, (id, data['bundle_name'], data.get('line_type'), data.get('bundle_type'), data['buy_price'], data['sell_price']))
+        """, (id, data.get('item_name', data.get('bundle_name')), data.get('service_type'), data.get('item_category'), data.get('price', data.get('buy_price')), data.get('unit_label')))
         conn.commit()
     return jsonify({'success': True}), 201
 
@@ -249,8 +249,8 @@ def add_provider_subscription(id):
 def get_service_ranges():
     with get_db() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM service_ranges ORDER BY range_label ASC")
-        return jsonify({'service_ranges': rows_to_list(cursor.fetchall())})
+        cursor.execute("SELECT * FROM service_ranges ORDER BY service_name ASC, range_from ASC")
+        return jsonify({'ranges': rows_to_list(cursor.fetchall())})
 
 @app.route('/api/service-ranges', methods=['POST'])
 def add_service_range():
@@ -258,8 +258,8 @@ def add_service_range():
     with get_db() as conn:
         cursor = conn.cursor()
         placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
-        cursor.execute(f"INSERT INTO service_ranges (range_label, buy_price, sell_price) VALUES ({placeholder}, {placeholder}, {placeholder})",
-                       (data['range_label'], data['buy_price'], data['sell_price']))
+        cursor.execute(f"INSERT INTO service_ranges (service_name, range_from, range_to, price) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder})",
+                       (data['service_name'], data['range_from'], data['range_to'], data['price']))
         conn.commit()
     return jsonify({'success': True}), 201
 
