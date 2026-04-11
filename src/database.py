@@ -65,6 +65,16 @@ class DbWrapper:
 
     def close(self):
         self.conn.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is not None:
+            self.conn.rollback()
+        else:
+            self.conn.commit()
+        self.close()
     
     @property
     def total_changes(self):
