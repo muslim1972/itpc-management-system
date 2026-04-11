@@ -42,9 +42,29 @@ const RequireUser = ({ children }) => {
 };
 
 
+import logo from './assets/itpc-logo.png';
+
 function App() {
   return (
     <Router>
+      {/* العلامة المائية المضمونة */}
+      <div 
+        style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 'min(500px, 80vw)',
+          opacity: 0.05,
+          zIndex: 0,
+          pointerEvents: 'none',
+          userSelect: 'none',
+          filter: 'grayscale(100%)'
+        }}
+      >
+        <img src={logo} alt="Watermark" style={{ width: '100%', height: 'auto' }} />
+      </div>
+
       <Routes>
         {/* Login only */}
         <Route path="/" element={<LoginPage />} />

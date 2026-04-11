@@ -19,25 +19,6 @@
     background-image: linear-gradient(180deg, #f8fafc 0%, #f8fafc 55%, #f1f5f9 100%);
   }
 
-  /* العلامة المائية (Watermark) - تحسين الظهور */
-  html::after {
-    content: "";
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100vw;
-    height: 100vh;
-    background-image: url('./assets/itpc-logo.png');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: clamp(300px, 40vw, 600px);
-    opacity: 0.08; /* زيادة الشفافية قليلاً للوضوح */
-    z-index: 9999; /* جعلها فوق كل شيء */
-    pointer-events: none; /* لا تعيق الضغط */
-    filter: grayscale(100%);
-  }
-
   * {
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 transparent;
