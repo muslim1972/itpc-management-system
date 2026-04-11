@@ -5,7 +5,7 @@ import SlideMenu from '../components/SlideMenu';
 import PageFooter from '../components/PageFooter';
 import { getUser, getAuthHeaders } from '../utils/auth';
 
-const API = 'http://127.0.0.1:5000/api';
+const API = '/api';
 
 const emptyForm = {
   name: '',

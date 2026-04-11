@@ -6,7 +6,7 @@ import PageFooter from '../components/PageFooter';
 import PriceHistoryDropdown from '../components/PriceHistoryDropdown';
 import { getAuthHeaders } from '../utils/auth';
 
-const API = 'http://127.0.0.1:5000/api';
+const API = '/api';
 
 const SERVICE_TYPES = ['Wireless', 'FTTH', 'Optical', 'Other'];
 const ITEM_CATEGORIES = ['Line', 'Bundle', 'Other'];

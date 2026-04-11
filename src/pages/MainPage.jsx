@@ -33,7 +33,7 @@ const MainPage = () => {
         setLoading(true);
         setError('');
 
-        const response = await fetch('http://127.0.0.1:5000/api/organizations');
+        const response = await fetch('/api/organizations');
         const data = await response.json();
 
         if (!response.ok) {

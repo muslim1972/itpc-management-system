@@ -4,7 +4,7 @@ import Navbar from '../components/Navbar';
 import SlideMenu from '../components/SlideMenu';
 import PageFooter from '../components/PageFooter';
 
-const API_BASE = 'http://127.0.0.1:5000/api';
+const API_BASE = '/api';
 
 const KIND_OPTIONS = [
   { value: 'all', label: 'الكل' },
