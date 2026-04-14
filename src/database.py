@@ -306,21 +306,14 @@ def init_db():
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_obr_service ON official_book_records(service_id)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_service_status ON organization_services(service_status)")
 
-    # Seeding
-    placeholder = "%s" if is_postgres else "?"
-    default_users = [
-        ('admin1', 'a123', 'admin'),
-        ('user1', 'u123', 'user'),
-        ('ali', '123', 'user'),
-        ('ali1', '123', 'admin'),
-        ('123', '123', 'user')
-    ]
-    for un, pw, role in default_users:
-        cursor.execute(f"SELECT COUNT(*) as count FROM users WHERE username = {placeholder}", (un,))
-        r = cursor.fetchone()
-        c = r[0] if r and not isinstance(r, dict) else (r.get('count') if r else 0)
-        if c == 0:
-            cursor.execute(f"INSERT INTO users (username, password, role) VALUES ({placeholder}, {placeholder}, {placeholder})", (un, pw, role))
+    # Seeding defaults only if tables are completely empty
+    placeholder = "%s"
+    
+    cursor.execute("SELECT COUNT(*) as count FROM users")
+    row = cursor.fetchone()
+    count = row[0] if row and not isinstance(row, dict) else (row.get('count') if row else 0)
+    if count == 0:
+        cursor.execute(f"INSERT INTO users (username, password, role) VALUES ({placeholder}, {placeholder}, {placeholder})", ('admin1', 'a123', 'admin'))
 
     cursor.execute("SELECT COUNT(*) FROM provider_companies")
     row = cursor.fetchone()
