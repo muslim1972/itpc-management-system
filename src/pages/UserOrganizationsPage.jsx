@@ -230,45 +230,63 @@ const UserOrganizationsPage = () => {
           {showAddForm && (
             <div className="soft-panel mb-5 page-reveal stagger-2">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input
-                  placeholder="اسم الجهة"
-                  value={addForm.name}
-                  onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
-                  className="input-modern"
-                />
-                <input
-                  placeholder="رقم الهاتف"
-                  value={addForm.phone}
-                  onChange={(e) => setAddForm({ ...addForm, phone: e.target.value })}
-                  className="input-modern"
-                />
-                <input
-                  placeholder="الموقع"
-                  value={addForm.location}
-                  onChange={(e) => setAddForm({ ...addForm, location: e.target.value })}
-                  className="input-modern"
-                />
-                <input
-                  placeholder="العنوان"
-                  value={addForm.address}
-                  onChange={(e) => setAddForm({ ...addForm, address: e.target.value })}
-                  className="input-modern"
-                />
-                <select
-                  value={addForm.status}
-                  onChange={(e) => setAddForm({ ...addForm, status: e.target.value })}
-                  className="select-modern"
-                >
-                  <option value="active">نشطة</option>
-                  <option value="inactive">غير نشطة</option>
-                  <option value="pending">معلقة</option>
-                </select>
-                <input
-                  placeholder="ملاحظات"
-                  value={addForm.notes}
-                  onChange={(e) => setAddForm({ ...addForm, notes: e.target.value })}
-                  className="input-modern"
-                />
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-medium text-slate-700 w-28 shrink-0">اسم الجهة</label>
+                  <input
+                    placeholder="اسم الجهة"
+                    value={addForm.name}
+                    onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
+                    className="input-modern flex-1"
+                  />
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-medium text-slate-700 w-28 shrink-0">رقم الهاتف</label>
+                  <input
+                    placeholder="رقم الهاتف"
+                    value={addForm.phone}
+                    onChange={(e) => setAddForm({ ...addForm, phone: e.target.value })}
+                    className="input-modern flex-1"
+                  />
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-medium text-slate-700 w-28 shrink-0">الموقع</label>
+                  <input
+                    placeholder="الموقع"
+                    value={addForm.location}
+                    onChange={(e) => setAddForm({ ...addForm, location: e.target.value })}
+                    className="input-modern flex-1"
+                  />
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-medium text-slate-700 w-28 shrink-0">العنوان</label>
+                  <input
+                    placeholder="العنوان"
+                    value={addForm.address}
+                    onChange={(e) => setAddForm({ ...addForm, address: e.target.value })}
+                    className="input-modern flex-1"
+                  />
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-medium text-slate-700 w-28 shrink-0">الحالة</label>
+                  <select
+                    value={addForm.status}
+                    onChange={(e) => setAddForm({ ...addForm, status: e.target.value })}
+                    className="select-modern flex-1"
+                  >
+                    <option value="active">نشطة</option>
+                    <option value="inactive">غير نشطة</option>
+                    <option value="pending">معلقة</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-medium text-slate-700 w-28 shrink-0">ملاحظات</label>
+                  <input
+                    placeholder="ملاحظات"
+                    value={addForm.notes}
+                    onChange={(e) => setAddForm({ ...addForm, notes: e.target.value })}
+                    className="input-modern flex-1"
+                  />
+                </div>
               </div>
               <div className="mt-4 flex flex-wrap gap-3">
                 <button onClick={handleAdd} className="btn-primary px-4 py-2.5 text-sm">حفظ</button>
@@ -298,45 +316,63 @@ const UserOrganizationsPage = () => {
                   <div key={org.id} className={`content-list-card page-reveal stagger-${(index % 4) + 1}`}>
                     {editingId === org.id ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input
-                          value={editForm.name}
-                          onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                          className="input-modern"
-                          placeholder="اسم الجهة"
-                        />
-                        <input
-                          value={editForm.phone}
-                          onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                          className="input-modern"
-                          placeholder="الهاتف"
-                        />
-                        <input
-                          value={editForm.location}
-                          onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
-                          className="input-modern"
-                          placeholder="الموقع"
-                        />
-                        <input
-                          value={editForm.address}
-                          onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                          className="input-modern"
-                          placeholder="العنوان"
-                        />
-                        <select
-                          value={editForm.status}
-                          onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                          className="select-modern"
-                        >
-                          <option value="active">نشطة</option>
-                          <option value="inactive">غير نشطة</option>
-                          <option value="pending">معلقة</option>
-                        </select>
-                        <input
-                          value={editForm.notes}
-                          onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                          className="input-modern"
-                          placeholder="ملاحظات"
-                        />
+                        <div className="flex items-center gap-3">
+                          <label className="text-sm font-medium text-slate-700 w-28 shrink-0">اسم الجهة</label>
+                          <input
+                            value={editForm.name}
+                            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                            className="input-modern flex-1"
+                            placeholder="اسم الجهة"
+                          />
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <label className="text-sm font-medium text-slate-700 w-28 shrink-0">الهاتف</label>
+                          <input
+                            value={editForm.phone}
+                            onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                            className="input-modern flex-1"
+                            placeholder="الهاتف"
+                          />
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <label className="text-sm font-medium text-slate-700 w-28 shrink-0">الموقع</label>
+                          <input
+                            value={editForm.location}
+                            onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+                            className="input-modern flex-1"
+                            placeholder="الموقع"
+                          />
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <label className="text-sm font-medium text-slate-700 w-28 shrink-0">العنوان</label>
+                          <input
+                            value={editForm.address}
+                            onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                            className="input-modern flex-1"
+                            placeholder="العنوان"
+                          />
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <label className="text-sm font-medium text-slate-700 w-28 shrink-0">الحالة</label>
+                          <select
+                            value={editForm.status}
+                            onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                            className="select-modern flex-1"
+                          >
+                            <option value="active">نشطة</option>
+                            <option value="inactive">غير نشطة</option>
+                            <option value="pending">معلقة</option>
+                          </select>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <label className="text-sm font-medium text-slate-700 w-28 shrink-0">ملاحظات</label>
+                          <input
+                            value={editForm.notes}
+                            onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                            className="input-modern flex-1"
+                            placeholder="ملاحظات"
+                          />
+                        </div>
                         <div className="md:col-span-2 flex flex-wrap gap-3">
                           <button onClick={handleSave} className="btn-success px-4 py-2.5 text-sm">حفظ التعديلات</button>
                           <button onClick={() => setEditingId(null)} className="btn-secondary px-4 py-2.5 text-sm">إلغاء</button>

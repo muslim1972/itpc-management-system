@@ -186,7 +186,7 @@ const OrganizationsSection = () => {
       {showAddForm && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50/80 rounded-[22px] border border-slate-200 mb-4">
           <div className="flex items-center gap-3">
-            <label className="text-sm font-medium text-slate-700 min-w-[120px]">اسم الجهة</label>
+            <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">اسم الجهة</label>
             <input
               placeholder="اسم الجهة"
               value={addForm.name}
@@ -195,7 +195,7 @@ const OrganizationsSection = () => {
             />
           </div>
           <div className="flex items-center gap-3">
-            <label className="text-sm font-medium text-slate-700 min-w-[120px]">رقم الهاتف</label>
+            <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">رقم الهاتف</label>
             <input
               placeholder="رقم الهاتف"
               value={addForm.phone}
@@ -204,7 +204,7 @@ const OrganizationsSection = () => {
             />
           </div>
           <div className="flex items-center gap-3">
-            <label className="text-sm font-medium text-slate-700 min-w-[120px]">الموقع</label>
+            <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">الموقع</label>
             <input
               placeholder="الموقع"
               value={addForm.location}
@@ -213,7 +213,7 @@ const OrganizationsSection = () => {
             />
           </div>
           <div className="flex items-center gap-3">
-            <label className="text-sm font-medium text-slate-700 min-w-[120px]">العنوان</label>
+            <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">العنوان</label>
             <input
               placeholder="العنوان"
               value={addForm.address}
@@ -222,7 +222,7 @@ const OrganizationsSection = () => {
             />
           </div>
           <div className="flex items-center gap-3">
-            <label className="text-sm font-medium text-slate-700 min-w-[120px]">ملاحظات</label>
+            <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">ملاحظات</label>
             <input
               placeholder="ملاحظات"
               value={addForm.notes}
@@ -231,7 +231,7 @@ const OrganizationsSection = () => {
             />
           </div>
           <div className="flex items-center gap-3">
-            <label className="text-sm font-medium text-slate-700 min-w-[120px]">الحالة</label>
+            <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">الحالة</label>
             <select
               value={addForm.status}
               onChange={(e) => setAddForm({ ...addForm, status: e.target.value })}
@@ -513,7 +513,7 @@ const CompaniesSection = ({ onDetails }) => {
       {showAddForm && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50/80 rounded-[22px] border border-slate-200 mb-4">
           <div className="flex items-center gap-3">
-            <label className="text-sm font-medium text-slate-700 min-w-[120px]">اسم الشركة</label>
+            <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">اسم الشركة</label>
             <input
               placeholder="اسم الشركة"
               value={addForm.name}
@@ -522,7 +522,7 @@ const CompaniesSection = ({ onDetails }) => {
             />
           </div>
           <div className="flex items-center gap-3">
-            <label className="text-sm font-medium text-slate-700 min-w-[120px]">رقم الهاتف</label>
+            <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">رقم الهاتف</label>
             <input
               placeholder="رقم الهاتف"
               value={addForm.phone}
@@ -531,7 +531,7 @@ const CompaniesSection = ({ onDetails }) => {
             />
           </div>
           <div className="flex items-center gap-3">
-            <label className="text-sm font-medium text-slate-700 min-w-[120px]">العنوان</label>
+            <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">العنوان</label>
             <input
               placeholder="العنوان"
               value={addForm.address}
@@ -540,7 +540,7 @@ const CompaniesSection = ({ onDetails }) => {
             />
           </div>
           <div className="flex items-center gap-3">
-            <label className="text-sm font-medium text-slate-700 min-w-[120px]">البريد الإلكتروني</label>
+            <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">البريد الإلكتروني</label>
             <input
               placeholder="البريد الإلكتروني"
               value={addForm.email}
@@ -549,7 +549,7 @@ const CompaniesSection = ({ onDetails }) => {
             />
           </div>
           <div className="md:col-span-2 flex gap-3 items-center">
-            <label className="text-sm font-medium text-slate-700 min-w-[120px]">الحالة</label>
+            <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">الحالة</label>
             <select
               value={String(addForm.is_active)}
               onChange={(e) =>
@@ -581,7 +581,7 @@ const CompaniesSection = ({ onDetails }) => {
               {editingId === company.id ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="flex items-center gap-3">
-                    <label className="text-sm font-medium text-slate-700 min-w-[120px]">اسم الشركة</label>
+                    <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">اسم الشركة</label>
                     <input
                       value={editForm.name}
                       onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
@@ -590,7 +590,7 @@ const CompaniesSection = ({ onDetails }) => {
                     />
                   </div>
                   <div className="flex items-center gap-3">
-                    <label className="text-sm font-medium text-slate-700 min-w-[120px]">الهاتف</label>
+                    <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">الهاتف</label>
                     <input
                       value={editForm.phone}
                       onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
@@ -599,7 +599,7 @@ const CompaniesSection = ({ onDetails }) => {
                     />
                   </div>
                   <div className="flex items-center gap-3">
-                    <label className="text-sm font-medium text-slate-700 min-w-[120px]">العنوان</label>
+                    <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">العنوان</label>
                     <input
                       value={editForm.address}
                       onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
@@ -608,7 +608,7 @@ const CompaniesSection = ({ onDetails }) => {
                     />
                   </div>
                   <div className="flex items-center gap-3">
-                    <label className="text-sm font-medium text-slate-700 min-w-[120px]">البريد</label>
+                    <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">البريد</label>
                     <input
                       value={editForm.email}
                       onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
@@ -617,7 +617,7 @@ const CompaniesSection = ({ onDetails }) => {
                     />
                   </div>
                   <div className="md:col-span-2 flex gap-3 items-center">
-                    <label className="text-sm font-medium text-slate-700 min-w-[120px]">الحالة</label>
+                    <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">الحالة</label>
                     <select
                       value={String(editForm.is_active)}
                       onChange={(e) =>
@@ -987,9 +987,18 @@ const PackagesSection = () => {
                   <div className="space-y-3">
                     {(drafts[serviceName] || []).map((row, index) => (
                       <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
-                        <input type="number" value={row.from} onChange={(e) => updateRangeRow(serviceName, index, 'from', e.target.value)} placeholder="from" className="input-modern" />
-                        <input type="number" value={row.to} onChange={(e) => updateRangeRow(serviceName, index, 'to', e.target.value)} placeholder="to" className="input-modern" />
-                        <input type="number" value={row.price} onChange={(e) => updateRangeRow(serviceName, index, 'price', e.target.value)} placeholder="price" className="input-modern" />
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm font-medium text-slate-700 w-12 shrink-0">من</label>
+                          <input type="number" value={row.from} onChange={(e) => updateRangeRow(serviceName, index, 'from', e.target.value)} placeholder="from" className="input-modern flex-1" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm font-medium text-slate-700 w-12 shrink-0">إلى</label>
+                          <input type="number" value={row.to} onChange={(e) => updateRangeRow(serviceName, index, 'to', e.target.value)} placeholder="to" className="input-modern flex-1" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm font-medium text-slate-700 w-12 shrink-0">السعر</label>
+                          <input type="number" value={row.price} onChange={(e) => updateRangeRow(serviceName, index, 'price', e.target.value)} placeholder="price" className="input-modern flex-1" />
+                        </div>
                         <button onClick={() => removeRangeRow(serviceName, index)} className="px-3 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50">حذف الرينج</button>
                       </div>
                     ))}
@@ -1136,35 +1145,46 @@ const UsersSection = () => {
       {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
       {success && <p className="text-green-600 text-sm mb-3">{success}</p>}
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-slate-50/80 rounded-[22px] border border-slate-200 mb-4">
-        <input
-          placeholder="اسم المستخدم"
-          value={form.username}
-          onChange={(e) => setForm({ ...form, username: e.target.value })}
-          className="input-modern"
-        />
-        <input
-          type="password"
-          placeholder="كلمة المرور"
-          value={form.password}
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
-          className="input-modern"
-        />
-        <select
-          value={form.role}
-          onChange={(e) => setForm({ ...form, role: e.target.value })}
-          className="select-modern"
-        >
-          <option value="user">user</option>
-          <option value="admin">admin</option>
-        </select>
-        <button
-          onClick={createUser}
-          disabled={saving}
-          className="btn-primary px-4 py-2.5 text-sm disabled:opacity-60"
-        >
-          {saving ? 'جاري الإضافة...' : 'إضافة'}
-        </button>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50/80 rounded-[22px] border border-slate-200 mb-4">
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-medium text-slate-700 w-28 shrink-0">اسم المستخدم</label>
+          <input
+            placeholder="اسم المستخدم"
+            value={form.username}
+            onChange={(e) => setForm({ ...form, username: e.target.value })}
+            className="input-modern flex-1"
+          />
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-medium text-slate-700 w-28 shrink-0">كلمة المرور</label>
+          <input
+            type="password"
+            placeholder="كلمة المرور"
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            className="input-modern flex-1"
+          />
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-medium text-slate-700 w-28 shrink-0">الصلاحية</label>
+          <select
+            value={form.role}
+            onChange={(e) => setForm({ ...form, role: e.target.value })}
+            className="select-modern flex-1"
+          >
+            <option value="user">user</option>
+            <option value="admin">admin</option>
+          </select>
+        </div>
+        <div className="flex justify-start">
+          <button
+            onClick={createUser}
+            disabled={saving}
+            className="btn-primary px-5 py-2.5 text-sm disabled:opacity-60"
+          >
+            {saving ? 'جاري الإضافة...' : 'إضافة'}
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -1345,24 +1365,42 @@ const CompanyDetailsSection = ({ company, onBack }) => {
 
       {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-slate-50/80 rounded-[22px] border border-slate-200 mb-6">
-        <select value={form.service_type} onChange={(e) => setForm({ ...form, service_type: e.target.value })} className="select-modern">
-          <option value="Wireless">Wireless</option>
-          <option value="FTTH">FTTH</option>
-          <option value="Optical">Optical</option>
-          <option value="Other">Other</option>
-        </select>
-        <select value={form.item_category} onChange={(e) => setForm({ ...form, item_category: e.target.value })} className="select-modern">
-          <option value="Line">Line</option>
-          <option value="Bundle">Bundle</option>
-          <option value="Other">Other</option>
-        </select>
-        <input value={form.item_name} onChange={(e) => setForm({ ...form, item_name: e.target.value })} placeholder="اسم الاشتراك" className="input-modern" />
-        <input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="السعر" className="input-modern" />
-        <input value={form.unit_label} onChange={(e) => setForm({ ...form, unit_label: e.target.value })} placeholder="وحدة القياس" className="input-modern" />
-        <input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="ملاحظات" className="input-modern" />
-        <div className="md:col-span-3">
-          <button onClick={handleAddSubscription} disabled={saving} className="btn-primary px-4 py-2.5 text-sm disabled:opacity-60">{saving ? 'جاري الحفظ...' : 'إضافة اشتراك'}</button>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50/80 rounded-[22px] border border-slate-200 mb-6">
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-medium text-slate-700 w-28 shrink-0">نوع الخدمة</label>
+          <select value={form.service_type} onChange={(e) => setForm({ ...form, service_type: e.target.value })} className="select-modern flex-1">
+            <option value="Wireless">Wireless</option>
+            <option value="FTTH">FTTH</option>
+            <option value="Optical">Optical</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-medium text-slate-700 w-28 shrink-0">فئة العنصر</label>
+          <select value={form.item_category} onChange={(e) => setForm({ ...form, item_category: e.target.value })} className="select-modern flex-1">
+            <option value="Line">Line</option>
+            <option value="Bundle">Bundle</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-medium text-slate-700 w-28 shrink-0">الاشتراك</label>
+          <input value={form.item_name} onChange={(e) => setForm({ ...form, item_name: e.target.value })} placeholder="اسم الاشتراك" className="input-modern flex-1" />
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-medium text-slate-700 w-28 shrink-0">السعر</label>
+          <input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="السعر" className="input-modern flex-1" />
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-medium text-slate-700 w-28 shrink-0">القياس</label>
+          <input value={form.unit_label} onChange={(e) => setForm({ ...form, unit_label: e.target.value })} placeholder="وحدة القياس" className="input-modern flex-1" />
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-medium text-slate-700 w-28 shrink-0">ملاحظات</label>
+          <input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="ملاحظات" className="input-modern flex-1" />
+        </div>
+        <div className="md:col-span-2 flex justify-end">
+          <button onClick={handleAddSubscription} disabled={saving} className="btn-primary px-5 py-2.5 text-sm disabled:opacity-60">{saving ? 'جاري الحفظ...' : 'إضافة اشتراك'}</button>
         </div>
       </div>
 
