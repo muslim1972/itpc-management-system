@@ -221,6 +221,46 @@ def add_provider():
         conn.commit()
     return jsonify({'success': True}), 201
 
+@app.route('/api/provider-companies/<int:id>', methods=['GET'])
+def get_provider_detail(id):
+    with get_db() as conn:
+        cursor = conn.cursor()
+        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        cursor.execute(f"SELECT * FROM provider_companies WHERE id = {placeholder}", (id,))
+        company = row_to_dict(cursor.fetchone())
+        if not company: return jsonify({'error': 'Not found'}), 404
+        
+        cursor.execute(f"SELECT * FROM provider_subscriptions WHERE provider_company_id = {placeholder} ORDER BY item_name ASC", (id,))
+        subs = rows_to_list(cursor.fetchall())
+        
+        # Get price history for each subscription
+        for s in subs:
+            cursor.execute(f"SELECT * FROM provider_subscription_price_history WHERE provider_subscription_id = {placeholder} ORDER BY changed_at DESC", (s['id'],))
+            s['price_history'] = rows_to_list(cursor.fetchall())
+            
+        company['subscriptions'] = subs
+    return jsonify({'provider_company': company})
+
+@app.route('/api/provider-companies/<int:id>', methods=['PUT'])
+def update_provider(id):
+    data = request.json
+    with get_db() as conn:
+        cursor = conn.cursor()
+        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        cursor.execute(f"UPDATE provider_companies SET name={placeholder}, contact_person={placeholder}, phone={placeholder}, email={placeholder}, address={placeholder}, is_active={placeholder} WHERE id={placeholder}",
+                       (data['name'], data.get('contact_person'), data.get('phone'), data.get('email'), data.get('address'), 1 if data.get('is_active') else 0, id))
+        conn.commit()
+    return jsonify({'success': True})
+
+@app.route('/api/provider-companies/<int:id>', methods=['DELETE'])
+def delete_provider(id):
+    with get_db() as conn:
+        cursor = conn.cursor()
+        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        cursor.execute(f"DELETE FROM provider_companies WHERE id = {placeholder}", (id,))
+        conn.commit()
+    return jsonify({'success': True})
+
 @app.route('/api/provider-companies/<int:id>/subscriptions', methods=['GET'])
 def get_provider_subscriptions(id):
     with get_db() as conn:
@@ -243,6 +283,105 @@ def add_provider_subscription(id):
         conn.commit()
     return jsonify({'success': True}), 201
 
+@app.route('/api/provider-subscriptions/<int:id>/impact', methods=['POST'])
+def get_subscription_impact(id):
+    data = request.json
+    new_price = float(data.get('price', 0))
+    with get_db() as conn:
+        cursor = conn.cursor()
+        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        
+        # Get subscription info
+        cursor.execute(f"SELECT * FROM provider_subscriptions WHERE id = {placeholder}", (id,))
+        sub = row_to_dict(cursor.fetchone())
+        if not sub: return jsonify({'error': 'Subscription not found'}), 404
+        
+        # Find affected organizations through service_items
+        cursor.execute(f"""
+            SELECT o.id as organization_id, o.name as organization_name, COUNT(DISTINCT si.service_id) as affected_services_count
+            FROM service_items si
+            JOIN organization_services os ON si.service_id = os.id
+            JOIN organizations o ON os.organization_id = o.id
+            WHERE si.provider_company_id = {placeholder} AND si.item_name = {placeholder}
+            GROUP BY o.id, o.name
+        """, (sub['provider_company_id'], sub['item_name']))
+        
+        orgs = rows_to_list(cursor.fetchall())
+        
+    return jsonify({
+        'old_price': sub['price'],
+        'new_price': new_price,
+        'affected_organizations': orgs
+    })
+
+@app.route('/api/provider-subscriptions/<int:id>', methods=['PUT'])
+def update_subscription(id):
+    data = request.json
+    new_price = float(data.get('price', 0))
+    selected_org_ids = data.get('selected_organization_ids', [])
+    book_date = data.get('official_book_date')
+    book_desc = data.get('official_book_description')
+    user_id = request.headers.get('X-User-Id')
+
+    with get_db() as conn:
+        cursor = conn.cursor()
+        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        
+        # 1. Get current sub
+        cursor.execute(f"SELECT * FROM provider_subscriptions WHERE id = {placeholder}", (id,))
+        sub = row_to_dict(cursor.fetchone())
+        if not sub: return jsonify({'error': 'Not found'}), 404
+        
+        old_price = sub['price']
+        
+        # 2. Update the subscription base price
+        cursor.execute(f"UPDATE provider_subscriptions SET service_type={placeholder}, item_category={placeholder}, item_name={placeholder}, price={placeholder}, unit_label={placeholder} WHERE id={placeholder}",
+                       (data.get('service_type'), data.get('item_category'), data.get('item_name'), new_price, data.get('unit_label'), id))
+        
+        # 3. Log Price History if changed
+        if old_price != new_price:
+            cursor.execute(f"INSERT INTO provider_subscription_price_history (provider_subscription_id, old_price, new_price, changed_by, note) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})",
+                           (id, old_price, new_price, user_id, f"تعديل السعر - كتاب رسمي: {book_desc}"))
+            
+            # 4. Impact on organizations
+            if selected_org_ids:
+                for org_id in selected_org_ids:
+                    # Update items
+                    cursor.execute(f"""
+                        UPDATE service_items 
+                        SET unit_price = {placeholder}, total_price = quantity * {placeholder}, updated_at = CURRENT_TIMESTAMP
+                        WHERE provider_company_id = {placeholder} AND item_name = {placeholder} 
+                        AND service_id IN (SELECT id FROM organization_services WHERE organization_id = {placeholder})
+                    """, (new_price, new_price, sub['provider_company_id'], sub['item_name'], org_id))
+                    
+                    # Log Official Book
+                    cursor.execute(f"""
+                        INSERT INTO official_book_records (operation_type, entity_type, provider_subscription_id, organization_id, official_book_date, official_book_description, created_by)
+                        VALUES ('PRICE_UPDATE', 'subscription', {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
+                    """, (id, org_id, book_date, book_desc, user_id))
+
+                    # Recalculate service totals
+                    cursor.execute(f"""
+                        UPDATE organization_services 
+                        SET annual_amount = (SELECT SUM(total_price) FROM service_items WHERE service_id = organization_services.id),
+                            due_amount = (SELECT SUM(total_price) FROM service_items WHERE service_id = organization_services.id) - paid_amount,
+                            updated_at = CURRENT_TIMESTAMP
+                        WHERE organization_id = {placeholder}
+                        AND id IN (SELECT service_id FROM service_items WHERE provider_company_id = {placeholder} AND item_name = {placeholder})
+                    """, (org_id, sub['provider_company_id'], sub['item_name']))
+
+        conn.commit()
+    return jsonify({'success': True})
+
+@app.route('/api/provider-subscriptions/<int:id>', methods=['DELETE'])
+def delete_subscription(id):
+    with get_db() as conn:
+        cursor = conn.cursor()
+        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        cursor.execute(f"DELETE FROM provider_subscriptions WHERE id = {placeholder}", (id,))
+        conn.commit()
+    return jsonify({'success': True})
+
 # ── Service Ranges (Global Pricing) ─────────────────────────────────────────
 
 @app.route('/api/service-ranges', methods=['GET'])
@@ -262,6 +401,101 @@ def add_service_range():
                        (data['service_name'], data['range_from'], data['range_to'], data['price']))
         conn.commit()
     return jsonify({'success': True}), 201
+
+@app.route('/api/service-ranges/<int:id>/impact', methods=['POST'])
+def get_range_impact(id):
+    data = request.json
+    new_price = float(data.get('price', 0))
+    with get_db() as conn:
+        cursor = conn.cursor()
+        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        
+        cursor.execute(f"SELECT * FROM service_ranges WHERE id = {placeholder}", (id,))
+        rng = row_to_dict(cursor.fetchone())
+        if not rng: return jsonify({'error': 'Range not found'}), 404
+        
+        # Organizations with services of the same name
+        cursor.execute(f"""
+            SELECT o.id as organization_id, o.name as organization_name, COUNT(os.id) as services_count, SUM(sic.si_count) as items_count
+            FROM organizations o
+            JOIN organization_services os ON o.id = os.organization_id
+            JOIN (SELECT service_id, COUNT(*) as si_count FROM service_items GROUP BY service_id) sic ON os.id = sic.service_id
+            WHERE os.service_type = {placeholder}
+            GROUP BY o.id, o.name
+        """, (rng['service_name'],))
+        
+        orgs = rows_to_list(cursor.fetchall())
+        
+    return jsonify({
+        'old_price': rng['price'],
+        'new_price': new_price,
+        'affected_organizations': orgs
+    })
+
+@app.route('/api/service-ranges/<int:id>', methods=['PUT'])
+def update_service_range(id):
+    data = request.json
+    new_price = float(data.get('price', 0))
+    selected_org_ids = data.get('selected_organization_ids', [])
+    book_date = data.get('official_book_date')
+    book_desc = data.get('official_book_description')
+    user_id = request.headers.get('X-User-Id')
+
+    with get_db() as conn:
+        cursor = conn.cursor()
+        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        
+        cursor.execute(f"SELECT * FROM service_ranges WHERE id = {placeholder}", (id,))
+        rng = row_to_dict(cursor.fetchone())
+        if not rng: return jsonify({'error': 'Not found'}), 404
+        
+        old_price = rng['price']
+        
+        # 1. Update Range
+        cursor.execute(f"UPDATE service_ranges SET service_name={placeholder}, range_from={placeholder}, range_to={placeholder}, price={placeholder} WHERE id={placeholder}",
+                       (data.get('service_name'), data.get('range_from'), data.get('range_to'), new_price, id))
+        
+        # 2. Log History
+        if old_price != new_price:
+            cursor.execute(f"INSERT INTO service_range_price_history (service_range_id, old_price, new_price, changed_by, note) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})",
+                           (id, old_price, new_price, user_id, f"تعديل السعر - كتاب رسمي: {book_desc}"))
+            
+            # 3. Apply to Orgs
+            if selected_org_ids:
+                for org_id in selected_org_ids:
+                    # Update items belonging to services of this type
+                    cursor.execute(f"""
+                        UPDATE service_items 
+                        SET unit_price = {placeholder}, total_price = quantity * {placeholder}, updated_at = CURRENT_TIMESTAMP
+                        WHERE service_id IN (SELECT id FROM organization_services WHERE organization_id = {placeholder} AND service_type = {placeholder})
+                    """, (new_price, new_price, org_id, rng['service_name']))
+                    
+                    # Official Book
+                    cursor.execute(f"""
+                        INSERT INTO official_book_records (operation_type, entity_type, service_range_id, organization_id, official_book_date, official_book_description, created_by)
+                        VALUES ('RANGE_UPDATE', 'range', {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
+                    """, (id, org_id, book_date, book_desc, user_id))
+
+                    # Update organization_services summary
+                    cursor.execute(f"""
+                        UPDATE organization_services 
+                        SET annual_amount = (SELECT SUM(total_price) FROM service_items WHERE service_id = organization_services.id),
+                            due_amount = (SELECT SUM(total_price) FROM service_items WHERE service_id = organization_services.id) - paid_amount,
+                            updated_at = CURRENT_TIMESTAMP
+                        WHERE organization_id = {placeholder} AND service_type = {placeholder}
+                    """, (org_id, rng['service_name']))
+
+        conn.commit()
+    return jsonify({'success': True})
+
+@app.route('/api/service-ranges/<int:id>', methods=['DELETE'])
+def delete_service_range(id):
+    with get_db() as conn:
+        cursor = conn.cursor()
+        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        cursor.execute(f"DELETE FROM service_ranges WHERE id = {placeholder}", (id,))
+        conn.commit()
+    return jsonify({'success': True})
 
 # ── Organization Services & Payments logic ──────────────────────────────────
 
