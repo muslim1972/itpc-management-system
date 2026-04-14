@@ -196,6 +196,14 @@ def _ensure_organization_services_columns(cursor):
         if not _column_exists(cursor, "organization_services", col):
             cursor.execute(f"ALTER TABLE organization_services ADD COLUMN {col} {col_type}")
 
+def _ensure_provider_companies_columns(cursor):
+    if not _table_exists(cursor, "provider_companies"):
+        return
+    if not _column_exists(cursor, "provider_companies", "contact_person"):
+        cursor.execute("ALTER TABLE provider_companies ADD COLUMN contact_person TEXT")
+    if not _column_exists(cursor, "provider_companies", "address"):
+        cursor.execute("ALTER TABLE provider_companies ADD COLUMN address TEXT")
+
 def _ensure_service_suspension_columns(cursor):
     # This was merged into _ensure_organization_services_columns for clarity
     _ensure_organization_services_columns(cursor)
@@ -283,7 +291,7 @@ def init_db():
     # ─────────────────────────────────────────────────────────────
     run_sql("CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin', 'user')), created_at TEXT DEFAULT CURRENT_TIMESTAMP, last_login TEXT)")
     run_sql("CREATE TABLE IF NOT EXISTS organizations (id SERIAL PRIMARY KEY, name TEXT NOT NULL UNIQUE, phone TEXT, address TEXT, location TEXT, status TEXT DEFAULT 'active' CHECK(status IN ('active', 'inactive', 'pending')), notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP)")
-    run_sql("CREATE TABLE IF NOT EXISTS provider_companies (id SERIAL PRIMARY KEY, name TEXT NOT NULL UNIQUE, phone TEXT, address TEXT, email TEXT, is_active INTEGER DEFAULT 1, created_at TEXT DEFAULT CURRENT_TIMESTAMP)")
+    run_sql("CREATE TABLE IF NOT EXISTS provider_companies (id SERIAL PRIMARY KEY, name TEXT NOT NULL UNIQUE, contact_person TEXT, phone TEXT, address TEXT, email TEXT, is_active INTEGER DEFAULT 1, created_at TEXT DEFAULT CURRENT_TIMESTAMP)")
     run_sql("CREATE TABLE IF NOT EXISTS provider_subscriptions (id SERIAL PRIMARY KEY, provider_company_id INTEGER NOT NULL, service_type TEXT NOT NULL CHECK(service_type IN ('Wireless', 'FTTH', 'Optical', 'Other')), item_category TEXT NOT NULL CHECK(item_category IN ('Line', 'Bundle', 'Other')), item_name TEXT NOT NULL, price REAL NOT NULL DEFAULT 0, unit_label TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (provider_company_id) REFERENCES provider_companies(id) ON DELETE CASCADE)")
     run_sql("CREATE TABLE IF NOT EXISTS organization_services (id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, service_type TEXT NOT NULL CHECK(service_type IN ('Wireless', 'FTTH', 'Optical', 'Other')), payment_method TEXT NOT NULL DEFAULT 'شهري' CHECK(payment_method IN ('يومي', 'شهري', 'كل 3 أشهر', 'سنوي')), payment_interval_days INTEGER DEFAULT 1, device_ownership TEXT NOT NULL DEFAULT 'الشركة' CHECK(device_ownership IN ('الشركة', 'المنظمة', 'الوزارة')), annual_amount REAL NOT NULL DEFAULT 0, paid_amount REAL NOT NULL DEFAULT 0, due_amount REAL NOT NULL DEFAULT 0, contract_created_at TEXT, contract_duration_unit TEXT NOT NULL DEFAULT 'شهري' CHECK(contract_duration_unit IN ('يومي', 'شهري', 'سنوي')), contract_duration_value INTEGER NOT NULL DEFAULT 1, due_date TEXT, last_payment_amount REAL DEFAULT 0, last_payment_date TEXT, notes TEXT, is_active INTEGER DEFAULT 1, created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE)")
     run_sql("CREATE TABLE IF NOT EXISTS service_items (id SERIAL PRIMARY KEY, service_id INTEGER NOT NULL, item_category TEXT NOT NULL CHECK(item_category IN ('Line', 'Bundle', 'Other')), provider_company_id INTEGER, item_name TEXT, line_type TEXT, bundle_type TEXT, quantity REAL NOT NULL DEFAULT 1, unit_price REAL NOT NULL DEFAULT 0, total_price REAL NOT NULL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (service_id) REFERENCES organization_services(id) ON DELETE CASCADE, FOREIGN KEY (provider_company_id) REFERENCES provider_companies(id) ON DELETE SET NULL)")
@@ -302,6 +310,7 @@ def init_db():
     _ensure_payments_contract_period_column(cursor)
     _ensure_users_role_column(cursor)
     _ensure_organization_services_columns(cursor)
+    _ensure_provider_companies_columns(cursor)
 
     # Indexes
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_org_name ON organizations(name)")
