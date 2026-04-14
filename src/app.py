@@ -217,13 +217,22 @@ def add_user():
 
 @app.route('/api/users/<int:id>', methods=['DELETE'])
 def delete_user(id):
-    with get_db() as conn:
-        cursor = conn.cursor()
-        is_pg = getattr(conn, 'is_postgres', False)
-        placeholder = "%s" if is_pg else "?"
-        cursor.execute(f"DELETE FROM users WHERE id = {placeholder}", (id,))
-        conn.commit()
-    return jsonify({'success': True})
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            is_pg = getattr(conn, 'is_postgres', False)
+            placeholder = "%s" if is_pg else "?"
+            cursor.execute(f"DELETE FROM users WHERE id = {placeholder}", (id,))
+            rows_deleted = cursor.rowcount
+            conn.commit()
+            print(f"🗑️ User ID {id} deletion request. Rows deleted: {rows_deleted}")
+            if rows_deleted == 0:
+                # User was not found or already deleted
+                return jsonify({'success': False, 'error': f'المستخدم غير موجود أو تم حذفه مسبقاً. Rows changed: {rows_deleted}'}), 404
+        return jsonify({'success': True, 'rows_deleted': rows_deleted})
+    except Exception as e:
+        print(f"❌ Error deleting user: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # ── Provider Companies & Subscriptions ───────────────────────────────────────
 
