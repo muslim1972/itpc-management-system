@@ -216,8 +216,8 @@ def add_provider():
     with get_db() as conn:
         cursor = conn.cursor()
         placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
-        cursor.execute(f"INSERT INTO provider_companies (name, contact_person, phone, email, is_active) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})", 
-                       (data['name'], data.get('contact_person'), data.get('phone'), data.get('email'), data.get('is_active', 1)))
+        cursor.execute(f"INSERT INTO provider_companies (name, contact_person, phone, email, address, is_active) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})", 
+                       (data['name'], data.get('contact_person'), data.get('phone'), data.get('email'), data.get('address'), 1 if data.get('is_active') else 0))
         conn.commit()
     return jsonify({'success': True}), 201
 
