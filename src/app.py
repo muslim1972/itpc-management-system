@@ -571,20 +571,106 @@ def add_org_service(org_id):
         cursor = conn.cursor()
         is_pg = getattr(conn, 'is_postgres', False)
         placeholder = "%s" if is_pg else "?"
-        cursor.execute(f"""
-            INSERT INTO organization_services (
-                organization_id, service_type, payment_method, device_ownership, 
-                annual_amount, paid_amount, due_amount, payment_interval_days,
-                contract_created_at, contract_duration_unit, contract_duration_value
-            ) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, 0, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
-        """, (
-            org_id, data['service_type'], data.get('payment_method', 'شهري'), 
-            data.get('device_ownership', 'الشركة'), data['annual_amount'], data['annual_amount'],
-            data.get('payment_interval_days', 1), data.get('contract_created_at'),
-            data.get('contract_duration_unit', 'شهري'), data.get('contract_duration_value', 1)
-        ))
+
+        if is_pg:
+            cursor.execute(f"""
+                INSERT INTO organization_services (
+                    organization_id, service_type, payment_method, device_ownership, 
+                    annual_amount, paid_amount, due_amount, payment_interval_days,
+                    contract_created_at, contract_duration_unit, contract_duration_value
+                ) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, 0, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
+                RETURNING *
+            """, (
+                org_id, data['service_type'], data.get('payment_method', 'شهري'), 
+                data.get('device_ownership', 'الشركة'), data['annual_amount'], data['annual_amount'],
+                data.get('payment_interval_days', 1), data.get('contract_created_at'),
+                data.get('contract_duration_unit', 'شهري'), data.get('contract_duration_value', 1)
+            ))
+            service = row_to_dict(cursor.fetchone())
+        else:
+            cursor.execute(f"""
+                INSERT INTO organization_services (
+                    organization_id, service_type, payment_method, device_ownership, 
+                    annual_amount, paid_amount, due_amount, payment_interval_days,
+                    contract_created_at, contract_duration_unit, contract_duration_value
+                ) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, 0, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
+            """, (
+                org_id, data['service_type'], data.get('payment_method', 'شهري'), 
+                data.get('device_ownership', 'الشركة'), data['annual_amount'], data['annual_amount'],
+                data.get('payment_interval_days', 1), data.get('contract_created_at'),
+                data.get('contract_duration_unit', 'شهري'), data.get('contract_duration_value', 1)
+            ))
+            new_id = cursor.lastrowid
+            cursor.execute(f"SELECT * FROM organization_services WHERE id = {placeholder}", (new_id,))
+            service = row_to_dict(cursor.fetchone())
+
         conn.commit()
-    return jsonify({'success': True}), 201
+    return jsonify({'success': True, 'service': service}), 201
+
+# ── Service Items ────────────────────────────────────────────────────────────
+
+@app.route('/api/organization-services/<int:service_id>/items', methods=['GET'])
+def get_service_items(service_id):
+    with get_db() as conn:
+        cursor = conn.cursor()
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
+        cursor.execute(f"SELECT * FROM service_items WHERE service_id = {placeholder} ORDER BY created_at ASC", (service_id,))
+        return jsonify({'service_items': rows_to_list(cursor.fetchall())})
+
+@app.route('/api/organization-services/<int:service_id>/items', methods=['POST'])
+def add_service_item(service_id):
+    data = request.json
+    with get_db() as conn:
+        cursor = conn.cursor()
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
+
+        quantity = float(data.get('quantity', 1))
+        unit_price = float(data.get('unit_price', 0))
+        total_price = quantity * unit_price
+
+        if is_pg:
+            cursor.execute(f"""
+                INSERT INTO service_items (
+                    service_id, item_category, provider_company_id, item_name,
+                    line_type, bundle_type, quantity, unit_price, total_price, notes
+                ) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
+                RETURNING *
+            """, (
+                service_id, data.get('item_category', 'Other'),
+                data.get('provider_company_id') or None, data.get('item_name', ''),
+                data.get('line_type'), data.get('bundle_type'),
+                quantity, unit_price, total_price, data.get('notes', '')
+            ))
+            service_item = row_to_dict(cursor.fetchone())
+        else:
+            cursor.execute(f"""
+                INSERT INTO service_items (
+                    service_id, item_category, provider_company_id, item_name,
+                    line_type, bundle_type, quantity, unit_price, total_price, notes
+                ) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
+            """, (
+                service_id, data.get('item_category', 'Other'),
+                data.get('provider_company_id') or None, data.get('item_name', ''),
+                data.get('line_type'), data.get('bundle_type'),
+                quantity, unit_price, total_price, data.get('notes', '')
+            ))
+            new_id = cursor.lastrowid
+            cursor.execute(f"SELECT * FROM service_items WHERE id = {placeholder}", (new_id,))
+            service_item = row_to_dict(cursor.fetchone())
+
+        # Update parent service totals
+        cursor.execute(f"""
+            UPDATE organization_services 
+            SET annual_amount = (SELECT COALESCE(SUM(total_price), 0) FROM service_items WHERE service_id = {placeholder}),
+                due_amount = (SELECT COALESCE(SUM(total_price), 0) FROM service_items WHERE service_id = {placeholder}) - paid_amount,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = {placeholder}
+        """, (service_id, service_id, service_id))
+
+        conn.commit()
+    return jsonify({'success': True, 'service_item': service_item}), 201
 
 # ── Payments Processing ──────────────────────────────────────────────────────
 
