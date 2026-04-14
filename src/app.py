@@ -130,27 +130,45 @@ def get_organizations():
 
 @app.route('/api/organizations', methods=['POST'])
 def add_organization():
-    data = request.json
-    with get_db() as conn:
-        cursor = conn.cursor()
-        is_pg = getattr(conn, 'is_postgres', False)
-        placeholder = "%s" if is_pg else "?"
-        cursor.execute(f"INSERT INTO organizations (name, phone, location, address, status, notes) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})", 
-                       (data['name'], data.get('phone'), data.get('location'), data.get('address'), data.get('status', 'active'), data.get('notes')))
-        conn.commit()
-    return jsonify({'success': True}), 201
+    try:
+        data = request.json or {}
+        with get_db() as conn:
+            cursor = conn.cursor()
+            is_pg = getattr(conn, 'is_postgres', False)
+            placeholder = "%s" if is_pg else "?"
+            
+            name = data.get('name')
+            if not name:
+                return jsonify({'success': False, 'error': 'اسم الجهة مطلوب'}), 400
+
+            cursor.execute(f"INSERT INTO organizations (name, phone, location, address, status, notes) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})", 
+                           (name, data.get('phone'), data.get('location'), data.get('address'), data.get('status', 'active'), data.get('notes')))
+            conn.commit()
+        return jsonify({'success': True}), 201
+    except Exception as e:
+        error_msg = str(e)
+        if 'UNIQUE constraint failed' in error_msg or 'already exists' in error_msg.lower():
+            error_msg = 'اسم هذه الجهة موجود مسبقاً، يرجى اختيار اسم آخر.'
+        print(f"❌ Error adding organization: {str(e)}")
+        return jsonify({'success': False, 'error': error_msg}), 500
 
 @app.route('/api/organizations/<int:id>', methods=['PUT'])
 def update_organization(id):
-    data = request.json
-    with get_db() as conn:
-        cursor = conn.cursor()
-        is_pg = getattr(conn, 'is_postgres', False)
-        placeholder = "%s" if is_pg else "?"
-        cursor.execute(f"UPDATE organizations SET name={placeholder}, phone={placeholder}, location={placeholder}, address={placeholder}, status={placeholder}, notes={placeholder}, updated_at=CURRENT_TIMESTAMP WHERE id={placeholder}",
-                       (data['name'], data.get('phone'), data.get('location'), data.get('address'), data.get('status'), data.get('notes'), id))
-        conn.commit()
-    return jsonify({'success': True})
+    try:
+        data = request.json or {}
+        with get_db() as conn:
+            cursor = conn.cursor()
+            is_pg = getattr(conn, 'is_postgres', False)
+            placeholder = "%s" if is_pg else "?"
+            cursor.execute(f"UPDATE organizations SET name={placeholder}, phone={placeholder}, location={placeholder}, address={placeholder}, status={placeholder}, notes={placeholder}, updated_at=CURRENT_TIMESTAMP WHERE id={placeholder}",
+                           (data['name'], data.get('phone'), data.get('location'), data.get('address'), data.get('status'), data.get('notes'), id))
+            conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        error_msg = str(e)
+        if 'UNIQUE constraint failed' in error_msg or 'already exists' in error_msg.lower():
+            error_msg = 'اسم هذه الجهة موجود مسبقاً، يرجى اختيار اسم آخر.'
+        return jsonify({'success': False, 'error': error_msg}), 500
 
 @app.route('/api/organizations/<int:id>', methods=['DELETE'])
 def delete_organization(id):
