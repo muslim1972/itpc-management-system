@@ -1,16 +1,23 @@
-import sqlite3
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import os
 from datetime import datetime, date, timedelta
 
+try:
+    from dotenv import load_dotenv
+    # Load .env file if it exists (for local development)
+    load_dotenv()
+except ImportError:
+    pass
+
 # السطر الذي سيحل مشكلة الـ ImportError في Render
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def get_config():
-    url = DATABASE_URL 
-    path = os.path.join(os.path.dirname(__file__), 'itpc.db')
-    return url, path
+    url = DATABASE_URL
+    if not url:
+        raise ValueError("DATABASE_URL is not set. The application requires a PostgreSQL connection string to run.")
+    return url
 
 class PostgresCursorWrapper:
     def __init__(self, cursor):
@@ -28,37 +35,30 @@ class PostgresCursorWrapper:
         self._lastrowid = rowid
 
 class DbWrapper:
-    def __init__(self, conn, is_postgres):
+    def __init__(self, conn):
         self.conn = conn
-        self.is_postgres = is_postgres
+        self.is_postgres = True  # Always true now
 
     def execute(self, sql, params=()):
-        if self.is_postgres:
-            sql = sql.replace('?', '%s')
-            sql = sql.replace("datetime('now')", "CURRENT_TIMESTAMP")
-            cursor = self.conn.cursor(cursor_factory=RealDictCursor)
-            
-            # محاكاة lastrowid لـ Postgres
-            if sql.strip().upper().startswith("INSERT") and "RETURNING" not in sql.upper():
-                sql = sql.rstrip().rstrip(';') + " RETURNING id"
-                cursor.execute(sql, params)
-                row = cursor.fetchone()
-                wrapper = PostgresCursorWrapper(cursor)
-                if row:
-                    wrapper.set_lastrowid(row['id'])
-                return wrapper
-            
+        sql = sql.replace('?', '%s')
+        sql = sql.replace("datetime('now')", "CURRENT_TIMESTAMP")
+        cursor = self.conn.cursor(cursor_factory=RealDictCursor)
+        
+        # محاكاة lastrowid لـ Postgres
+        if sql.strip().upper().startswith("INSERT") and "RETURNING" not in sql.upper():
+            sql = sql.rstrip().rstrip(';') + " RETURNING id"
             cursor.execute(sql, params)
-            return PostgresCursorWrapper(cursor)
-        else:
-            cursor = self.conn.cursor()
-            cursor.execute(sql, params)
-            return cursor
+            row = cursor.fetchone()
+            wrapper = PostgresCursorWrapper(cursor)
+            if row:
+                wrapper.set_lastrowid(row['id'])
+            return wrapper
+        
+        cursor.execute(sql, params)
+        return PostgresCursorWrapper(cursor)
 
     def cursor(self):
-        if self.is_postgres:
-            return self.conn.cursor(cursor_factory=RealDictCursor)
-        return self.conn.cursor()
+        return self.conn.cursor(cursor_factory=RealDictCursor)
 
     def commit(self):
         self.conn.commit()
@@ -78,50 +78,30 @@ class DbWrapper:
     
     @property
     def total_changes(self):
-        return self.conn.total_changes if not self.is_postgres else 1
+        return 1
 
 def get_db():
-    database_url, db_path = get_config()
-    if database_url:
-        conn = psycopg2.connect(database_url)
-        return DbWrapper(conn, True)
-    else:
-        conn = sqlite3.connect(db_path)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA foreign_keys = ON")
-        return DbWrapper(conn, False)
+    database_url = get_config()
+    conn = psycopg2.connect(database_url)
+    return DbWrapper(conn)
 
 # ── Helpers from New Version ──────────────────────────────────────────────────
 def _column_exists(cursor, table_name, column_name):
-    # This is slightly different for Postgres vs SQLite
-    # For now, we'll implement it to be safe for both
-    database_url, _ = get_config()
-    if database_url: # Postgres
-        cursor.execute("""
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_name=%s AND column_name=%s
-        """, (table_name, column_name))
-    else: # SQLite
-        cursor.execute(f"PRAGMA table_info({table_name})")
-        columns = cursor.fetchall()
-        return any(col["name"] == column_name for col in columns)
+    # Only PostgreSQL implementation needed now
+    cursor.execute("""
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name=%s AND column_name=%s
+    """, (table_name, column_name))
     return cursor.fetchone() is not None
 
 def _table_exists(cursor, table_name):
-    database_url, _ = get_config()
-    if database_url: # Postgres
-        cursor.execute("""
-            SELECT table_name 
-            FROM information_schema.tables 
-            WHERE table_name=%s
-        """, (table_name,))
-    else: # SQLite
-        cursor.execute("""
-            SELECT name
-            FROM sqlite_master
-            WHERE type='table' AND name=?
-        """, (table_name,))
+    # Only PostgreSQL implementation needed now
+    cursor.execute("""
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_name=%s
+    """, (table_name,))
     return cursor.fetchone() is not None
 
 def _safe_parse_date(value):
