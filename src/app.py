@@ -133,7 +133,8 @@ def add_organization():
     data = request.json
     with get_db() as conn:
         cursor = conn.cursor()
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
         cursor.execute(f"INSERT INTO organizations (name, phone, location, address, status, notes) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})", 
                        (data['name'], data.get('phone'), data.get('location'), data.get('address'), data.get('status', 'active'), data.get('notes')))
         conn.commit()
@@ -144,7 +145,8 @@ def update_organization(id):
     data = request.json
     with get_db() as conn:
         cursor = conn.cursor()
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
         cursor.execute(f"UPDATE organizations SET name={placeholder}, phone={placeholder}, location={placeholder}, address={placeholder}, status={placeholder}, notes={placeholder}, updated_at=CURRENT_TIMESTAMP WHERE id={placeholder}",
                        (data['name'], data.get('phone'), data.get('location'), data.get('address'), data.get('status'), data.get('notes'), id))
         conn.commit()
@@ -154,7 +156,8 @@ def update_organization(id):
 def delete_organization(id):
     with get_db() as conn:
         cursor = conn.cursor()
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
         cursor.execute(f"DELETE FROM organizations WHERE id = {placeholder}", (id,))
         conn.commit()
     return jsonify({'success': True})
@@ -163,7 +166,8 @@ def delete_organization(id):
 def get_organization_detail(id):
     with get_db() as conn:
         cursor = conn.cursor()
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
         cursor.execute(f"SELECT * FROM organizations WHERE id = {placeholder}", (id,))
         org = row_to_dict(cursor.fetchone())
         if not org: return jsonify({'error': 'Not found'}), 404
@@ -186,7 +190,8 @@ def add_user():
     data = request.json
     with get_db() as conn:
         cursor = conn.cursor()
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
         cursor.execute(f"INSERT INTO users (username, password, role) VALUES ({placeholder}, {placeholder}, {placeholder})",
                        (data['username'], data['password'], data.get('role', 'user')))
         conn.commit()
@@ -196,7 +201,8 @@ def add_user():
 def delete_user(id):
     with get_db() as conn:
         cursor = conn.cursor()
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
         cursor.execute(f"DELETE FROM users WHERE id = {placeholder}", (id,))
         conn.commit()
     return jsonify({'success': True})
@@ -215,7 +221,8 @@ def add_provider():
     data = request.json
     with get_db() as conn:
         cursor = conn.cursor()
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
         cursor.execute(f"INSERT INTO provider_companies (name, contact_person, phone, email, address, is_active) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})", 
                        (data['name'], data.get('contact_person'), data.get('phone'), data.get('email'), data.get('address'), 1 if data.get('is_active') else 0))
         conn.commit()
@@ -225,7 +232,8 @@ def add_provider():
 def get_provider_detail(id):
     with get_db() as conn:
         cursor = conn.cursor()
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
         cursor.execute(f"SELECT * FROM provider_companies WHERE id = {placeholder}", (id,))
         company = row_to_dict(cursor.fetchone())
         if not company: return jsonify({'error': 'Not found'}), 404
@@ -246,7 +254,8 @@ def update_provider(id):
     data = request.json
     with get_db() as conn:
         cursor = conn.cursor()
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
         cursor.execute(f"UPDATE provider_companies SET name={placeholder}, contact_person={placeholder}, phone={placeholder}, email={placeholder}, address={placeholder}, is_active={placeholder} WHERE id={placeholder}",
                        (data['name'], data.get('contact_person'), data.get('phone'), data.get('email'), data.get('address'), 1 if data.get('is_active') else 0, id))
         conn.commit()
@@ -256,7 +265,8 @@ def update_provider(id):
 def delete_provider(id):
     with get_db() as conn:
         cursor = conn.cursor()
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
         cursor.execute(f"DELETE FROM provider_companies WHERE id = {placeholder}", (id,))
         conn.commit()
     return jsonify({'success': True})
@@ -265,7 +275,8 @@ def delete_provider(id):
 def get_provider_subscriptions(id):
     with get_db() as conn:
         cursor = conn.cursor()
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
         cursor.execute(f"SELECT * FROM provider_subscriptions WHERE provider_company_id = {placeholder} ORDER BY item_name ASC", (id,))
         return jsonify({'subscriptions': rows_to_list(cursor.fetchall())})
 
@@ -274,7 +285,8 @@ def add_provider_subscription(id):
     data = request.json
     with get_db() as conn:
         cursor = conn.cursor()
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
         cursor.execute(f"""
             INSERT INTO provider_subscriptions (
                 provider_company_id, item_name, service_type, item_category, price, unit_label
@@ -289,7 +301,8 @@ def get_subscription_impact(id):
     new_price = float(data.get('price', 0))
     with get_db() as conn:
         cursor = conn.cursor()
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
         
         # Get subscription info
         cursor.execute(f"SELECT * FROM provider_subscriptions WHERE id = {placeholder}", (id,))
@@ -325,7 +338,8 @@ def update_subscription(id):
 
     with get_db() as conn:
         cursor = conn.cursor()
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
         
         # 1. Get current sub
         cursor.execute(f"SELECT * FROM provider_subscriptions WHERE id = {placeholder}", (id,))
@@ -377,7 +391,8 @@ def update_subscription(id):
 def delete_subscription(id):
     with get_db() as conn:
         cursor = conn.cursor()
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
         cursor.execute(f"DELETE FROM provider_subscriptions WHERE id = {placeholder}", (id,))
         conn.commit()
     return jsonify({'success': True})
@@ -393,14 +408,29 @@ def get_service_ranges():
 
 @app.route('/api/service-ranges', methods=['POST'])
 def add_service_range():
-    data = request.json
-    with get_db() as conn:
-        cursor = conn.cursor()
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
-        cursor.execute(f"INSERT INTO service_ranges (service_name, range_from, range_to, price) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder})",
-                       (data['service_name'], data['range_from'], data['range_to'], data['price']))
-        conn.commit()
-    return jsonify({'success': True}), 201
+    try:
+        data = request.json or {}
+        with get_db() as conn:
+            cursor = conn.cursor()
+            is_pg = getattr(conn, 'is_postgres', False)
+            placeholder = "%s" if is_pg else "?"
+            
+            # Using get() and conversion for safety
+            service_name = data.get('service_name')
+            range_from = int(data.get('range_from') or 0)
+            range_to = int(data.get('range_to') or 0)
+            price = float(data.get('price') or 0)
+            
+            if not service_name:
+                return jsonify({'success': False, 'error': 'اسم الخدمة مطلوب'}), 400
+
+            cursor.execute(f"INSERT INTO service_ranges (service_name, range_from, range_to, price) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder})",
+                           (service_name, range_from, range_to, price))
+            conn.commit()
+        return jsonify({'success': True}), 201
+    except Exception as e:
+        print(f"❌ Error adding service range: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/service-ranges/<int:id>/impact', methods=['POST'])
 def get_range_impact(id):
@@ -408,7 +438,8 @@ def get_range_impact(id):
     new_price = float(data.get('price', 0))
     with get_db() as conn:
         cursor = conn.cursor()
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
         
         cursor.execute(f"SELECT * FROM service_ranges WHERE id = {placeholder}", (id,))
         rng = row_to_dict(cursor.fetchone())
@@ -443,7 +474,8 @@ def update_service_range(id):
 
     with get_db() as conn:
         cursor = conn.cursor()
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
         
         cursor.execute(f"SELECT * FROM service_ranges WHERE id = {placeholder}", (id,))
         rng = row_to_dict(cursor.fetchone())
@@ -492,7 +524,8 @@ def update_service_range(id):
 def delete_service_range(id):
     with get_db() as conn:
         cursor = conn.cursor()
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
         cursor.execute(f"DELETE FROM service_ranges WHERE id = {placeholder}", (id,))
         conn.commit()
     return jsonify({'success': True})
@@ -503,7 +536,8 @@ def delete_service_range(id):
 def get_org_services(org_id):
     with get_db() as conn:
         cursor = conn.cursor()
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
         cursor.execute(f"SELECT * FROM organization_services WHERE organization_id = {placeholder} ORDER BY created_at DESC", (org_id,))
         return jsonify({'services': rows_to_list(cursor.fetchall())})
 
@@ -512,7 +546,8 @@ def add_org_service(org_id):
     data = request.json
     with get_db() as conn:
         cursor = conn.cursor()
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
         cursor.execute(f"""
             INSERT INTO organization_services (
                 organization_id, service_type, payment_method, device_ownership, 
@@ -535,7 +570,8 @@ def add_payment(service_id):
     data = request.json
     with get_db() as conn:
         cursor = conn.cursor()
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
         
         # Get active period
         cursor.execute(f"SELECT * FROM service_contract_periods WHERE service_id = {placeholder} AND status = 'active'", (service_id,))
@@ -586,7 +622,8 @@ def get_full_history():
     lim = request.args.get('limit', 50, type=int)
     with get_db() as conn:
         cursor = conn.cursor()
-        placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
+        is_pg = getattr(conn, 'is_postgres', False)
+        placeholder = "%s" if is_pg else "?"
         cursor.execute(f"SELECT al.*, u.username FROM activity_log al LEFT JOIN users u ON al.user_id = u.id ORDER BY al.created_at DESC LIMIT {placeholder}", (lim,))
         history = rows_to_list(cursor.fetchall())
     return jsonify({'history': history})
