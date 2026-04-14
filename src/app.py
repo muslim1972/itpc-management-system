@@ -65,22 +65,6 @@ def format_date(d_obj):
     return d_obj.isoformat() if d_obj else None
 
 # ── Database Migration/Failsafe for Render ───────────────────────────────────
-def ensure_default_users_exist(conn):
-    placeholder = "%s" if isinstance(conn, DbWrapper) or 'postgres' in str(type(conn)).lower() else "?"
-    default_users = [
-        ('admin1', 'a123', 'admin'),
-        ('user1', 'u123', 'user'),
-        ('ali', '123', 'user'),
-        ('ali1', '123', 'admin'),
-        ('123', '123', 'user')
-    ]
-    for un, pw, role in default_users:
-        cursor = conn.cursor()
-        cursor.execute(f"SELECT id FROM users WHERE username = {placeholder}", (un,))
-        if not cursor.fetchone():
-            cursor.execute(f"INSERT INTO users (username, password, role) VALUES ({placeholder}, {placeholder}, {placeholder})", (un, pw, role))
-    conn.commit()
-
 # ── Auth & Session (Improved for Production) ──────────────────────────────────
 
 @app.route('/api/auth/login', methods=['POST'])
@@ -96,15 +80,8 @@ def login():
             p = "%s" if is_pg else "?"
             
             cursor = conn.cursor()
-            # 1. التأكد من وجود الحسابات الأساسية لضمان عمل حساب ali1
-            default_users = [('ali1', '123', 'admin'), ('ali', '123', 'user'), ('123', '123', 'user')]
-            for un, pw, role in default_users:
-                cursor.execute(f"SELECT id FROM users WHERE username = {p}", (un,))
-                if not cursor.fetchone():
-                    cursor.execute(f"INSERT INTO users (username, password, role) VALUES ({p}, {p}, {p})", (un, pw, role))
-            conn.commit()
-
-            # 2. عملية تسجيل الدخول الحقيقية
+            
+            # عملية تسجيل الدخول החقيقية
             cursor.execute(f"SELECT id, username, role FROM users WHERE username = {p} AND password = {p}", (username, password))
             user = cursor.fetchone()
             
