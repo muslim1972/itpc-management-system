@@ -949,28 +949,28 @@ const PackagesSection = () => {
                     const isEditing = editingRangeId === row.id;
                     return (
                       <div key={row.id} className="p-3 bg-white rounded-lg border">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 items-center">
-                          <div className="flex items-center gap-2">
-                            <label className="text-sm font-medium text-slate-700 w-12 shrink-0">من</label>
-                            <input type="number" value={isEditing ? editingRangeForm.from : row.from} readOnly={!isEditing} onChange={(e) => setEditingRangeForm((prev) => ({ ...prev, from: e.target.value }))} className={`input-modern flex-1 ${isEditing ? 'bg-white' : 'bg-slate-100'}`} placeholder="from" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 items-center">
+                          <div className="grid grid-cols-[50px_1fr] items-center gap-2">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">من</span>
+                            <input type="number" value={isEditing ? editingRangeForm.from : row.from} readOnly={!isEditing} onChange={(e) => setEditingRangeForm((prev) => ({ ...prev, from: e.target.value }))} className={`input-modern w-full ${isEditing ? 'bg-white' : 'bg-slate-100/80 shadow-inner'}`} placeholder="من" />
                           </div>
-                          <div className="flex items-center gap-2">
-                            <label className="text-sm font-medium text-slate-700 w-12 shrink-0">إلى</label>
-                            <input type="number" value={isEditing ? editingRangeForm.to : row.to} readOnly={!isEditing} onChange={(e) => setEditingRangeForm((prev) => ({ ...prev, to: e.target.value }))} className={`input-modern flex-1 ${isEditing ? 'bg-white' : 'bg-slate-100'}`} placeholder="to" />
+                          <div className="grid grid-cols-[50px_1fr] items-center gap-2">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">إلى</span>
+                            <input type="number" value={isEditing ? editingRangeForm.to : row.to} readOnly={!isEditing} onChange={(e) => setEditingRangeForm((prev) => ({ ...prev, to: e.target.value }))} className={`input-modern w-full ${isEditing ? 'bg-white' : 'bg-slate-100/80 shadow-inner'}`} placeholder="إلى" />
                           </div>
-                          <div className="flex items-center gap-2">
-                            <label className="text-sm font-medium text-slate-700 w-12 shrink-0">السعر</label>
-                            <input type="number" value={isEditing ? editingRangeForm.price : row.price} readOnly={!isEditing} onChange={(e) => setEditingRangeForm((prev) => ({ ...prev, price: e.target.value }))} className={`input-modern flex-1 ${isEditing ? 'bg-white' : 'bg-slate-100'}`} placeholder="price" />
+                          <div className="grid grid-cols-[50px_1fr] items-center gap-2">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">السعر</span>
+                            <input type="number" value={isEditing ? editingRangeForm.price : row.price} readOnly={!isEditing} onChange={(e) => setEditingRangeForm((prev) => ({ ...prev, price: e.target.value }))} className={`input-modern w-full ${isEditing ? 'bg-white' : 'bg-slate-100/80 shadow-inner'}`} placeholder="السعر" />
                           </div>
                           {isEditing ? (
                             <div className="flex gap-2 lg:col-span-2">
-                              <button onClick={() => handleUpdateSavedRange(serviceName, row.id)} className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex-1">حفظ</button>
-                              <button onClick={cancelEditSavedRange} className="px-3 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50/80 flex-1">إلغاء</button>
+                              <button onClick={() => handleUpdateSavedRange(serviceName, row.id)} className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex-1 font-bold shadow-sm">حفظ</button>
+                              <button onClick={cancelEditSavedRange} className="px-3 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50/80 flex-1 font-bold shadow-sm">إلغاء</button>
                             </div>
                           ) : (
                             <div className="flex gap-2 lg:col-span-2">
-                              <button onClick={() => startEditSavedRange(row)} className="px-3 py-2 border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 flex-1">تعديل</button>
-                              <button onClick={() => handleDeleteSavedRange(row.id)} className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex-1">حذف</button>
+                              <button onClick={() => startEditSavedRange(row)} className="px-3 py-2 border border-indigo-200 text-indigo-600 rounded-lg hover:bg-indigo-50 flex-1 font-bold shadow-sm">تعديل</button>
+                              <button onClick={() => handleDeleteSavedRange(row.id)} className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex-1 font-bold shadow-sm">حذف</button>
                             </div>
                           )}
                         </div>
@@ -995,21 +995,21 @@ const PackagesSection = () => {
                 <div className="bg-white border-2 border-indigo-200 rounded-xl p-4">
                   <div className="space-y-3">
                     {(drafts[serviceName] || []).map((row, index) => (
-                      <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
-                        <div className="flex items-center gap-2">
-                          <label className="text-sm font-medium text-slate-700 w-12 shrink-0">من</label>
-                          <input type="number" value={row.from} onChange={(e) => updateRangeRow(serviceName, index, 'from', e.target.value)} placeholder="from" className="input-modern flex-1" />
+                        <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center border-b pb-3 last:border-0 last:pb-0">
+                          <div className="grid grid-cols-[50px_1fr] items-center gap-2">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">من</span>
+                            <input type="number" value={row.from} onChange={(e) => updateRangeRow(serviceName, index, 'from', e.target.value)} placeholder="من" className="input-modern w-full" />
+                          </div>
+                          <div className="grid grid-cols-[50px_1fr] items-center gap-2">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">إلى</span>
+                            <input type="number" value={row.to} onChange={(e) => updateRangeRow(serviceName, index, 'to', e.target.value)} placeholder="إلى" className="input-modern w-full" />
+                          </div>
+                          <div className="grid grid-cols-[50px_1fr] items-center gap-2">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">السعر</span>
+                            <input type="number" value={row.price} onChange={(e) => updateRangeRow(serviceName, index, 'price', e.target.value)} placeholder="السعر" className="input-modern w-full" />
+                          </div>
+                          <button onClick={() => removeRangeRow(serviceName, index)} className="px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition font-bold">حذف الرينج</button>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <label className="text-sm font-medium text-slate-700 w-12 shrink-0">إلى</label>
-                          <input type="number" value={row.to} onChange={(e) => updateRangeRow(serviceName, index, 'to', e.target.value)} placeholder="to" className="input-modern flex-1" />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <label className="text-sm font-medium text-slate-700 w-12 shrink-0">السعر</label>
-                          <input type="number" value={row.price} onChange={(e) => updateRangeRow(serviceName, index, 'price', e.target.value)} placeholder="price" className="input-modern flex-1" />
-                        </div>
-                        <button onClick={() => removeRangeRow(serviceName, index)} className="px-3 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50">حذف الرينج</button>
-                      </div>
                     ))}
                   </div>
 
