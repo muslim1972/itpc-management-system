@@ -949,20 +949,29 @@ const PackagesSection = () => {
                     const isEditing = editingRangeId === row.id;
                     return (
                       <div key={row.id} className="p-3 bg-white rounded-lg border">
-                        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-center">
-                          <input type="number" value={isEditing ? editingRangeForm.from : row.from} readOnly={!isEditing} onChange={(e) => setEditingRangeForm((prev) => ({ ...prev, from: e.target.value }))} className={`input-modern ${isEditing ? 'bg-white' : 'bg-slate-100'}`} placeholder="from" />
-                          <input type="number" value={isEditing ? editingRangeForm.to : row.to} readOnly={!isEditing} onChange={(e) => setEditingRangeForm((prev) => ({ ...prev, to: e.target.value }))} className={`input-modern ${isEditing ? 'bg-white' : 'bg-slate-100'}`} placeholder="to" />
-                          <input type="number" value={isEditing ? editingRangeForm.price : row.price} readOnly={!isEditing} onChange={(e) => setEditingRangeForm((prev) => ({ ...prev, price: e.target.value }))} className={`input-modern ${isEditing ? 'bg-white' : 'bg-slate-100'}`} placeholder="price" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 items-center">
+                          <div className="flex items-center gap-2">
+                            <label className="text-sm font-medium text-slate-700 w-12 shrink-0">من</label>
+                            <input type="number" value={isEditing ? editingRangeForm.from : row.from} readOnly={!isEditing} onChange={(e) => setEditingRangeForm((prev) => ({ ...prev, from: e.target.value }))} className={`input-modern flex-1 ${isEditing ? 'bg-white' : 'bg-slate-100'}`} placeholder="from" />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <label className="text-sm font-medium text-slate-700 w-12 shrink-0">إلى</label>
+                            <input type="number" value={isEditing ? editingRangeForm.to : row.to} readOnly={!isEditing} onChange={(e) => setEditingRangeForm((prev) => ({ ...prev, to: e.target.value }))} className={`input-modern flex-1 ${isEditing ? 'bg-white' : 'bg-slate-100'}`} placeholder="to" />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <label className="text-sm font-medium text-slate-700 w-12 shrink-0">السعر</label>
+                            <input type="number" value={isEditing ? editingRangeForm.price : row.price} readOnly={!isEditing} onChange={(e) => setEditingRangeForm((prev) => ({ ...prev, price: e.target.value }))} className={`input-modern flex-1 ${isEditing ? 'bg-white' : 'bg-slate-100'}`} placeholder="price" />
+                          </div>
                           {isEditing ? (
-                            <>
-                              <button onClick={() => handleUpdateSavedRange(serviceName, row.id)} className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">حفظ التعديل</button>
-                              <button onClick={cancelEditSavedRange} className="px-3 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50/80">إلغاء</button>
-                            </>
+                            <div className="flex gap-2 lg:col-span-2">
+                              <button onClick={() => handleUpdateSavedRange(serviceName, row.id)} className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex-1">حفظ</button>
+                              <button onClick={cancelEditSavedRange} className="px-3 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50/80 flex-1">إلغاء</button>
+                            </div>
                           ) : (
-                            <>
-                              <button onClick={() => startEditSavedRange(row)} className="px-3 py-2 border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50">تعديل</button>
-                              <button onClick={() => handleDeleteSavedRange(row.id)} className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">حذف</button>
-                            </>
+                            <div className="flex gap-2 lg:col-span-2">
+                              <button onClick={() => startEditSavedRange(row)} className="px-3 py-2 border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 flex-1">تعديل</button>
+                              <button onClick={() => handleDeleteSavedRange(row.id)} className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex-1">حذف</button>
+                            </div>
                           )}
                         </div>
 
@@ -1414,21 +1423,36 @@ const CompanyDetailsSection = ({ company, onBack }) => {
             const isEditing = editingSubId === sub.id;
             return (
               <div key={sub.id} className="content-list-card flex flex-col gap-3">
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-start">
-                  <input value={isEditing ? editingSubForm.item_name : sub.item_name} onChange={(e) => setEditingSubForm((prev) => ({ ...prev, item_name: e.target.value }))} disabled={!isEditing} className="select-modern disabled:bg-slate-100" />
-                  <select value={isEditing ? editingSubForm.service_type : sub.service_type} onChange={(e) => setEditingSubForm((prev) => ({ ...prev, service_type: e.target.value }))} disabled={!isEditing} className="select-modern disabled:bg-slate-100">
-                    <option value="Wireless">Wireless</option>
-                    <option value="FTTH">FTTH</option>
-                    <option value="Optical">Optical</option>
-                    <option value="Other">Other</option>
-                  </select>
-                  <select value={isEditing ? editingSubForm.item_category : sub.item_category} onChange={(e) => setEditingSubForm((prev) => ({ ...prev, item_category: e.target.value }))} disabled={!isEditing} className="select-modern disabled:bg-slate-100">
-                    <option value="Line">Line</option>
-                    <option value="Bundle">Bundle</option>
-                    <option value="Other">Other</option>
-                  </select>
-                  <input type="number" value={isEditing ? editingSubForm.price : sub.price} onChange={(e) => setEditingSubForm((prev) => ({ ...prev, price: e.target.value }))} disabled={!isEditing} className="select-modern disabled:bg-slate-100" />
-                  <input value={isEditing ? editingSubForm.unit_label : (sub.unit_label || '')} onChange={(e) => setEditingSubForm((prev) => ({ ...prev, unit_label: e.target.value }))} disabled={!isEditing} className="select-modern disabled:bg-slate-100" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-2">
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-slate-700 w-24 shrink-0">الاشتراك</label>
+                    <input value={isEditing ? editingSubForm.item_name : sub.item_name} onChange={(e) => setEditingSubForm((prev) => ({ ...prev, item_name: e.target.value }))} disabled={!isEditing} className="input-modern flex-1 disabled:bg-slate-100" />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-slate-700 w-24 shrink-0">نوع الخدمة</label>
+                    <select value={isEditing ? editingSubForm.service_type : sub.service_type} onChange={(e) => setEditingSubForm((prev) => ({ ...prev, service_type: e.target.value }))} disabled={!isEditing} className="select-modern flex-1 disabled:bg-slate-100">
+                      <option value="Wireless">Wireless</option>
+                      <option value="FTTH">FTTH</option>
+                      <option value="Optical">Optical</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-slate-700 w-24 shrink-0">فئة العنصر</label>
+                    <select value={isEditing ? editingSubForm.item_category : sub.item_category} onChange={(e) => setEditingSubForm((prev) => ({ ...prev, item_category: e.target.value }))} disabled={!isEditing} className="select-modern flex-1 disabled:bg-slate-100">
+                      <option value="Line">Line</option>
+                      <option value="Bundle">Bundle</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-slate-700 w-24 shrink-0">السعر</label>
+                    <input type="number" value={isEditing ? editingSubForm.price : sub.price} onChange={(e) => setEditingSubForm((prev) => ({ ...prev, price: e.target.value }))} disabled={!isEditing} className="input-modern flex-1 disabled:bg-slate-100" />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-slate-700 w-24 shrink-0">وحدة القياس</label>
+                    <input value={isEditing ? editingSubForm.unit_label : (sub.unit_label || '')} onChange={(e) => setEditingSubForm((prev) => ({ ...prev, unit_label: e.target.value }))} disabled={!isEditing} className="input-modern flex-1 disabled:bg-slate-100" />
+                  </div>
                 </div>
 
                 {sub.notes && <p className="text-sm text-slate-500">ملاحظات: {sub.notes}</p>}
