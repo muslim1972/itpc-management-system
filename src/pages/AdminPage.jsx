@@ -680,14 +680,28 @@ const CompaniesSection = ({ onDetails }) => {
                 </div>
               ) : (
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-                  <div className="space-y-1">
-                    <p className="font-bold text-slate-900">{company.name}</p>
-                    <p className="text-sm text-slate-500">
-                      الهاتف: {company.phone || '—'} | البريد: {company.email || '—'}
-                    </p>
-                    <p className="text-sm text-slate-500">
-                      العنوان: {company.address || '—'} | الحالة: {company.is_active ? 'نشطة' : 'غير نشطة'}
-                    </p>
+                  <div className="flex-1 space-y-2">
+                    <p className="font-bold text-lg text-slate-900 mb-2">{company.name}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
+                      <div className="flex gap-2 text-sm text-slate-600">
+                        <span className="font-semibold text-slate-800 shrink-0">رقم الهاتف:</span>
+                        <span className="truncate">{company.phone || '—'}</span>
+                      </div>
+                      <div className="flex gap-2 text-sm text-slate-600">
+                        <span className="font-semibold text-slate-800 shrink-0">البريد الإلكتروني:</span>
+                        <span className="truncate">{company.email || '—'}</span>
+                      </div>
+                      <div className="flex gap-2 text-sm text-slate-600">
+                        <span className="font-semibold text-slate-800 shrink-0">العنوان:</span>
+                        <span className="truncate">{company.address || '—'}</span>
+                      </div>
+                      <div className="flex gap-2 text-sm text-slate-600">
+                        <span className="font-semibold text-slate-800 shrink-0">الحالة:</span>
+                        <span className={`font-bold ${company.is_active ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          {company.is_active ? 'نشطة' : 'غير نشطة'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <button
