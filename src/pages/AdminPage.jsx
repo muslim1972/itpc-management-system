@@ -262,58 +262,76 @@ const OrganizationsSection = () => {
           {organizations.map((org) => (
             <li key={org.id} className="content-list-card">
               {editingId === org.id ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <input
-                    value={editForm.name}
-                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                    className="input-modern"
-                    placeholder="اسم الجهة"
-                  />
-                  <input
-                    value={editForm.phone}
-                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                    className="input-modern"
-                    placeholder="الهاتف"
-                  />
-                  <input
-                    value={editForm.location}
-                    onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
-                    className="input-modern"
-                    placeholder="الموقع"
-                  />
-                  <input
-                    value={editForm.address}
-                    onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                    className="input-modern"
-                    placeholder="العنوان"
-                  />
-                  <select
-                    value={editForm.status}
-                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                    className="input-modern bg-white"
-                  >
-                    <option value="active">active</option>
-                    <option value="inactive">inactive</option>
-                    <option value="pending">pending</option>
-                  </select>
-                  <input
-                    value={editForm.notes}
-                    onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                    className="input-modern"
-                    placeholder="ملاحظات"
-                  />
-                  <div className="md:col-span-2 flex gap-2">
-                    <button
-                      onClick={handleSave}
-                      className="btn-success px-4 py-2.5 text-sm"
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50/80 rounded-[22px] border border-slate-200 mb-4">
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">اسم الجهة</label>
+                    <input
+                      value={editForm.name}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      className="input-modern flex-1"
+                      placeholder="اسم الجهة"
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">رقم الهاتف</label>
+                    <input
+                      value={editForm.phone}
+                      onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                      className="input-modern flex-1"
+                      placeholder="رقم الهاتف"
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">الموقع</label>
+                    <input
+                      value={editForm.location}
+                      onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+                      className="input-modern flex-1"
+                      placeholder="الموقع"
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">العنوان</label>
+                    <input
+                      value={editForm.address}
+                      onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                      className="input-modern flex-1"
+                      placeholder="العنوان"
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">ملاحظات</label>
+                    <input
+                      value={editForm.notes}
+                      onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                      className="input-modern flex-1"
+                      placeholder="ملاحظات"
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">الحالة</label>
+                    <select
+                      value={editForm.status}
+                      onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                      className="select-modern flex-1 bg-white"
                     >
-                      حفظ التعديلات
-                    </button>
+                      <option value="active">active</option>
+                      <option value="inactive">inactive</option>
+                      <option value="pending">pending</option>
+                    </select>
+                  </div>
+                  <div className="md:col-span-2 flex justify-end gap-2">
                     <button
                       onClick={() => setEditingId(null)}
-                      className="btn-secondary px-4 py-2.5 text-sm"
+                      className="btn-secondary px-5 py-2.5 text-sm"
                     >
                       إلغاء
+                    </button>
+                    <button
+                      onClick={handleSave}
+                      className="btn-primary px-5 py-2.5 text-sm"
+                    >
+                      حفظ التعديلات
                     </button>
                   </div>
                 </div>
