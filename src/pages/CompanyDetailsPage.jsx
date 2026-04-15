@@ -50,7 +50,7 @@ const formatMoney = (value) => {
 };
 
 const SummaryCard = ({ label, value, tone = 'slate', hint }) => (
-  <div className={`rounded-2xl border p-4 shadow-sm ${statCardTone[tone] || statCardTone.slate}`}>
+  <div className={`rounded-2xl border p-4 shadow-sm text-right ${statCardTone[tone] || statCardTone.slate}`}>
     <div className="text-xs font-semibold opacity-80">{label}</div>
     <div className="mt-2 text-2xl font-bold">{value}</div>
     {hint ? <div className="mt-1 text-xs opacity-70">{hint}</div> : null}
@@ -364,7 +364,7 @@ const CompanyDetailsPage = () => {
   };
 
   return (
-    <div className="app-shell min-h-screen bg-slate-50">
+    <div className="app-shell min-h-screen bg-slate-50" dir="rtl">
       <Navbar onMenuClick={() => setIsMenuOpen(true)} />
       <SlideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
@@ -456,13 +456,13 @@ const CompanyDetailsPage = () => {
                 </>
               }
             >
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">نوع الخدمة</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-semibold text-slate-700 w-28 shrink-0">نوع الخدمة</label>
                   <select
                     value={form.service_type}
                     onChange={(e) => setForm((prev) => ({ ...prev, service_type: e.target.value }))}
-                    className={inputClassName}
+                    className={`${inputClassName} flex-1`}
                   >
                     {SERVICE_TYPES.map((item) => (
                       <option key={item} value={item}>
@@ -472,12 +472,12 @@ const CompanyDetailsPage = () => {
                   </select>
                 </div>
 
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">التصنيف</label>
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-semibold text-slate-700 w-28 shrink-0">التصنيف</label>
                   <select
                     value={form.item_category}
                     onChange={(e) => setForm((prev) => ({ ...prev, item_category: e.target.value }))}
-                    className={inputClassName}
+                    className={`${inputClassName} flex-1`}
                   >
                     {ITEM_CATEGORIES.map((item) => (
                       <option key={item} value={item}>
@@ -487,37 +487,37 @@ const CompanyDetailsPage = () => {
                   </select>
                 </div>
 
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">اسم الاشتراك</label>
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-semibold text-slate-700 w-28 shrink-0">اسم الاشتراك</label>
                   <input
                     type="text"
                     value={form.item_name}
                     onChange={(e) => setForm((prev) => ({ ...prev, item_name: e.target.value }))}
                     placeholder="مثال: Premium / Gold"
-                    className={inputClassName}
+                    className={`${inputClassName} flex-1`}
                   />
                 </div>
 
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">السعر</label>
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-semibold text-slate-700 w-28 shrink-0">السعر</label>
                   <input
                     type="number"
                     min="0"
                     value={form.price}
                     onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
                     placeholder="0"
-                    className={inputClassName}
+                    className={`${inputClassName} flex-1`}
                   />
                 </div>
 
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">الوحدة</label>
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-semibold text-slate-700 w-28 shrink-0">الوحدة</label>
                   <input
                     type="text"
                     value={form.unit_label}
                     onChange={(e) => setForm((prev) => ({ ...prev, unit_label: e.target.value }))}
                     placeholder="مثال: خط / حزمة"
-                    className={inputClassName}
+                    className={`${inputClassName} flex-1`}
                   />
                 </div>
               </div>
