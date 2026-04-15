@@ -70,7 +70,7 @@ const AddPage = () => {
   };
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" dir="rtl">
       <Navbar onMenuClick={() => setIsMenuOpen(true)} />
       <SlideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
@@ -137,11 +137,20 @@ const AddPage = () => {
             {filteredOrganizations.map((org) => (
               <article key={org.id} className="content-list-card">
                 <div className="flex items-start justify-between gap-3 mb-4">
-                  <div>
-                    <h2 className="text-xl font-bold text-slate-900">{org.name || 'بدون اسم'}</h2>
-                    <div className="mt-2 flex flex-wrap gap-2"><span className="metric-pill">الموقع: {org.location || 'غير محدد'}</span><span className="metric-pill">الهاتف: {org.phone || 'غير متوفر'}</span></div>
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold text-slate-900 mb-3">{org.name || 'بدون اسم'}</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                      <div className="flex gap-2 text-sm text-slate-600">
+                        <span className="font-semibold text-slate-800 shrink-0">رقم الهاتف:</span>
+                        <span className="truncate">{org.phone || '—'}</span>
+                      </div>
+                      <div className="flex gap-2 text-sm text-slate-600">
+                        <span className="font-semibold text-slate-800 shrink-0">الموقع:</span>
+                        <span className="truncate">{org.location || '—'}</span>
+                      </div>
+                    </div>
                   </div>
-                  <span className={getStatusClasses(org.status)}>{org.status || 'unknown'}</span>
+                  <span className={getStatusClasses(org.status)}>{org.status === 'active' ? 'نشطة' : org.status === 'inactive' ? 'غير نشطة' : org.status}</span>
                 </div>
 
                 <p className="mb-5 text-sm text-slate-500">اختيار الجهة للانتقال المباشر إلى إنشاء العقد أو مراجعة تفاصيلها.</p>
