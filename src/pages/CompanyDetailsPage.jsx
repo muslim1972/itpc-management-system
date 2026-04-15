@@ -395,7 +395,7 @@ const CompanyDetailsPage = () => {
                   </div>
                 </div>
 
-                <div className="grid w-full gap-3 sm:grid-cols-2 lg:w-[420px]">
+                <div className="grid w-full gap-3 grid-cols-2 lg:w-[420px]">
                   <SummaryCard label="إجمالي الاشتراكات" value={totalSubscriptions} tone="blue" />
                   <SummaryCard
                     label="آخر تعديل سعر"
