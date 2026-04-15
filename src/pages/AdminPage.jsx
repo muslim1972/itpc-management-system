@@ -337,14 +337,30 @@ const OrganizationsSection = () => {
                 </div>
               ) : (
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-                  <div className="space-y-1">
-                    <p className="font-bold text-slate-900">{org.name}</p>
-                    <p className="text-sm text-slate-500">
-                      الهاتف: {org.phone || '—'} | الموقع: {org.location || '—'}
-                    </p>
-                    <p className="text-sm text-slate-500">
-                      الحالة: {org.status || '—'} | العنوان: {org.address || '—'}
-                    </p>
+                  <div className="flex-1 space-y-2">
+                    <p className="font-bold text-lg text-slate-900 mb-2">{org.name}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
+                      <div className="flex gap-2 text-sm text-slate-600">
+                        <span className="font-semibold text-slate-800 shrink-0">رقم الهاتف:</span>
+                        <span className="truncate">{org.phone || '—'}</span>
+                      </div>
+                      <div className="flex gap-2 text-sm text-slate-600">
+                        <span className="font-semibold text-slate-800 shrink-0">الموقع:</span>
+                        <span className="truncate">{org.location || '—'}</span>
+                      </div>
+                      <div className="flex gap-2 text-sm text-slate-600">
+                        <span className="font-semibold text-slate-800 shrink-0">الحالة:</span>
+                        <span className="truncate">{org.status || '—'}</span>
+                      </div>
+                      <div className="flex gap-2 text-sm text-slate-600">
+                        <span className="font-semibold text-slate-800 shrink-0">العنوان:</span>
+                        <span className="truncate">{org.address || '—'}</span>
+                      </div>
+                      <div className="flex gap-2 text-sm text-slate-600 sm:col-span-2">
+                        <span className="font-semibold text-slate-800 shrink-0">ملاحظات:</span>
+                        <span>{org.notes || 'لا توجد'}</span>
+                      </div>
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <button
