@@ -796,7 +796,7 @@ const NewContractPage = () => {
                         onChange={(e) => item.setter(e.target.checked)}
                         className="w-5 h-5 text-blue-600"
                       />
-                      <span className="ml-3 font-medium text-slate-900">{item.label}</span>
+                      <span className="ms-3 font-medium text-slate-900">{item.label}</span>
                     </label>
                   ))}
                 </div>
@@ -820,7 +820,7 @@ const NewContractPage = () => {
                         onChange={(e) => setWirelessLine(e.target.checked)}
                         className="w-5 h-5 text-blue-600"
                       />
-                      <span className="ml-3 font-medium">خط</span>
+                      <span className="ms-3 font-medium">خط</span>
                     </label>
 
                     <label
@@ -836,7 +836,7 @@ const NewContractPage = () => {
                         onChange={(e) => setWirelessBundle(e.target.checked)}
                         className="w-5 h-5 text-blue-600"
                       />
-                      <span className="ml-3 font-medium">حزمة</span>
+                      <span className="ms-3 font-medium">حزمة</span>
                     </label>
                   </div>
 
