@@ -17,7 +17,8 @@ def get_config():
     url = DATABASE_URL
     if not url:
         raise ValueError("DATABASE_URL is not set. The application requires a PostgreSQL connection string to run.")
-    return url
+    return url, None
+
 
 class PostgresCursorWrapper:
     def __init__(self, cursor):
@@ -81,9 +82,10 @@ class DbWrapper:
         return 1
 
 def get_db():
-    database_url = get_config()
+    database_url, _ = get_config()
     conn = psycopg2.connect(database_url)
     return DbWrapper(conn)
+
 
 # ── Helpers from New Version ──────────────────────────────────────────────────
 def _column_exists(cursor, table_name, column_name):
