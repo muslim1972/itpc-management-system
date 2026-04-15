@@ -1406,6 +1406,14 @@ const NewContractPage = () => {
                   <div className="flex items-center gap-3">
                     <label className="text-sm font-medium text-slate-700 w-32 shrink-0">مدة العقد</label>
                     <div className="flex gap-2 flex-1">
+                      <input
+                        type="number"
+                        min="1"
+                        placeholder="العدد (مثلاً: 12)"
+                        value={contractDurationValue}
+                        onChange={(e) => setContractDurationValue(e.target.value)}
+                        className="w-1/2 px-4 py-2 border border-slate-300 rounded-lg bg-white text-center"
+                      />
                       <select
                         value={contractDurationUnit}
                         onChange={(e) => setContractDurationUnit(e.target.value)}
@@ -1417,13 +1425,6 @@ const NewContractPage = () => {
                           </option>
                         ))}
                       </select>
-                      <input
-                        type="number"
-                        min="1"
-                        value={contractDurationValue}
-                        onChange={(e) => setContractDurationValue(e.target.value)}
-                        className="w-1/2 px-4 py-2 border border-slate-300 rounded-lg bg-white text-center"
-                      />
                     </div>
                   </div>
 

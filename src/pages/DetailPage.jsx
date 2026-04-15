@@ -1720,7 +1720,7 @@ const DetailPage = () => {
   }
 
   return (
-    <div className="app-shell min-h-screen bg-slate-50">
+    <div dir="rtl" className="app-shell min-h-screen bg-slate-50 text-right">
       <Navbar onMenuClick={() => setIsMenuOpen(true)} />
       <SlideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
@@ -1812,8 +1812,9 @@ const DetailPage = () => {
               </>
             }
           >
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <Field label="اسم الجهة">
+            <div className="grid grid-cols-1 gap-x-8 gap-y-4 lg:grid-cols-2">
+              <div className="flex items-center gap-3">
+                <label className="w-32 shrink-0 text-sm font-semibold text-slate-600">اسم الجهة</label>
                 <input
                   type="text"
                   value={orgForm.name}
@@ -1821,9 +1822,10 @@ const DetailPage = () => {
                   onChange={(e) => setOrgForm((prev) => ({ ...prev, name: e.target.value }))}
                   className={editMode ? shellInput : shellReadOnly}
                 />
-              </Field>
-
-              <Field label="رقم الهاتف">
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <label className="w-32 shrink-0 text-sm font-semibold text-slate-600">رقم الهاتف</label>
                 <input
                   type="text"
                   value={orgForm.phone}
@@ -1831,9 +1833,10 @@ const DetailPage = () => {
                   onChange={(e) => setOrgForm((prev) => ({ ...prev, phone: e.target.value }))}
                   className={editMode ? shellInput : shellReadOnly}
                 />
-              </Field>
+              </div>
 
-              <Field label="الموقع">
+              <div className="flex items-center gap-3">
+                <label className="w-32 shrink-0 text-sm font-semibold text-slate-600">الموقع</label>
                 <input
                   type="text"
                   value={orgForm.location}
@@ -1841,43 +1844,42 @@ const DetailPage = () => {
                   onChange={(e) => setOrgForm((prev) => ({ ...prev, location: e.target.value }))}
                   className={editMode ? shellInput : shellReadOnly}
                 />
-              </Field>
-
-              <div className="md:col-span-2">
-                <Field label="العنوان">
-                  <input
-                    type="text"
-                    value={orgForm.address}
-                    disabled={!editMode}
-                    onChange={(e) => setOrgForm((prev) => ({ ...prev, address: e.target.value }))}
-                    className={editMode ? shellInput : shellReadOnly}
-                  />
-                </Field>
               </div>
 
-              <Field label="الحالة">
+              <div className="flex items-center gap-3">
+                <label className="w-32 shrink-0 text-sm font-semibold text-slate-600">الحالة</label>
                 <select
                   value={orgForm.status}
                   disabled={!editMode}
                   onChange={(e) => setOrgForm((prev) => ({ ...prev, status: e.target.value }))}
                   className={editMode ? shellInput : shellReadOnly}
                 >
-                  <option value="active">active</option>
-                  <option value="inactive">inactive</option>
-                  <option value="pending">pending</option>
+                  <option value="active">نشط (Active)</option>
+                  <option value="inactive">غير نشط (Inactive)</option>
+                  <option value="pending">معلق (Pending)</option>
                 </select>
-              </Field>
+              </div>
 
-              <div className="xl:col-span-3">
-                <Field label="ملاحظات">
-                  <textarea
-                    rows="3"
-                    value={orgForm.notes}
-                    disabled={!editMode}
-                    onChange={(e) => setOrgForm((prev) => ({ ...prev, notes: e.target.value }))}
-                    className={editMode ? shellInput : shellReadOnly}
-                  />
-                </Field>
+              <div className="flex items-center gap-3 lg:col-span-2">
+                <label className="w-32 shrink-0 text-sm font-semibold text-slate-600">العنوان</label>
+                <input
+                  type="text"
+                  value={orgForm.address}
+                  disabled={!editMode}
+                  onChange={(e) => setOrgForm((prev) => ({ ...prev, address: e.target.value }))}
+                  className={editMode ? shellInput : shellReadOnly}
+                />
+              </div>
+
+              <div className="flex items-start gap-3 lg:col-span-2">
+                <label className="mt-3 w-32 shrink-0 text-sm font-semibold text-slate-600">ملاحظات</label>
+                <textarea
+                  rows="3"
+                  value={orgForm.notes}
+                  disabled={!editMode}
+                  onChange={(e) => setOrgForm((prev) => ({ ...prev, notes: e.target.value }))}
+                  className={editMode ? shellInput : shellReadOnly}
+                />
               </div>
             </div>
           </Block>
