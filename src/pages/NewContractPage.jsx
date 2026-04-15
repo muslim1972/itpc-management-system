@@ -738,7 +738,7 @@ const NewContractPage = () => {
   };
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" dir="rtl">
       <Navbar onMenuClick={() => setIsMenuOpen(true)} />
       <SlideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
@@ -853,9 +853,9 @@ const NewContractPage = () => {
 
                         return (
                           <div key={index} className="mb-4 p-4 soft-panel">
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-4">
-                              <div>
-                                <label className="block text-sm font-medium mb-2">عدد الخطوط</label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                              <div className="flex items-center gap-3">
+                                <label className="text-sm font-medium text-slate-700 w-28 shrink-0">عدد الخطوط</label>
                                 <input
                                   type="number"
                                   min="1"
@@ -863,12 +863,12 @@ const NewContractPage = () => {
                                   onChange={(e) =>
                                     updateRow(setWirelessLineRows, index, 'quantity', e.target.value)
                                   }
-                                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+                                  className="w-full px-4 py-2 border border-slate-300 rounded-lg flex-1"
                                 />
                               </div>
 
-                              <div>
-                                <label className="block text-sm font-medium mb-2">الشركة</label>
+                              <div className="flex items-center gap-3">
+                                <label className="text-sm font-medium text-slate-700 w-28 shrink-0">الشركة</label>
                                 <select
                                   value={row.provider_company_id}
                                   onChange={(e) =>
@@ -880,14 +880,14 @@ const NewContractPage = () => {
                                       'Line'
                                     )
                                   }
-                                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
+                                  className="w-full px-4 py-2 border border-slate-300 rounded-lg bg-white flex-1"
                                 >
                                   {renderProviderOptions()}
                                 </select>
                               </div>
 
-                              <div>
-                                <label className="block text-sm font-medium mb-2">نوع الاشتراك</label>
+                              <div className="flex items-center gap-3">
+                                <label className="text-sm font-medium text-slate-700 w-28 shrink-0">نوع الاشتراك</label>
                                 <select
                                   value={row.subscription_id}
                                   onChange={(e) =>
@@ -898,7 +898,7 @@ const NewContractPage = () => {
                                       e.target.value
                                     )
                                   }
-                                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
+                                  className="w-full px-4 py-2 border border-slate-300 rounded-lg bg-white flex-1"
                                   disabled={!row.provider_company_id}
                                 >
                                   {renderSubscriptionOptions(
@@ -909,23 +909,23 @@ const NewContractPage = () => {
                                 </select>
                               </div>
 
-                              <div>
-                                <label className="block text-sm font-medium mb-2">سعر الاشتراك</label>
+                              <div className="flex items-center gap-3">
+                                <label className="text-sm font-medium text-slate-700 w-28 shrink-0">سعر الاشتراك</label>
                                 <input
                                   type="number"
                                   readOnly
                                   value={currentUnitPrice}
-                                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-100"
+                                  className="w-full px-4 py-2 border border-slate-300 rounded-lg bg-slate-100 flex-1"
                                 />
                               </div>
 
-                              <div>
-                                <label className="block text-sm font-medium mb-2">المجموع</label>
+                              <div className="flex items-center gap-3">
+                                <label className="text-sm font-medium text-slate-700 w-28 shrink-0">المجموع</label>
                                 <input
-                                  type="number"
+                                  type="text"
                                   readOnly
                                   value={formatMoney(currentTotal)}
-                                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-100"
+                                  className="w-full px-4 py-2 border border-slate-300 rounded-lg bg-slate-100 flex-1"
                                 />
                               </div>
                             </div>
@@ -1346,15 +1346,13 @@ const NewContractPage = () => {
               <div className="border-2 border-slate-200 rounded-xl p-6 bg-slate-50/80">
                 <h3 className="text-xl font-semibold text-slate-900 mb-4">تفاصيل العقد</h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4 mb-6">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      عائدية الاجهزة
-                    </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-slate-700 w-32 shrink-0">عائدية الاجهزة</label>
                     <select
                       value={deviceChoice}
                       onChange={(e) => setDeviceChoice(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
+                      className="w-full px-4 py-2 border border-slate-300 rounded-lg bg-white flex-1"
                     >
                       {DEVICE_UI_OPTIONS.map((option) => (
                         <option key={option} value={option}>
@@ -1364,14 +1362,12 @@ const NewContractPage = () => {
                     </select>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      آلية الدفع
-                    </label>
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-slate-700 w-32 shrink-0">آلية الدفع</label>
                     <select
                       value={paymentMethod}
                       onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
+                      className="w-full px-4 py-2 border border-slate-300 rounded-lg bg-white flex-1"
                     >
                       {PAYMENT_METHODS.map((option) => (
                         <option key={option} value={option}>
@@ -1382,122 +1378,103 @@ const NewContractPage = () => {
                   </div>
 
                   {paymentMethod === 'يومي' && (
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        كل كم يوم؟
-                      </label>
+                    <div className="flex items-center gap-3">
+                      <label className="text-sm font-medium text-slate-700 w-32 shrink-0">كل كم يوم؟</label>
                       <input
                         type="number"
                         min="1"
                         value={paymentIntervalDays}
                         onChange={(e) => setPaymentIntervalDays(e.target.value)}
-                        className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
+                        className="w-full px-4 py-2 border border-slate-300 rounded-lg bg-white flex-1"
                       />
                     </div>
                   )}
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      تاريخ العقد
-                    </label>
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-slate-700 w-32 shrink-0">تاريخ العقد</label>
                     <input
                       type="date"
                       value={contractDate}
                       onChange={(e) => setContractDate(e.target.value)}
                       disabled={useCurrentDate}
-                      className={`w-full px-4 py-2.5 border border-slate-300 rounded-lg ${
+                      className={`w-full px-4 py-2 border border-slate-300 rounded-lg flex-1 ${
                         useCurrentDate ? 'bg-slate-100 cursor-not-allowed' : 'bg-white'
                       }`}
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      مدة العقد
-                    </label>
-                    <select
-                      value={contractDurationUnit}
-                      onChange={(e) => setContractDurationUnit(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
-                    >
-                      {CONTRACT_DURATION_UNITS.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-slate-700 w-32 shrink-0">مدة العقد</label>
+                    <div className="flex gap-2 flex-1">
+                      <select
+                        value={contractDurationUnit}
+                        onChange={(e) => setContractDurationUnit(e.target.value)}
+                        className="w-1/2 px-4 py-2 border border-slate-300 rounded-lg bg-white"
+                      >
+                        {CONTRACT_DURATION_UNITS.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="number"
+                        min="1"
+                        value={contractDurationValue}
+                        onChange={(e) => setContractDurationValue(e.target.value)}
+                        className="w-1/2 px-4 py-2 border border-slate-300 rounded-lg bg-white text-center"
+                      />
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      العدد
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={contractDurationValue}
-                      onChange={(e) => setContractDurationValue(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      تاريخ الاستحقاق القادم
-                    </label>
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-slate-700 w-32 shrink-0">تاريخ الاستحقاق</label>
                     <input
                       type="date"
                       readOnly
                       value={resolvedDueDate}
-                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-100"
+                      className="w-full px-4 py-2 border border-slate-300 rounded-lg bg-slate-100 flex-1"
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      تاريخ الكتاب الرسمي
-                    </label>
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-slate-700 w-32 shrink-0">تاريخ الكتاب الرسمي</label>
                     <input
                       type="date"
                       value={officialBookDate}
                       onChange={(e) => setOfficialBookDate(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
+                      className="w-full px-4 py-2 border border-slate-300 rounded-lg bg-white flex-1"
                     />
                   </div>
 
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      وصف الكتاب الرسمي
-                    </label>
-                    <textarea
+                  <div className="flex items-center gap-3 md:col-span-2">
+                    <label className="text-sm font-medium text-slate-700 w-32 shrink-0">وصف الكتاب الرسمي</label>
+                    <input
+                      type="text"
                       value={officialBookDescription}
                       onChange={(e) => setOfficialBookDescription(e.target.value)}
-                      rows={3}
-                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
+                      placeholder="أدخل وصف الكتاب الرسمي"
+                      className="w-full px-4 py-2 border border-slate-300 rounded-lg bg-white flex-1"
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      السعر الشهري الأساسي
-                    </label>
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-slate-700 w-32 shrink-0">السع الشهري</label>
                     <input
-                      type="number"
+                      type="text"
                       readOnly
                       value={formatMoney(baseMonthlyTotal)}
-                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-100"
+                      className="w-full px-4 py-2 border border-slate-300 rounded-lg bg-slate-100 flex-1"
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      المجموع الكلي
-                    </label>
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-slate-700 w-32 shrink-0">المجموع الكلي</label>
                     <input
-                      type="number"
+                      type="text"
                       readOnly
                       value={formatMoney(grandTotal)}
-                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-100 font-semibold"
+                      className="w-full px-4 py-2 border border-slate-300 rounded-lg bg-indigo-50 border-indigo-200 text-indigo-700 font-bold flex-1"
                     />
                   </div>
                 </div>
