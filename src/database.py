@@ -148,12 +148,19 @@ def _ensure_organization_services_columns(cursor):
     if not _table_exists(cursor, "organization_services"):
         return
 
-    # الأعمدة الأساسية للعقود
+    # الأعمدة الأساسية للعقود والمبالغ
     contract_cols = [
         ("contract_created_at", "TEXT"),
         ("contract_duration_unit", "TEXT NOT NULL DEFAULT 'شهري'"),
         ("contract_duration_value", "INTEGER NOT NULL DEFAULT 1"),
         ("payment_interval_days", "INTEGER NOT NULL DEFAULT 1"),
+        ("annual_amount", "REAL NOT NULL DEFAULT 0"),
+        ("paid_amount", "REAL NOT NULL DEFAULT 0"),
+        ("due_amount", "REAL NOT NULL DEFAULT 0"),
+        ("due_date", "TEXT"),
+        ("last_payment_amount", "REAL DEFAULT 0"),
+        ("last_payment_date", "TEXT"),
+        ("is_active", "INTEGER DEFAULT 1"),
     ]
     for col, col_def in contract_cols:
         if not _column_exists(cursor, "organization_services", col):
@@ -175,6 +182,16 @@ def _ensure_organization_services_columns(cursor):
     for col, col_type in suspension_cols:
         if not _column_exists(cursor, "organization_services", col):
             cursor.execute(f"ALTER TABLE organization_services ADD COLUMN {col} {col_type}")
+
+    # أعمدة الكتاب الرسمي (Official Book) في حال عدم وجودها في الجدول الأصلي
+    official_cols = [
+        ("official_book_date", "TEXT"),
+        ("official_book_description", "TEXT"),
+    ]
+    for col, col_type in official_cols:
+        if not _column_exists(cursor, "organization_services", col):
+            cursor.execute(f"ALTER TABLE organization_services ADD COLUMN {col} {col_type}")
+
 
 def _ensure_provider_companies_columns(cursor):
     if not _table_exists(cursor, "provider_companies"):

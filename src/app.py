@@ -196,7 +196,10 @@ def get_organization_detail(id):
             cursor.execute(f"SELECT * FROM service_suspensions WHERE service_id = {placeholder} ORDER BY created_at DESC LIMIT 1", (sid,))
             s['latest_suspension'] = row_to_dict(cursor.fetchone())
 
-    return jsonify({'organization': org, 'services': services})
+        org['services'] = services
+
+    return jsonify({'organization': org})
+
 
 
 # ── Users Management ─────────────────────────────────────────────────────────
@@ -629,14 +632,16 @@ def add_org_service(org_id):
                 INSERT INTO organization_services (
                     organization_id, service_type, payment_method, device_ownership, 
                     annual_amount, paid_amount, due_amount, payment_interval_days,
-                    contract_created_at, contract_duration_unit, contract_duration_value, due_date
-                ) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, 0, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
+                    contract_created_at, contract_duration_unit, contract_duration_value, due_date,
+                    official_book_date, official_book_description
+                ) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, 0, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
                 RETURNING *
             """, (
                 org_id, service_type, payment_method, 
                 data.get('device_ownership', 'الشركة'), annual_amount, annual_amount,
                 data.get('payment_interval_days', 1), created_at_str,
-                duration_unit, duration_value, end_date.isoformat()
+                duration_unit, duration_value, end_date.isoformat(),
+                data.get('official_book_date'), data.get('official_book_description')
             ))
             service = row_to_dict(cursor.fetchone())
         else:
@@ -644,17 +649,20 @@ def add_org_service(org_id):
                 INSERT INTO organization_services (
                     organization_id, service_type, payment_method, device_ownership, 
                     annual_amount, paid_amount, due_amount, payment_interval_days,
-                    contract_created_at, contract_duration_unit, contract_duration_value, due_date
-                ) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, 0, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
+                    contract_created_at, contract_duration_unit, contract_duration_value, due_date,
+                    official_book_date, official_book_description
+                ) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, 0, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
             """, (
                 org_id, service_type, payment_method, 
                 data.get('device_ownership', 'الشركة'), annual_amount, annual_amount,
                 data.get('payment_interval_days', 1), created_at_str,
-                duration_unit, duration_value, end_date.isoformat()
+                duration_unit, duration_value, end_date.isoformat(),
+                data.get('official_book_date'), data.get('official_book_description')
             ))
             new_id = cursor.lastrowid
             cursor.execute(f"SELECT * FROM organization_services WHERE id = {placeholder}", (new_id,))
             service = row_to_dict(cursor.fetchone())
+
 
         # Create Initial Contract Period
         if service:
@@ -729,7 +737,10 @@ def add_service_item(service_id):
             service_item = row_to_dict(cursor.fetchone())
 
         # Update parent service totals
-        # 1. Fetch current service duration/unit
+        cursor.execute(f"SELECT COALESCE(SUM(total_price), 0) as total FROM service_items WHERE service_id = {placeholder}", (service_id,))
+        row = cursor.fetchone()
+        monthly_sum = row['total'] if isinstance(row, dict) else row[0]
+
         cursor.execute(f"SELECT contract_duration_unit, contract_duration_value FROM organization_services WHERE id = {placeholder}", (service_id,))
         svc_info = row_to_dict(cursor.fetchone())
         
