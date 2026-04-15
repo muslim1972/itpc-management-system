@@ -163,13 +163,41 @@ def get_organization_detail(id):
         cursor = conn.cursor()
         is_pg = getattr(conn, 'is_postgres', False)
         placeholder = "%s" if is_pg else "?"
+        
+        # 1. Fetch Organization
         cursor.execute(f"SELECT * FROM organizations WHERE id = {placeholder}", (id,))
         org = row_to_dict(cursor.fetchone())
         if not org: return jsonify({'error': 'Not found'}), 404
         
+        # 2. Fetch Services
         cursor.execute(f"SELECT * FROM organization_services WHERE organization_id = {placeholder} ORDER BY created_at DESC", (id,))
         services = rows_to_list(cursor.fetchall())
+        
+        # 3. Enrich Services with Items, Payments, and Periods
+        for s in services:
+            sid = s['id']
+            # Items
+            cursor.execute(f"SELECT * FROM service_items WHERE service_id = {placeholder} ORDER BY created_at ASC", (sid,))
+            s['service_items'] = rows_to_list(cursor.fetchall())
+            
+            # Payments
+            cursor.execute(f"SELECT p.*, u.username as created_by_username FROM payments p LEFT JOIN users u ON p.created_by = u.id WHERE p.service_id = {placeholder} ORDER BY p.payment_date DESC", (sid,))
+            s['payments'] = rows_to_list(cursor.fetchall())
+            
+            # Active Period
+            cursor.execute(f"SELECT * FROM service_contract_periods WHERE service_id = {placeholder} AND status = 'active' LIMIT 1", (sid,))
+            s['active_contract_period'] = row_to_dict(cursor.fetchone())
+            
+            # Closed Periods (History)
+            cursor.execute(f"SELECT * FROM service_contract_periods WHERE service_id = {placeholder} AND status != 'active' ORDER BY period_number DESC", (sid,))
+            s['closed_contract_periods'] = rows_to_list(cursor.fetchall())
+            
+            # Latest Suspension info if any
+            cursor.execute(f"SELECT * FROM service_suspensions WHERE service_id = {placeholder} ORDER BY created_at DESC LIMIT 1", (sid,))
+            s['latest_suspension'] = row_to_dict(cursor.fetchone())
+
     return jsonify({'organization': org, 'services': services})
+
 
 # ── Users Management ─────────────────────────────────────────────────────────
 
@@ -564,6 +592,14 @@ def get_org_services(org_id):
         cursor.execute(f"SELECT * FROM organization_services WHERE organization_id = {placeholder} ORDER BY created_at DESC", (org_id,))
         return jsonify({'services': rows_to_list(cursor.fetchall())})
 
+def calculate_contract_total_py(base_monthly, unit, value):
+    base = float(base_monthly or 0)
+    val = int(value or 1)
+    if unit == 'يومي': return (base / 30.0) * val
+    if unit == 'شهري': return base * val
+    if unit == 'سنوي': return base * 12.0 * val
+    return base
+
 @app.route('/api/organizations/<int:org_id>/services', methods=['POST'])
 def add_org_service(org_id):
     data = request.json
@@ -572,19 +608,35 @@ def add_org_service(org_id):
         is_pg = getattr(conn, 'is_postgres', False)
         placeholder = "%s" if is_pg else "?"
 
+        service_type = data['service_type']
+        payment_method = data.get('payment_method', 'شهري')
+        annual_amount = float(data.get('annual_amount', 0))
+        duration_unit = data.get('contract_duration_unit', 'شهري')
+        duration_value = int(data.get('contract_duration_value', 1))
+        created_at_str = data.get('contract_created_at') or datetime.now().strftime('%Y-%m-%d')
+        
+        # Calculate End Date for the first period
+        start_date = parse_date(created_at_str) or date.today()
+        if duration_unit == 'يومي': end_date = start_date + timedelta(days=duration_value)
+        elif duration_unit == 'شهري': 
+            # Simple month add
+            end_date = (start_date + timedelta(days=duration_value * 30)) # Approximation for first period
+        elif duration_unit == 'سنوي': end_date = start_date + timedelta(days=duration_value * 365)
+        else: end_date = start_date + timedelta(days=30)
+
         if is_pg:
             cursor.execute(f"""
                 INSERT INTO organization_services (
                     organization_id, service_type, payment_method, device_ownership, 
                     annual_amount, paid_amount, due_amount, payment_interval_days,
-                    contract_created_at, contract_duration_unit, contract_duration_value
-                ) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, 0, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
+                    contract_created_at, contract_duration_unit, contract_duration_value, due_date
+                ) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, 0, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
                 RETURNING *
             """, (
-                org_id, data['service_type'], data.get('payment_method', 'شهري'), 
-                data.get('device_ownership', 'الشركة'), data['annual_amount'], data['annual_amount'],
-                data.get('payment_interval_days', 1), data.get('contract_created_at'),
-                data.get('contract_duration_unit', 'شهري'), data.get('contract_duration_value', 1)
+                org_id, service_type, payment_method, 
+                data.get('device_ownership', 'الشركة'), annual_amount, annual_amount,
+                data.get('payment_interval_days', 1), created_at_str,
+                duration_unit, duration_value, end_date.isoformat()
             ))
             service = row_to_dict(cursor.fetchone())
         else:
@@ -592,20 +644,36 @@ def add_org_service(org_id):
                 INSERT INTO organization_services (
                     organization_id, service_type, payment_method, device_ownership, 
                     annual_amount, paid_amount, due_amount, payment_interval_days,
-                    contract_created_at, contract_duration_unit, contract_duration_value
-                ) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, 0, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
+                    contract_created_at, contract_duration_unit, contract_duration_value, due_date
+                ) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, 0, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
             """, (
-                org_id, data['service_type'], data.get('payment_method', 'شهري'), 
-                data.get('device_ownership', 'الشركة'), data['annual_amount'], data['annual_amount'],
-                data.get('payment_interval_days', 1), data.get('contract_created_at'),
-                data.get('contract_duration_unit', 'شهري'), data.get('contract_duration_value', 1)
+                org_id, service_type, payment_method, 
+                data.get('device_ownership', 'الشركة'), annual_amount, annual_amount,
+                data.get('payment_interval_days', 1), created_at_str,
+                duration_unit, duration_value, end_date.isoformat()
             ))
             new_id = cursor.lastrowid
             cursor.execute(f"SELECT * FROM organization_services WHERE id = {placeholder}", (new_id,))
             service = row_to_dict(cursor.fetchone())
 
+        # Create Initial Contract Period
+        if service:
+            cursor.execute(f"""
+                INSERT INTO service_contract_periods (
+                    service_id, period_number, period_label, start_date, end_date,
+                    contract_duration_unit, contract_duration_value, payment_method,
+                    base_amount, carried_debt, total_amount, paid_amount, due_amount,
+                    status, created_at, updated_at
+                ) VALUES ({placeholder}, 1, 'الفترة 1', {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, 0, {placeholder}, 0, {placeholder}, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """, (
+                service['id'], start_date.isoformat(), end_date.isoformat(),
+                duration_unit, duration_value, payment_method,
+                annual_amount, annual_amount, annual_amount
+            ))
+
         conn.commit()
     return jsonify({'success': True, 'service': service}), 201
+
 
 # ── Service Items ────────────────────────────────────────────────────────────
 
@@ -661,15 +729,43 @@ def add_service_item(service_id):
             service_item = row_to_dict(cursor.fetchone())
 
         # Update parent service totals
-        cursor.execute(f"""
-            UPDATE organization_services 
-            SET annual_amount = (SELECT COALESCE(SUM(total_price), 0) FROM service_items WHERE service_id = {placeholder}),
-                due_amount = (SELECT COALESCE(SUM(total_price), 0) FROM service_items WHERE service_id = {placeholder}) - paid_amount,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = {placeholder}
-        """, (service_id, service_id, service_id))
+        # 1. Fetch current service duration/unit
+        cursor.execute(f"SELECT contract_duration_unit, contract_duration_value FROM organization_services WHERE id = {placeholder}", (service_id,))
+        svc_info = row_to_dict(cursor.fetchone())
+        
+        if svc_info:
+            dur_unit = svc_info['contract_duration_unit']
+            dur_val = svc_info['contract_duration_value']
+            
+            # 2. Calculate new monthly sum from items
+            cursor.execute(f"SELECT COALESCE(SUM(total_price), 0) as total FROM service_items WHERE service_id = {placeholder}", (service_id,))
+            res = cursor.fetchone()
+            monthly_sum = float(res['total'] if isinstance(res, dict) else res[0])
+            
+            # 3. Calculate new total contract amount
+            new_contract_total = calculate_contract_total_py(monthly_sum, dur_unit, dur_val)
+            
+            # 4. Update the organization_services
+            cursor.execute(f"""
+                UPDATE organization_services 
+                SET annual_amount = {placeholder},
+                    due_amount = {placeholder} - COALESCE(paid_amount, 0),
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = {placeholder}
+            """, (new_contract_total, new_contract_total, service_id))
+            
+            # 5. Update the active contract period
+            cursor.execute(f"""
+                UPDATE service_contract_periods
+                SET base_amount = {placeholder},
+                    total_amount = {placeholder},
+                    due_amount = {placeholder} - COALESCE(paid_amount, 0),
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE service_id = {placeholder} AND status = 'active'
+            """, (new_contract_total, new_contract_total, new_contract_total, service_id))
 
         conn.commit()
+
     return jsonify({'success': True, 'service_item': service_item}), 201
 
 # ── Payments Processing ──────────────────────────────────────────────────────
