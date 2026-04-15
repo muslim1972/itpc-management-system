@@ -413,7 +413,7 @@ const CompanyDetailsPage = () => {
               </div>
             ) : null}
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
               <SummaryCard label="Wireless" value={groupedStats.Wireless} tone="blue" />
               <SummaryCard label="FTTH" value={groupedStats.FTTH} tone="green" />
               <SummaryCard label="Optical" value={groupedStats.Optical} tone="amber" />
