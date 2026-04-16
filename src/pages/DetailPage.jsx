@@ -1163,6 +1163,12 @@ const DetailPage = () => {
     const isScheduledSuspend = service.service_status === 'scheduled_suspend';
     const activeView = activeServiceViews[service.id] || 'summary';
 
+    const isOtherService = service.service_type === 'Other';
+    const firstItemName = items.length > 0 ? items[0].item_name : '';
+    const displayTitle = (isOtherService && firstItemName) 
+      ? firstItemName 
+      : (serviceLabelMap[service.service_type] || service.service_type);
+
     return (
       <div id={`service-card-${service.id}`} key={service.id} className="scroll-mt-24 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 bg-white p-5 sm:p-6">
@@ -1170,7 +1176,7 @@ const DetailPage = () => {
             <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="text-2xl font-bold text-slate-900">
-                  {serviceLabelMap[service.service_type] || service.service_type}
+                  {displayTitle}
                 </h3>
                 <span className={`rounded-full border px-3 py-1 text-xs font-bold ${serviceStatusMeta.className}`}>
                   {serviceStatusMeta.label}
