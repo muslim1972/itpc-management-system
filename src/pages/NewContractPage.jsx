@@ -252,8 +252,9 @@ const NewContractPage = () => {
 
   const getSubscriptionsForRow = (companyId, serviceType, itemCategory) => {
     const all = subscriptionCache[companyId] || [];
+    const categories = Array.isArray(itemCategory) ? itemCategory : [itemCategory];
     return all.filter(
-      (sub) => sub.service_type === serviceType && sub.item_category === itemCategory
+      (sub) => sub.service_type === serviceType && categories.includes(sub.item_category)
     );
   };
 
@@ -664,7 +665,7 @@ const NewContractPage = () => {
           );
 
           await createServiceItem(ftthService.id, {
-            item_category: 'Line',
+            item_category: sub?.item_category || 'Line',
             provider_company_id: companyId,
             item_name: sub?.item_name || 'FTTH Line',
             line_type: sub?.item_name || '',
@@ -1172,7 +1173,7 @@ const NewContractPage = () => {
                                   index,
                                   e.target.value,
                                   'FTTH',
-                                  'Line'
+                                  ['Line', 'Bundle']
                                 )
                               }
                               className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
@@ -1199,7 +1200,7 @@ const NewContractPage = () => {
                               {renderSubscriptionOptions(
                                 row.provider_company_id,
                                 'FTTH',
-                                'Line'
+                                ['Line', 'Bundle']
                               )}
                             </select>
                           </div>
