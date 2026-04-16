@@ -176,6 +176,7 @@ const NewContractPage = () => {
 
   const [wirelessLineRows, setWirelessLineRows] = useState([emptySubscriptionRow()]);
   const [ftthLineRows, setFtthLineRows] = useState([emptySubscriptionRow()]);
+  const [opticalLineRows, setOpticalLineRows] = useState([emptySubscriptionRow()]);
   const [wirelessBundleRows, setWirelessBundleRows] = useState([emptyBundleRow()]);
   const [otherRows, setOtherRows] = useState([emptyOtherRow()]);
 
@@ -395,6 +396,12 @@ const NewContractPage = () => {
     [ftthLineRows]
   );
 
+  const opticalTotal = useMemo(
+    () =>
+      opticalLineRows.reduce((sum, row) => sum + rowTotal(row.quantity, row.unit_price), 0),
+    [opticalLineRows]
+  );
+
   const wirelessBundleTotal = useMemo(
     () =>
       wirelessBundleRows.reduce((sum, row) => {
@@ -430,19 +437,24 @@ const NewContractPage = () => {
     [ftthTotal, contractDurationUnit, contractDurationValue]
   );
 
+  const opticalContractTotal = useMemo(
+    () => calculateContractTotal(opticalTotal, contractDurationUnit, contractDurationValue),
+    [opticalTotal, contractDurationUnit, contractDurationValue]
+  );
+
   const otherContractTotal = useMemo(
     () => calculateContractTotal(otherTotal, contractDurationUnit, contractDurationValue),
     [otherTotal, contractDurationUnit, contractDurationValue]
   );
 
   const baseMonthlyTotal = useMemo(
-    () => wirelessBaseMonthlyTotal + ftthTotal + otherTotal,
-    [wirelessBaseMonthlyTotal, ftthTotal, otherTotal]
+    () => wirelessBaseMonthlyTotal + ftthTotal + opticalTotal + otherTotal,
+    [wirelessBaseMonthlyTotal, ftthTotal, opticalTotal, otherTotal]
   );
 
   const grandTotal = useMemo(
-    () => wirelessContractTotal + ftthContractTotal + otherContractTotal,
-    [wirelessContractTotal, ftthContractTotal, otherContractTotal]
+    () => wirelessContractTotal + ftthContractTotal + opticalContractTotal + otherContractTotal,
+    [wirelessContractTotal, ftthContractTotal, opticalContractTotal, otherContractTotal]
   );
 
   const resolvedDueDate = useMemo(
@@ -538,6 +550,14 @@ const NewContractPage = () => {
       }
     }
 
+    if (optical) {
+      for (const row of opticalLineRows) {
+        if (!row.quantity || !row.provider_company_id || !row.subscription_id) {
+          return 'يرجى إكمال جميع حقول Optical';
+        }
+      }
+    }
+
     if (wireless && wirelessBundle) {
       for (const row of wirelessBundleRows) {
         if (!row.bundle_type) {
@@ -582,11 +602,6 @@ const NewContractPage = () => {
     const validationMessage = validateBeforeSave();
     if (validationMessage) {
       alert(validationMessage);
-      return;
-    }
-
-    if (optical) {
-      alert('خدمة Optical غير مفعلة بعد في هذا الكود. أزل التحديد عنها حالياً أو نكملها لاحقاً.');
       return;
     }
 
@@ -673,6 +688,31 @@ const NewContractPage = () => {
             quantity: toNumber(row.quantity),
             unit_price: toNumber(row.unit_price),
             notes: 'FTTH Line',
+          });
+        }
+      }
+
+      if (optical) {
+        const opticalService = await createService(
+          organizationId,
+          'Optical',
+          calculateContractTotal(opticalTotal, contractDurationUnit, contractDurationValue)
+        );
+
+        for (const row of opticalLineRows) {
+          const companyId = row.provider_company_id;
+          const sub = (subscriptionCache[companyId] || []).find(
+            (s) => String(s.id) === String(row.subscription_id)
+          );
+
+          await createServiceItem(opticalService.id, {
+            item_category: sub?.item_category || 'Line',
+            provider_company_id: companyId,
+            item_name: sub?.item_name || 'Optical Line',
+            line_type: sub?.item_name || '',
+            quantity: toNumber(row.quantity),
+            unit_price: toNumber(row.unit_price),
+            notes: 'Optical Line',
           });
         }
       }
@@ -1253,11 +1293,117 @@ const NewContractPage = () => {
               )}
 
               {optical && (
-                <div className="mb-8 border-2 border-amber-200 rounded-xl p-6 bg-amber-50">
-                  <h3 className="text-xl font-semibold text-slate-900 mb-2">Optical</h3>
-                  <p className="text-amber-700">
-                    هذا القسم محجوز مؤقتاً لأنك قلت Optical coming soon.
-                  </p>
+                <div className="mb-8 border-2 border-blue-200 rounded-xl p-6 bg-blue-50/30">
+                  <h3 className="text-xl font-semibold text-slate-900 mb-4">Optical - خط</h3>
+
+                  {opticalLineRows.map((row, index) => {
+                    const currentUnitPrice = subscriptionPriceFromCache(
+                      row.provider_company_id,
+                      row.subscription_id
+                    );
+                    const currentTotal = rowTotal(row.quantity, currentUnitPrice);
+
+                    return (
+                      <div key={index} className="mb-4 p-4 surface-card-soft">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-4">
+                          <div>
+                            <label className="block text-sm font-medium mb-2">عدد الخطوط</label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={row.quantity}
+                              onChange={(e) =>
+                                updateRow(setOpticalLineRows, index, 'quantity', e.target.value)
+                              }
+                              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium mb-2">الشركة</label>
+                            <select
+                              value={row.provider_company_id}
+                              onChange={(e) =>
+                                handleSubscriptionCompanyChange(
+                                  setOpticalLineRows,
+                                  index,
+                                  e.target.value,
+                                  'Optical',
+                                  null
+                                )
+                              }
+                              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
+                            >
+                              {renderProviderOptions()}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium mb-2">نوع الاشتراك</label>
+                            <select
+                              value={row.subscription_id}
+                              onChange={(e) =>
+                                handleSubscriptionSelect(
+                                  setOpticalLineRows,
+                                  index,
+                                  row.provider_company_id,
+                                  e.target.value
+                                )
+                              }
+                              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
+                              disabled={!row.provider_company_id}
+                            >
+                              {renderSubscriptionOptions(
+                                row.provider_company_id,
+                                'Optical',
+                                null
+                              )}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium mb-2">سعر الاشتراك</label>
+                            <input
+                              type="number"
+                              readOnly
+                              value={currentUnitPrice}
+                              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-100"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium mb-2">المجموع</label>
+                            <input
+                              type="text"
+                              readOnly
+                              value={formatMoney(currentTotal)}
+                              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-100"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => addRow(setOpticalLineRows, emptySubscriptionRow)}
+                            className="btn-success px-4 py-2.5 text-sm hover:bg-green-700"
+                          >
+                            اضافة خط اخر
+                          </button>
+
+                          {opticalLineRows.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeRow(setOpticalLineRows, index)}
+                              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                            >
+                              حذف
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
