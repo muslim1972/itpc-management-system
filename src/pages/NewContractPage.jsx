@@ -252,6 +252,7 @@ const NewContractPage = () => {
 
   const getSubscriptionsForRow = (companyId, serviceType, itemCategory) => {
     const all = subscriptionCache[companyId] || [];
+    if (!itemCategory) return all.filter(sub => sub.service_type === serviceType);
     const categories = Array.isArray(itemCategory) ? itemCategory : [itemCategory];
     return all.filter(
       (sub) => sub.service_type === serviceType && categories.includes(sub.item_category)
@@ -878,7 +879,7 @@ const NewContractPage = () => {
                                       index,
                                       e.target.value,
                                       'Wireless',
-                                      'Line'
+                                      null
                                     )
                                   }
                                   className="w-full px-4 py-2 border border-slate-300 rounded-lg bg-white flex-1"
@@ -905,7 +906,7 @@ const NewContractPage = () => {
                                   {renderSubscriptionOptions(
                                     row.provider_company_id,
                                     'Wireless',
-                                    'Line'
+                                    null
                                   )}
                                 </select>
                               </div>
@@ -1014,7 +1015,7 @@ const NewContractPage = () => {
                                         index,
                                         e.target.value,
                                         'Wireless',
-                                        'Bundle'
+                                        null
                                       )
                                     }
                                     className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
@@ -1041,7 +1042,7 @@ const NewContractPage = () => {
                                     {renderSubscriptionOptions(
                                       row.provider_company_id,
                                       'Wireless',
-                                      'Bundle'
+                                      null
                                     )}
                                   </select>
                                 </div>
@@ -1173,7 +1174,7 @@ const NewContractPage = () => {
                                   index,
                                   e.target.value,
                                   'FTTH',
-                                  ['Line', 'Bundle']
+                                  null
                                 )
                               }
                               className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
@@ -1200,7 +1201,7 @@ const NewContractPage = () => {
                               {renderSubscriptionOptions(
                                 row.provider_company_id,
                                 'FTTH',
-                                ['Line', 'Bundle']
+                                null
                               )}
                             </select>
                           </div>
