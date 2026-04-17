@@ -569,16 +569,20 @@ const CompaniesSection = ({ onDetails }) => {
 
   return (
     <div className="surface-card p-6 sm:p-7 page-reveal">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-slate-900">شركات مقدمة الخدمة</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+        <div>
+          <h2 className="section-title">إدارة الشركات المزودة</h2>
+          <p className="section-subtitle">إجمالي الشركات: {companies.length}</p>
+        </div>
         <button
           onClick={() => {
             setShowAddForm(!showAddForm);
             setError('');
           }}
-          className="btn-primary px-4 py-2.5 text-sm"
+          className="btn-primary flex items-center justify-center gap-2 px-4 py-2 text-sm"
         >
-          إضافة شركة
+          <Plus className="h-4 w-4" />
+          <span>إضافة شركة</span>
         </button>
       </div>
 
@@ -1044,8 +1048,11 @@ const PackagesSection = () => {
 
   return (
     <div className="surface-card p-6 sm:p-7 page-reveal">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-slate-900">إدارة الباقات والرينجات</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+        <div>
+          <h2 className="section-title">إدارة الباقات والرينجات</h2>
+          <p className="section-subtitle">إدارة أسعار الرينجات للخدمات النوعية</p>
+        </div>
         <button 
           onClick={loadRanges} 
           className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors"
@@ -1056,10 +1063,6 @@ const PackagesSection = () => {
           </svg>
         </button>
       </div>
-
-      <p className="text-sm text-slate-500 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-        هذه الواجهة مخصصة لإدارة أسعار الرينجات للخدمات النوعية (fna, gcc, انترانيت, دولي, LTE) وهي مستقلة عن اشتراكات الشركات المجهزة.
-      </p>
 
       {error && <p className="text-red-500 text-sm mb-4 bg-red-50 p-3 rounded-xl border border-red-100">{error}</p>}
 

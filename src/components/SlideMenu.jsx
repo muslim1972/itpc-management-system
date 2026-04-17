@@ -84,7 +84,7 @@ const SlideMenu = ({ isOpen, onClose }) => {
             </div>
 
             {user?.username ? (
-              <div className="mt-4 rounded-[18px] border border-white/12 bg-white/10 px-3.5 py-2.5">
+              <div className="mt-4 rounded-[18px] border border-white/10 bg-white/10 px-3.5 py-2.5">
                 <div className="text-[10px] font-medium text-indigo-100/80">المستخدم الحالي</div>
                 <div className="mt-0.5 text-xl sm:text-2xl font-bold text-white leading-tight">{user.username}</div>
               </div>

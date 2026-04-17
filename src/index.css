@@ -131,7 +131,7 @@
   }
 
   .hero-stat-tile {
-    @apply rounded-xl border border-white/12 bg-white/10 px-2.5 py-2.5 backdrop-blur-sm sm:rounded-2xl sm:px-4 sm:py-4;
+    @apply rounded-xl border border-white/10 bg-white/10 px-2.5 py-2.5 backdrop-blur-sm sm:rounded-2xl sm:px-4 sm:py-4;
   }
 
   .hero-stat-label {
@@ -143,7 +143,7 @@
   }
 
   .section-title {
-    @apply text-lg sm:text-2xl font-bold text-slate-900;
+    @apply text-lg sm:text-xl font-bold text-slate-900;
   }
 
   .section-subtitle {
