@@ -406,40 +406,40 @@ const CompanyDetailsPage = () => {
               </div>
             </section>
 
-            <section className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-8">
-                <div className="flex items-center justify-between border-b border-slate-50 pb-2 sm:border-0 sm:pb-0">
+            <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+                <div className="flex items-center justify-between py-1">
                   <span className="text-sm font-semibold text-slate-500">إجمالي الاشتراكات :</span>
-                  <span className="text-base font-bold text-blue-600">{totalSubscriptions}</span>
+                  <span className="text-sm font-bold text-blue-600">{totalSubscriptions}</span>
                 </div>
-                <div className="flex items-center justify-between border-b border-slate-50 pb-2 sm:border-0 sm:pb-0">
+                <div className="flex items-center justify-between py-1">
                   <span className="text-sm font-semibold text-slate-500">آخر تعديل سعر :</span>
-                  <div className="text-left">
-                    <span className="text-base font-bold text-amber-600">
-                      {lastPriceHistoryEntry ? formatMoney(lastPriceHistoryEntry.new_price || lastPriceHistoryEntry.price || 0) : '-'}
-                    </span>
+                  <div className="text-left flex items-center gap-2">
                     {lastPriceHistoryEntry && (
-                      <span className="mr-2 text-[10px] text-slate-400 font-normal">
+                      <span className="text-[10px] text-slate-400 font-normal">
                         ({lastPriceHistoryEntry.changed_at || lastPriceHistoryEntry.created_at || ''})
                       </span>
                     )}
+                    <span className="text-sm font-bold text-amber-600">
+                      {lastPriceHistoryEntry ? formatMoney(lastPriceHistoryEntry.new_price || lastPriceHistoryEntry.price || 0) : '-'}
+                    </span>
                   </div>
                 </div>
-                <div className="flex items-center justify-between border-b border-slate-50 pb-2 sm:border-0 sm:pb-0">
+                <div className="flex items-center justify-between py-1">
                   <span className="text-sm font-semibold text-slate-500">Wireless :</span>
-                  <span className="text-base font-bold text-blue-600">{groupedStats.Wireless}</span>
+                  <span className="text-sm font-bold text-blue-600">{groupedStats.Wireless}</span>
                 </div>
-                <div className="flex items-center justify-between border-b border-slate-50 pb-2 sm:border-0 sm:pb-0">
+                <div className="flex items-center justify-between py-1">
                   <span className="text-sm font-semibold text-slate-500">FTTH :</span>
-                  <span className="text-base font-bold text-green-600">{groupedStats.FTTH}</span>
+                  <span className="text-sm font-bold text-green-600">{groupedStats.FTTH}</span>
                 </div>
-                <div className="flex items-center justify-between border-b border-slate-50 pb-2 sm:border-0 sm:pb-0">
+                <div className="flex items-center justify-between py-1">
                   <span className="text-sm font-semibold text-slate-500">Optical :</span>
-                  <span className="text-base font-bold text-amber-600">{groupedStats.Optical}</span>
+                  <span className="text-sm font-bold text-amber-600">{groupedStats.Optical}</span>
                 </div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between py-1">
                   <span className="text-sm font-semibold text-slate-500">Other :</span>
-                  <span className="text-base font-bold text-slate-600">{groupedStats.Other}</span>
+                  <span className="text-sm font-bold text-slate-600">{groupedStats.Other}</span>
                 </div>
               </div>
             </section>
