@@ -20,6 +20,7 @@ const AddPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [expandedId, setExpandedId] = useState(null);
 
   useEffect(() => {
     loadOrganizations();
@@ -75,46 +76,59 @@ const AddPage = () => {
       <SlideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
       <main className="page-container space-y-6">
+        {/* Floating Back Button - Left Side */}
+        <div className="fixed top-24 left-6 z-40">
+          <button
+            onClick={() => navigate(-1)}
+            className="group flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-xl border border-slate-200 transition-all hover:bg-slate-50 hover:border-slate-300 hover:scale-105 active:scale-95"
+          >
+            رجوع للخلف
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 transition-transform group-hover:-translate-x-1"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
+
         <section className="page-hero">
           <div className="relative z-10 flex flex-col gap-6">
             <div>
               <div className="brand-chip">العقود</div>
-              <h1 className="hero-title mt-4">إضافة عقد جديد</h1>
-              <p className="hero-subtitle">اختر الجهة أولاً، ثم انتقل إلى إنشاء العقد ضمن نفس القالب البصري لبقية الصفحات.</p>
+              <h1 className="hero-title mt-4">إضافة عقود</h1>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="hero-stat-tile">
+            <div className="grid grid-cols-1 gap-3">
+              <div className="hero-stat-tile w-fit min-w-[200px]">
                 <div className="hero-stat-label">الجهات المتاحة</div>
                 <div className="hero-stat-value">{filteredOrganizations.length}</div>
-              </div>
-              <div className="hero-stat-tile">
-                <div className="hero-stat-label">إجراءات سريعة</div>
-                <div className="mt-2 text-base sm:text-lg font-semibold text-white">اختيار الجهة ثم إنشاء العقد</div>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="filter-panel">
-          <div className="grid lg:grid-cols-[1fr_auto] gap-4 items-end">
-            <div>
-              <label className="field-label">البحث عن جهة</label>
+        <section className="surface-card p-5 border border-slate-100 shadow-sm">
+          <div className="flex flex-col gap-4">
+            <h3 className="text-lg font-bold text-slate-800">البحث عن جهة</h3>
+            <div className="relative w-full">
+              <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-400">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-4.35-4.35m1.85-5.15a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
+                </svg>
+              </span>
               <input
                 type="text"
                 placeholder="ابحث بالاسم أو الهاتف أو الموقع..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="input-modern"
+                className="w-full rounded-xl border border-slate-300 bg-white py-3 pr-12 pl-4 text-sm text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
               />
-            </div>
-
-            <div className="flex gap-3 flex-wrap">
-              <button type="button" onClick={loadOrganizations} className="btn-primary">
-                تحديث
-              </button>
-              <button type="button" onClick={() => navigate('/main')} className="btn-secondary">
-                رجوع
-              </button>
             </div>
           </div>
 
@@ -128,44 +142,72 @@ const AddPage = () => {
         ) : filteredOrganizations.length === 0 ? (
           <section className="surface-card p-12 text-center">
             <div className="text-slate-500 text-lg mb-3">لا توجد جهات مطابقة</div>
-            {organizations.length === 0 && (
-              <div className="text-sm text-slate-400">تأكد أولاً من وجود بيانات في جدول organizations</div>
-            )}
           </section>
         ) : (
-          <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {filteredOrganizations.map((org) => (
-              <article key={org.id} className="content-list-card">
-                <div className="flex items-start justify-between gap-3 mb-4">
-                  <div className="flex-1">
-                    <h2 className="text-xl font-bold text-slate-900 mb-3">{org.name || 'بدون اسم'}</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
-                      <div className="flex gap-2 text-sm text-slate-600">
-                        <span className="font-semibold text-slate-800 shrink-0">رقم الهاتف:</span>
-                        <span className="truncate">{org.phone || '—'}</span>
-                      </div>
-                      <div className="flex gap-2 text-sm text-slate-600">
-                        <span className="font-semibold text-slate-800 shrink-0">الموقع:</span>
-                        <span className="truncate">{org.location || '—'}</span>
-                      </div>
+          <div className="space-y-3">
+            {filteredOrganizations.map((org) => {
+              const isExpanded = expandedId === org.id;
+              return (
+                <div key={org.id} className="surface-card overflow-hidden border border-slate-200 transition-all duration-300">
+                  <div 
+                    onClick={() => setExpandedId(isExpanded ? null : org.id)}
+                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-2 h-2 rounded-full ${org.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                      <h3 className="font-bold text-slate-900 text-lg">{org.name}</h3>
+                    </div>
+                    
+                    <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
+                      <button
+                        onClick={() => handleSelectOrganization(org)}
+                        className="px-5 py-2 text-sm font-bold bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all shadow-md active:scale-95"
+                      >
+                        اختيار
+                      </button>
+                      <button
+                        onClick={() => navigate(`/detail/${org.id}`)}
+                        className="px-4 py-2 text-sm font-bold border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-all"
+                      >
+                        التفاصيل
+                      </button>
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        className={`h-5 w-5 text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} 
+                        viewBox="0 0 20 20" 
+                        fill="currentColor"
+                      >
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
                     </div>
                   </div>
-                  <span className={getStatusClasses(org.status)}>{org.status === 'active' ? 'نشطة' : org.status === 'inactive' ? 'غير نشطة' : org.status}</span>
-                </div>
 
-                <p className="mb-5 text-sm text-slate-500">اختيار الجهة للانتقال المباشر إلى إنشاء العقد أو مراجعة تفاصيلها.</p>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <button type="button" onClick={() => handleSelectOrganization(org)} className="btn-success px-4 py-2.5 text-sm">
-                    اختيار
-                  </button>
-                  <button type="button" onClick={() => navigate(`/detail/${org.id}`)} className="btn-secondary px-4 py-2.5 text-sm">
-                    التفاصيل
-                  </button>
+                  {isExpanded && (
+                    <div className="px-5 pb-5 pt-2 border-t border-slate-100 bg-slate-50/30 animate-in slide-in-from-top-2 duration-300">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">رقم الهاتف</span>
+                          <p className="text-sm text-slate-700 font-medium">{org.phone || '—'}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">الموقع</span>
+                          <p className="text-sm text-slate-700 font-medium">{org.location || '—'}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">الحالة</span>
+                          <p className="text-sm font-bold text-emerald-600">{org.status || '—'}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">العنوان</span>
+                          <p className="text-sm text-slate-700 font-medium">{org.address || '—'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </article>
-            ))}
-          </section>
+              );
+            })}
+          </div>
         )}
       </main>
       <PageFooter />
