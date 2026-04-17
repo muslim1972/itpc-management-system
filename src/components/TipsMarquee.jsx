@@ -65,7 +65,7 @@ const TipsMarquee = ({ appName = 'InfTeleKarbala' }) => {
 
       <div className="flex whitespace-nowrap min-w-full marquee-wrapper">
         <div
-          className="flex shrink-0 animate-marquee"
+          className="flex shrink-0 animate-marquee-rtl"
           style={{
             animationDuration: `${Math.max(duplicatedText.length * 0.1, 15)}s`,
             animationPlayState: isPaused ? 'paused' : 'running',
@@ -84,12 +84,12 @@ const TipsMarquee = ({ appName = 'InfTeleKarbala' }) => {
       </div>
       
       <style>{`
-        @keyframes marquee {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
+        @keyframes marquee-rtl {
+          0% { transform: translateX(-50%); }
+          100% { transform: translateX(0); }
         }
-        .animate-marquee {
-          animation: marquee linear infinite;
+        .animate-marquee-rtl {
+          animation: marquee-rtl linear infinite;
         }
         .font-tajawal {
           font-family: 'Tajawal', sans-serif;

@@ -53,7 +53,7 @@ const SlideMenu = ({ isOpen, onClose }) => {
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="flex h-full flex-col">
+        <div className="flex h-full flex-col pb-32">
           <div className="border-b border-white/10 bg-gradient-to-br from-indigo-900 via-indigo-800 to-indigo-700 p-6 text-white">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-3">

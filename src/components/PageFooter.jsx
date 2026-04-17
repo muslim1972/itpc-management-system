@@ -35,7 +35,7 @@ const PageFooter = ({ onDeveloperClick }) => {
             {/* Left: Credits */}
             <div className="flex items-center gap-1">
               <Code2 className="w-3 h-3 shrink-0" />
-              <span className="whitespace-nowrap">اعداد م. مسلم عقيل</span>
+              <span className="whitespace-nowrap">اعداد: علي علاء</span>
             </div>
 
             {/* Center: Signature Image */}
@@ -55,9 +55,9 @@ const PageFooter = ({ onDeveloperClick }) => {
               />
             </div>
 
-            {/* Right: Version */}
+            {/* Right: Credits 2 */}
             <div className="tracking-widest opacity-70 text-left flex justify-end overflow-hidden">
-              <span className="truncate">V-v1.0.1</span>
+              <span className="truncate">اعداد: كرار حيدر</span>
             </div>
           </div>
         </div>
