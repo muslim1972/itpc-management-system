@@ -36,26 +36,11 @@ const inputClassName =
 const secondaryButtonClassName =
   'rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50';
 
-const statCardTone = {
-  blue: 'border-blue-200 bg-blue-50 text-blue-700',
-  green: 'border-green-200 bg-green-50 text-green-700',
-  amber: 'border-amber-200 bg-amber-50 text-amber-700',
-  slate: 'border-slate-200 bg-slate-50 text-slate-700',
-};
-
 const formatMoney = (value) => {
   const amount = Number(value || 0);
   if (!Number.isFinite(amount)) return '0';
   return amount.toLocaleString('en-US');
 };
-
-const SummaryCard = ({ label, value, tone = 'slate', hint }) => (
-  <div className={`rounded-2xl border p-4 shadow-sm text-right ${statCardTone[tone] || statCardTone.slate}`}>
-    <div className="text-xs font-semibold opacity-80">{label}</div>
-    <div className="mt-2 text-2xl font-bold">{value}</div>
-    {hint ? <div className="mt-1 text-xs opacity-70">{hint}</div> : null}
-  </div>
-);
 
 const SectionCard = ({ title, subtitle, actions, children, className = '' }) => (
   <section className={`rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6 ${className}`}>
@@ -401,7 +386,7 @@ const CompanyDetailsPage = () => {
           <div className="space-y-6">
             <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
               <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="mb-2 inline-flex rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
                     صفحة الشركة المجهزة
                   </div>
@@ -418,15 +403,43 @@ const CompanyDetailsPage = () => {
                     </span>
                   </div>
                 </div>
+              </div>
+            </section>
 
-                <div className="grid w-full gap-3 grid-cols-2 lg:w-[420px]">
-                  <SummaryCard label="إجمالي الاشتراكات" value={totalSubscriptions} tone="blue" />
-                  <SummaryCard
-                    label="آخر تعديل سعر"
-                    value={lastPriceHistoryEntry ? formatMoney(lastPriceHistoryEntry.new_price || lastPriceHistoryEntry.price || 0) : '-'}
-                    tone="amber"
-                    hint={lastPriceHistoryEntry?.changed_at || lastPriceHistoryEntry?.created_at || ''}
-                  />
+            <section className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-8">
+                <div className="flex items-center justify-between border-b border-slate-50 pb-2 sm:border-0 sm:pb-0">
+                  <span className="text-sm font-semibold text-slate-500">إجمالي الاشتراكات :</span>
+                  <span className="text-base font-bold text-blue-600">{totalSubscriptions}</span>
+                </div>
+                <div className="flex items-center justify-between border-b border-slate-50 pb-2 sm:border-0 sm:pb-0">
+                  <span className="text-sm font-semibold text-slate-500">آخر تعديل سعر :</span>
+                  <div className="text-left">
+                    <span className="text-base font-bold text-amber-600">
+                      {lastPriceHistoryEntry ? formatMoney(lastPriceHistoryEntry.new_price || lastPriceHistoryEntry.price || 0) : '-'}
+                    </span>
+                    {lastPriceHistoryEntry && (
+                      <span className="mr-2 text-[10px] text-slate-400 font-normal">
+                        ({lastPriceHistoryEntry.changed_at || lastPriceHistoryEntry.created_at || ''})
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between border-b border-slate-50 pb-2 sm:border-0 sm:pb-0">
+                  <span className="text-sm font-semibold text-slate-500">Wireless :</span>
+                  <span className="text-base font-bold text-blue-600">{groupedStats.Wireless}</span>
+                </div>
+                <div className="flex items-center justify-between border-b border-slate-50 pb-2 sm:border-0 sm:pb-0">
+                  <span className="text-sm font-semibold text-slate-500">FTTH :</span>
+                  <span className="text-base font-bold text-green-600">{groupedStats.FTTH}</span>
+                </div>
+                <div className="flex items-center justify-between border-b border-slate-50 pb-2 sm:border-0 sm:pb-0">
+                  <span className="text-sm font-semibold text-slate-500">Optical :</span>
+                  <span className="text-base font-bold text-amber-600">{groupedStats.Optical}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-slate-500">Other :</span>
+                  <span className="text-base font-bold text-slate-600">{groupedStats.Other}</span>
                 </div>
               </div>
             </section>
@@ -436,13 +449,6 @@ const CompanyDetailsPage = () => {
                 {error}
               </div>
             ) : null}
-
-            <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-              <SummaryCard label="Wireless" value={groupedStats.Wireless} tone="blue" />
-              <SummaryCard label="FTTH" value={groupedStats.FTTH} tone="green" />
-              <SummaryCard label="Optical" value={groupedStats.Optical} tone="amber" />
-              <SummaryCard label="Other" value={groupedStats.Other} tone="slate" />
-            </div>
 
             <section 
               className={`rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6 overflow-hidden transition-all duration-300 ${
