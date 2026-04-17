@@ -424,6 +424,7 @@ const CompaniesSection = ({ onDetails }) => {
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [expandedId, setExpandedId] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [addForm, setAddForm] = useState({
     name: '',
@@ -643,125 +644,158 @@ const CompaniesSection = ({ onDetails }) => {
       ) : companies.length === 0 ? (
         <p className="text-slate-500 py-4">لا توجد شركات</p>
       ) : (
-        <ul className="space-y-3">
-          {companies.map((company) => (
-            <li key={company.id} className="content-list-card">
-              {editingId === company.id ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="flex items-center gap-3">
-                    <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">اسم الشركة</label>
-                    <input
-                      value={editForm.name}
-                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className="input-modern flex-1"
-                      placeholder="اسم الشركة"
-                    />
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">الهاتف</label>
-                    <input
-                      value={editForm.phone}
-                      onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                      className="input-modern flex-1"
-                      placeholder="الهاتف"
-                    />
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">العنوان</label>
-                    <input
-                      value={editForm.address}
-                      onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                      className="input-modern flex-1"
-                      placeholder="العنوان"
-                    />
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">البريد</label>
-                    <input
-                      value={editForm.email}
-                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                      className="input-modern flex-1"
-                      placeholder="البريد"
-                    />
-                  </div>
-                  <div className="md:col-span-2 flex gap-3 items-center">
-                    <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">الحالة</label>
-                    <select
-                      value={String(editForm.is_active)}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, is_active: e.target.value === 'true' })
-                      }
-                      className="select-modern flex-1 bg-white"
-                    >
-                      <option value="true">نشطة</option>
-                      <option value="false">غير نشطة</option>
-                    </select>
-                    <div className="flex gap-2 mr-auto">
-                      <button
-                        onClick={handleSaveCompany}
-                        className="btn-success px-4 py-2.5 text-sm"
-                      >
-                        حفظ التعديلات
-                      </button>
+        <div className="space-y-3">
+          {companies.map((company) => {
+            const isExpanded = expandedId === company.id;
+            const isEditing = editingId === company.id;
+
+            return (
+              <div key={company.id} className="surface-card overflow-hidden transition-all duration-300">
+                {isEditing ? (
+                  <div className="p-5 bg-slate-50/50">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="flex items-center gap-3">
+                        <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">اسم الشركة</label>
+                        <input
+                          value={editForm.name}
+                          onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                          className="input-modern flex-1"
+                          placeholder="اسم الشركة"
+                        />
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">الهاتف</label>
+                        <input
+                          value={editForm.phone}
+                          onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                          className="input-modern flex-1"
+                          placeholder="الهاتف"
+                        />
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">العنوان</label>
+                        <input
+                          value={editForm.address}
+                          onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                          className="input-modern flex-1"
+                          placeholder="العنوان"
+                        />
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">البريد</label>
+                        <input
+                          value={editForm.email}
+                          onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                          className="input-modern flex-1"
+                          placeholder="البريد"
+                        />
+                      </div>
+                      <div className="md:col-span-2 flex gap-3 items-center">
+                        <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">الحالة</label>
+                        <select
+                          value={String(editForm.is_active)}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, is_active: e.target.value === 'true' })
+                          }
+                          className="select-modern flex-1 bg-white"
+                        >
+                          <option value="true">نشطة</option>
+                          <option value="false">غير نشطة</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="mt-5 flex justify-end gap-2 border-t pt-4">
                       <button
                         onClick={() => setEditingId(null)}
-                        className="btn-secondary px-4 py-2.5 text-sm"
+                        className="btn-secondary px-5 py-2.5 text-sm"
                       >
                         إلغاء
                       </button>
+                      <button
+                        onClick={handleSaveCompany}
+                        className="btn-primary px-5 py-2.5 text-sm"
+                      >
+                        حفظ التعديلات
+                      </button>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-                  <div className="flex-1 space-y-2">
-                    <p className="font-bold text-lg text-slate-900 mb-2">{company.name}</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
-                      <div className="flex gap-2 text-sm text-slate-600">
-                        <span className="font-semibold text-slate-800 shrink-0">رقم الهاتف:</span>
-                        <span className="truncate">{company.phone || '—'}</span>
+                ) : (
+                  <>
+                    <div 
+                      onClick={() => setExpandedId(isExpanded ? null : company.id)}
+                      className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={`w-2 h-2 rounded-full ${company.is_active ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                        <h3 className="font-bold text-slate-900 text-lg">{company.name}</h3>
                       </div>
-                      <div className="flex gap-2 text-sm text-slate-600">
-                        <span className="font-semibold text-slate-800 shrink-0">البريد الإلكتروني:</span>
-                        <span className="truncate">{company.email || '—'}</span>
-                      </div>
-                      <div className="flex gap-2 text-sm text-slate-600">
-                        <span className="font-semibold text-slate-800 shrink-0">العنوان:</span>
-                        <span className="truncate">{company.address || '—'}</span>
-                      </div>
-                      <div className="flex gap-2 text-sm text-slate-600">
-                        <span className="font-semibold text-slate-800 shrink-0">الحالة:</span>
-                        <span className={`font-bold ${company.is_active ? 'text-emerald-600' : 'text-rose-600'}`}>
-                          {company.is_active ? 'نشطة' : 'غير نشطة'}
-                        </span>
+                      
+                      <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={() => onDetails(company)}
+                          className="px-3 py-1.5 text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-lg hover:bg-emerald-100 transition-colors"
+                        >
+                          التفاصيل
+                        </button>
+                        <button
+                          onClick={() => startEdit(company)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
+                          title="تعديل"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCompany(company)}
+                          className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
+                          title="حذف"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                        <svg 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          className={`h-5 w-5 text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} 
+                          viewBox="0 0 20 20" 
+                          fill="currentColor"
+                        >
+                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      onClick={() => onDetails(company)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                    >
-                      التفاصيل
-                    </button>
-                    <button
-                      onClick={() => startEdit(company)}
-                      className="px-4 py-2 border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50"
-                    >
-                      تعديل
-                    </button>
-                    <button
-                      onClick={() => handleDeleteCompany(company)}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                    >
-                      حذف
-                    </button>
-                  </div>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
+
+                    {isExpanded && (
+                      <div className="px-5 pb-5 pt-2 border-t border-slate-100 bg-slate-50/30 animate-in slide-in-from-top-2 duration-300">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">رقم الهاتف</span>
+                            <p className="text-sm text-slate-700 font-medium">{company.phone || '—'}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">البريد الإلكتروني</span>
+                            <p className="text-sm text-slate-700 font-medium">{company.email || '—'}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">الحالة</span>
+                            <p className={`text-sm font-bold ${company.is_active ? 'text-emerald-600' : 'text-rose-600'}`}>
+                              {company.is_active ? 'نشطة' : 'غير نشطة'}
+                            </p>
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">العنوان</span>
+                            <p className="text-sm text-slate-700 font-medium">{company.address || '—'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );
