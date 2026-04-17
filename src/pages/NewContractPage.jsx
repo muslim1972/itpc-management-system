@@ -838,19 +838,16 @@ const NewContractPage = () => {
         </div>
 
         <div className="surface-card p-6 sm:p-8">
-          <div className="page-hero mb-8">
-            <div className="relative z-10 flex flex-col gap-4">
-              <div className="brand-chip">العقود</div>
-              <h1 className="hero-title">إضافة عقود</h1>
-              
-              <div className="grid grid-cols-1 gap-3">
-                <div className="hero-stat-tile w-fit min-w-[200px]">
-                  <div className="hero-stat-label">الجهات المتاحة</div>
-                  <div className="mt-2 text-2xl font-bold text-white">{organizations.length}</div>
-                </div>
-              </div>
-            </div>
-          </div>
+        <section className="rounded-[28px] bg-emerald-600 p-6 shadow-lg text-white mb-4">
+          <h1 className="text-3xl font-bold">إضافة عقود</h1>
+        </section>
+
+        {!organizationId && (
+          <section className="flex items-center justify-between px-6 py-2 bg-white rounded-2xl border border-slate-100 shadow-sm mb-4">
+            <span className="text-sm font-semibold text-slate-500">الجهات المتاحة :</span>
+            <span className="text-lg font-bold text-emerald-600">{organizations.length}</span>
+          </section>
+        )}
 
           {error && (
             <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">

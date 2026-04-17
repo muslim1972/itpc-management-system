@@ -98,19 +98,13 @@ const AddPage = () => {
           </button>
         </div>
 
-        <section className="page-hero">
-          <div className="relative z-10 flex flex-col gap-6">
-            <div>
-              <div className="brand-chip">العقود</div>
-              <h1 className="hero-title mt-4">إضافة عقود</h1>
-            </div>
-            <div className="grid grid-cols-1 gap-3">
-              <div className="hero-stat-tile w-fit min-w-[200px]">
-                <div className="hero-stat-label">الجهات المتاحة</div>
-                <div className="hero-stat-value">{filteredOrganizations.length}</div>
-              </div>
-            </div>
-          </div>
+        <section className="rounded-[28px] bg-emerald-600 p-6 shadow-lg text-white mb-4">
+          <h1 className="text-3xl font-bold">إضافة عقود</h1>
+        </section>
+
+        <section className="flex items-center justify-between px-6 py-2 bg-white rounded-2xl border border-slate-100 shadow-sm mb-4">
+          <span className="text-sm font-semibold text-slate-500">الجهات المتاحة :</span>
+          <span className="text-lg font-bold text-emerald-600">{filteredOrganizations.length}</span>
         </section>
 
         <section className="surface-card p-5 border border-slate-100 shadow-sm">
