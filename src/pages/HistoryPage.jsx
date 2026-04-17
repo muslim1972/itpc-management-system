@@ -550,11 +550,11 @@ const HistoryPage = () => {
         </section>
 
         <section className="filter-panel">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-5">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900">الفلاتر والبحث</h2>
-              <p className="text-sm text-slate-500 mt-1">استخدم أكثر من فلتر للوصول بسرعة إلى السجل المطلوب.</p>
-            </div>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
+          <div>
+            <h2 className="section-title !text-xl">الفلاتر والبحث</h2>
+            <p className="section-subtitle">استخدم الفلاتر للوصول بسرعة إلى السجل.</p>
+          </div>
 
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 text-sm font-medium">
@@ -730,10 +730,10 @@ const HistoryPage = () => {
         </section>
 
         <section className="bg-white rounded-[28px] shadow-sm border border-slate-200 overflow-hidden">
-          <div className="px-5 sm:px-7 py-5 border-b border-slate-100 bg-slate-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="px-4 sm:px-7 py-4 border-b border-slate-100 bg-slate-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900">الخط الزمني</h2>
-              <p className="text-sm text-slate-500 mt-1">السجلات مرتبة حسب اليوم لتسهيل التتبع والمراجعة.</p>
+              <h2 className="section-title !text-xl">الخط الزمني</h2>
+              <p className="section-subtitle">السجلات مرتبة حسب اليوم لتسهيل التتبع.</p>
             </div>
 
             <div className="text-sm text-slate-500">
@@ -857,9 +857,9 @@ const InfoBox = ({ label, value, highlight = false, tone = 'green' }) => {
   };
 
   return (
-    <div className={`rounded-2xl border p-4 ${highlight ? tones[tone] || tones.green : 'bg-white border-slate-200'}`}>
-      <div className="text-xs text-slate-500 mb-1">{label}</div>
-      <div className={`text-sm font-semibold break-words ${highlight ? '' : 'text-slate-900'}`}>{value}</div>
+    <div className={`rounded-2xl border p-3 ${highlight ? tones[tone] || tones.green : 'bg-white border-slate-200'}`}>
+      <div className="text-[10px] text-slate-500 mb-1 uppercase tracking-wider">{label}</div>
+      <div className={`text-[13px] font-semibold break-words ${highlight ? '' : 'text-slate-900'}`}>{value}</div>
     </div>
   );
 };
@@ -875,9 +875,9 @@ const DetailPanel = ({ title, tone = 'slate', children }) => {
   const panelClass = tones[tone] || tones.slate;
 
   return (
-    <div className={`rounded-2xl border p-4 ${panelClass}`}>
-      <div className="text-sm font-semibold mb-2">{title}</div>
-      <div className="text-sm whitespace-pre-wrap break-words text-slate-700">{children}</div>
+    <div className={`rounded-2xl border p-3 ${panelClass}`}>
+      <div className="text-xs font-semibold mb-1.5">{title}</div>
+      <div className="text-[13px] whitespace-pre-wrap break-words text-slate-700">{children}</div>
     </div>
   );
 };
@@ -895,9 +895,9 @@ const StatCard = ({ title, value, tone = 'blue' }) => {
   };
 
   return (
-    <div className={`rounded-2xl border p-4 ${toneClasses[tone] || toneClasses.blue}`}>
-      <div className="text-sm opacity-80 mb-1">{title}</div>
-      <div className="text-2xl font-bold break-words">{value}</div>
+    <div className={`rounded-2xl border p-3.5 ${toneClasses[tone] || toneClasses.blue}`}>
+      <div className="text-[11px] opacity-80 mb-0.5 uppercase tracking-wider">{title}</div>
+      <div className="text-xl font-bold break-words">{value}</div>
     </div>
   );
 };

@@ -53,19 +53,19 @@ const SlideMenu = ({ isOpen, onClose }) => {
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="flex h-full flex-col pb-32">
-          <div className="border-b border-white/10 bg-gradient-to-br from-indigo-900 via-indigo-800 to-indigo-700 p-6 text-white">
+        <div className="flex h-full flex-col pb-[env(safe-area-inset-bottom,0px)]">
+          <div className="border-b border-white/10 bg-gradient-to-br from-indigo-900 via-indigo-800 to-indigo-700 p-5 sm:p-6 text-white pt-[calc(1.25rem+env(safe-area-inset-top,0px))]">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3">
                 <div className="shrink-0 rounded-[18px] bg-white p-1 shadow-lg">
                   <BrandLogo className="h-10 w-10 sm:h-14 sm:w-14 rounded-lg" />
                 </div>
                 <div>
-                  <div className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-0.5 text-[10px] sm:text-[11px] font-semibold text-indigo-50">
+                  <div className="inline-flex rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[9px] sm:text-[11px] font-semibold text-indigo-50">
                     تنقل سريع
                   </div>
-                  <h2 className="mt-1.5 text-lg sm:text-xl font-bold text-white leading-tight">القائمة الرئيسية</h2>
-                  <p className="mt-0.5 text-xs sm:text-sm text-indigo-100/90">
+                  <h2 className="mt-1 text-base sm:text-xl font-bold text-white leading-tight">القائمة الرئيسية</h2>
+                  <p className="mt-0.5 text-[11px] sm:text-sm text-indigo-100/90">
                     {isAdmin ? 'وضع المدير' : 'وضع المستخدم'}
                   </p>
                 </div>
@@ -84,9 +84,9 @@ const SlideMenu = ({ isOpen, onClose }) => {
             </div>
 
             {user?.username ? (
-              <div className="mt-4 rounded-[18px] border border-white/10 bg-white/10 px-3.5 py-2.5">
-                <div className="text-[10px] font-medium text-indigo-100/80">المستخدم الحالي</div>
-                <div className="mt-0.5 text-xl sm:text-2xl font-bold text-white leading-tight">{user.username}</div>
+              <div className="mt-3 rounded-[16px] border border-white/10 bg-white/10 px-3 py-2">
+                <div className="text-[9px] font-medium text-indigo-100/80">المستخدم الحالي</div>
+                <div className="mt-0.5 text-lg sm:text-2xl font-bold text-white leading-tight">{user.username}</div>
               </div>
             ) : null}
           </div>

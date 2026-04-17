@@ -22,6 +22,10 @@
     --brand-primary-dark: #15803d;
     --brand-accent: #22c55e;
     --page-max-width: 1280px;
+
+    /* Safe Area Variables */
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sat: env(safe-area-inset-top, 0px);
   }
 
   html {
@@ -123,11 +127,11 @@
   }
 
   .hero-title {
-    @apply relative z-10 text-xl sm:text-3xl lg:text-4xl font-bold tracking-tight leading-tight;
+    @apply relative z-10 text-lg sm:text-3xl lg:text-4xl font-bold tracking-tight leading-tight;
   }
 
   .hero-subtitle {
-    @apply relative z-10 mt-1 max-w-3xl text-[13px] sm:text-base text-indigo-50/90 leading-normal;
+    @apply relative z-10 mt-0.5 max-w-3xl text-[12px] sm:text-base text-indigo-50/90 leading-normal;
   }
 
   .hero-stat-tile {
@@ -135,11 +139,11 @@
   }
 
   .hero-stat-label {
-    @apply text-[10px] sm:text-xs text-indigo-100/90;
+    @apply text-[9px] sm:text-xs text-indigo-100/90;
   }
 
   .hero-stat-value {
-    @apply mt-1 text-lg sm:text-3xl font-bold text-white;
+    @apply mt-0.5 text-base sm:text-3xl font-bold text-white;
   }
 
   .section-title {

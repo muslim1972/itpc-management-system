@@ -208,10 +208,10 @@ const UserOrganizationsPage = () => {
           </div>
         </section>
 
-        <section className="surface-card p-6 sm:p-7 page-reveal stagger-1">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4">
+        <section className="surface-card p-4 sm:p-7 page-reveal stagger-1">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3">
             <div>
-              <h2 className="section-title text-xl">قائمة الجهات</h2>
+              <h2 className="section-title">قائمة الجهات</h2>
               <p className="section-subtitle">إدارة أبسط وبطاقة موحدة لكل جهة.</p>
             </div>
             <button

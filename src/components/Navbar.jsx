@@ -6,9 +6,9 @@ const Navbar = ({ onMenuClick }) => {
   const navigate = useNavigate();
 
   return (
-    <nav className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/92 backdrop-blur-xl shadow-[0_8px_18px_rgba(15,23,42,0.04)]">
+    <nav className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/92 backdrop-blur-xl shadow-[0_8px_18px_rgba(15,23,42,0.04)] pt-[env(safe-area-inset-top,0px)]">
       <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
-        <div dir="rtl" className="grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-5 min-h-[76px] py-3 page-reveal">
+        <div dir="rtl" className="grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-5 min-h-[64px] py-2 page-reveal">
           <button
             type="button"
             onClick={onMenuClick}

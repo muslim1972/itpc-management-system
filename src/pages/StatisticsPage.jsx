@@ -40,11 +40,11 @@ const MetricCard = ({ title, value, subValue, tone = 'blue' }) => {
 
   return (
     <div className="surface-card overflow-hidden">
-      <div className={`h-1.5 bg-gradient-to-r ${toneClasses[tone] || toneClasses.blue}`} />
-      <div className="p-5">
-        <p className="text-sm text-slate-500 mb-2">{title}</p>
-        <p className="text-2xl font-bold text-slate-900">{value}</p>
-        {subValue ? <p className="text-xs text-slate-500 mt-2">{subValue}</p> : null}
+      <div className={`h-1 bg-gradient-to-r ${toneClasses[tone] || toneClasses.blue}`} />
+      <div className="p-3 sm:p-5">
+        <p className="text-[10px] sm:text-sm text-slate-500 mb-1 uppercase tracking-wider">{title}</p>
+        <p className="text-lg sm:text-2xl font-bold text-slate-900">{value}</p>
+        {subValue ? <p className="text-[10px] sm:text-xs text-slate-500 mt-1">{subValue}</p> : null}
       </div>
     </div>
   );
@@ -52,8 +52,8 @@ const MetricCard = ({ title, value, subValue, tone = 'blue' }) => {
 
 const TableCard = ({ title, children, action }) => (
   <div className="surface-card overflow-hidden">
-    <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
-      <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+    <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between gap-3">
+      <h3 className="section-title">{title}</h3>
       {action}
     </div>
     <div className="overflow-x-auto">{children}</div>
@@ -518,10 +518,10 @@ const StatisticsPage = () => {
   const renderProvidersTab = () => (
     <div className="space-y-6">
       <div className="filter-panel space-y-5">
-        <div className="flex flex-col lg:flex-row gap-4 lg:items-end lg:justify-between">
+        <div className="flex flex-col lg:flex-row gap-3 lg:items-end lg:justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-1">إحصائيات الجهات المزودة</h2>
-            <p className="text-slate-500">اختر جهة مزودة، ثم حدد فترة زمنية لمعرفة الدفعات المسددة لهذه الجهة خلال المدة المطلوبة مع إمكانية طباعتها PDF.</p>
+            <h2 className="section-title !text-xl mb-0.5">إحصائيات الجهات المزودة</h2>
+            <p className="section-subtitle">اختر جهة مزودة، ثم حدد فترة لمعرفة الدفعات المسددة لها.</p>
           </div>
           <div className="w-full lg:w-96">
             <label className="block text-sm font-medium text-slate-700 mb-2">الجهة المزودة</label>
@@ -696,9 +696,9 @@ const StatisticsPage = () => {
 
   const renderGeneralTab = () => (
     <div className="space-y-6">
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-        <h2 className="text-2xl font-bold text-slate-900 mb-1">الإحصائيات العامة</h2>
-        <p className="text-slate-500">عرض شامل لكل النظام: الجهات، الخدمات، الدفعات، والكتب الرسمية.</p>
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5">
+        <h2 className="section-title !text-xl mb-0.5">الإحصائيات العامة</h2>
+        <p className="section-subtitle">عرض شامل لكل النظام: الجهات، الخدمات، الدفعات، والكتب الرسمية.</p>
       </div>
 
       {generalError ? <EmptyState text={generalError} /> : null}

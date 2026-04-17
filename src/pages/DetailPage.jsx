@@ -136,20 +136,20 @@ const MetricCard = ({ label, value, tone = 'slate' }) => {
   };
 
   return (
-    <div className={`rounded-2xl border p-4 ${tones[tone] || tones.slate}`}>
-      <div className="mb-1 text-xs font-semibold opacity-80">{label}</div>
-      <div className="text-2xl font-bold">{value}</div>
+    <div className={`rounded-2xl border p-3 sm:p-4 ${tones[tone] || tones.slate}`}>
+      <div className="mb-1 text-[10px] font-semibold opacity-80 uppercase tracking-wider">{label}</div>
+      <div className="text-xl sm:text-2xl font-bold">{value}</div>
     </div>
   );
 };
 
 const Block = ({ title, subtitle, actions, children, className = '' }) => (
-  <section className={`rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 ${className}`}>
+  <section className={`rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm ${className}`}>
     {(title || actions) && (
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          {title && <h3 className="text-lg font-bold text-slate-900">{title}</h3>}
-          {subtitle && <p className="mt-1 text-sm text-slate-500">{subtitle}</p>}
+          {title && <h3 className="section-title">{title}</h3>}
+          {subtitle && <p className="section-subtitle">{subtitle}</p>}
         </div>
         {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
       </div>
@@ -1738,24 +1738,24 @@ const DetailPage = () => {
             </div>
           )}
 
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <section className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-7 shadow-sm">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <div className="mb-2 text-sm font-semibold text-slate-500">صفحة التفاصيل</div>
-                <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">{organization?.name || 'تفاصيل الجهة'}</h1>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-semibold text-slate-700">
-                    عدد الخدمات: {organization?.services?.length || 0}
+                <div className="mb-1 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">صفحة التفاصيل</div>
+                <h1 className="hero-title !text-slate-900">{organization?.name || 'تفاصيل الجهة'}</h1>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
+                    الخدمات: {organization?.services?.length || 0}
                   </span>
-                  <span className={`rounded-full border px-3 py-1.5 text-sm font-semibold ${isContractFullyPaid ? 'border-green-200 bg-green-50 text-green-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
+                  <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${isContractFullyPaid ? 'border-green-200 bg-green-50 text-green-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
                     {isContractFullyPaid ? 'مكتمل الدفع' : 'يوجد مبالغ متبقية'}
                   </span>
                 </div>
               </div>
 
-              <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="text-xs font-semibold text-slate-500">المتبقي الكلي</div>
-                <div className="mt-1 text-3xl font-bold text-slate-900">{formatMoney(totalDueAmount)}</div>
+              <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
+                <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">المتبقي الكلي</div>
+                <div className="mt-0.5 text-2xl font-bold text-slate-900">{formatMoney(totalDueAmount)}</div>
               </div>
             </div>
           </section>
@@ -1922,8 +1922,8 @@ const DetailPage = () => {
                 <section key={key} className="space-y-5 rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <div className="text-xs font-semibold text-slate-500">قسم الخدمات</div>
-                      <h2 className="text-2xl font-bold text-slate-900">{sectionTitleMap[key]}</h2>
+                      <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">قسم الخدمات</div>
+                      <h2 className="section-title">{sectionTitleMap[key]}</h2>
                     </div>
                     <div className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-600">
                       {list.length} خدمة

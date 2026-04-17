@@ -56,29 +56,29 @@ const LoginPage = () => {
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-3 gap-4">
-            <div className="rounded-2xl bg-white/12 border border-white/15 p-4">
-              <div className="text-sm text-indigo-100">الهوية</div>
-              <div className="mt-2 text-2xl font-bold">موحدة</div>
+          <div className="grid sm:grid-cols-3 gap-3">
+            <div className="rounded-2xl bg-white/12 border border-white/15 p-3">
+              <div className="text-[11px] text-indigo-100 uppercase tracking-wider">الهوية</div>
+              <div className="mt-1 text-xl font-bold">موحدة</div>
             </div>
-            <div className="rounded-2xl bg-white/12 border border-white/15 p-4">
-              <div className="text-sm text-indigo-100">الواجهة</div>
-              <div className="mt-2 text-2xl font-bold">أوضح</div>
+            <div className="rounded-2xl bg-white/12 border border-white/15 p-3">
+              <div className="text-[11px] text-indigo-100 uppercase tracking-wider">الواجهة</div>
+              <div className="mt-1 text-xl font-bold">أوضح</div>
             </div>
-            <div className="rounded-2xl bg-white/12 border border-white/15 p-4">
-              <div className="text-sm text-indigo-100">التنقل</div>
-              <div className="mt-2 text-2xl font-bold">أسرع</div>
+            <div className="rounded-2xl bg-white/12 border border-white/15 p-3">
+              <div className="text-[11px] text-indigo-100 uppercase tracking-wider">التنقل</div>
+              <div className="mt-1 text-xl font-bold">أسرع</div>
             </div>
           </div>
         </section>
 
         <section className="surface-card p-6 sm:p-8 lg:p-10 self-center">
-          <div className="text-center mb-8">
-            <BrandLogo className="mx-auto h-20 w-20 rounded-[24px] brand-glow mb-4" imageClassName="scale-[1.04]" />
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
+          <div className="text-center mb-6">
+            <BrandLogo className="mx-auto h-16 w-16 rounded-[20px] brand-glow mb-3" imageClassName="scale-[1.04]" />
+            <h2 className="section-title !text-xl sm:!text-2xl mb-1">
               تسجيل الدخول
             </h2>
-            <p className="text-slate-500 text-sm sm:text-base">
+            <p className="text-slate-500 text-[13px] sm:text-base">
               للوصول إلى نظام اتصالات ومعلوماتية كربلاء
             </p>
           </div>

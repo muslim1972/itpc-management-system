@@ -8,7 +8,7 @@ const PageFooter = ({ onDeveloperClick }) => {
       {/* Line 1: News Ticker */}
       <TipsMarquee appName="InfTeleKarbala" />
 
-      <div className="max-w-7xl mx-auto px-4 pt-1 pb-[calc(0.4rem+env(safe-area-inset-bottom))] w-full border-t border-blue-500/10">
+      <div className="max-w-7xl mx-auto px-4 pt-1 pb-[calc(0.8rem+env(safe-area-inset-bottom,0px))] w-full border-t border-blue-500/10">
         <div className="flex flex-col gap-0.5 relative">
           {/* Line 2: System Title */}
           <div className="relative w-full h-5 flex items-center justify-center overflow-hidden px-4">
