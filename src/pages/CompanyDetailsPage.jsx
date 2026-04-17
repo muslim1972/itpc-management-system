@@ -364,11 +364,32 @@ const CompanyDetailsPage = () => {
   };
 
   return (
-    <div className="app-shell min-h-screen bg-slate-50" dir="rtl">
+    <div className="app-shell min-h-screen bg-slate-50 pb-32" dir="rtl">
       <Navbar onMenuClick={() => setIsMenuOpen(true)} />
       <SlideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
       <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+        <div className="mb-6 flex items-center justify-between">
+          <button
+            onClick={() => navigate(-1)}
+            className="group flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm border border-slate-200 transition-all hover:bg-slate-50 hover:border-slate-300 hover:-translate-x-1"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 transition-transform group-hover:translate-x-1"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                clipRule="evenodd"
+              />
+            </svg>
+            رجوع للخلف
+          </button>
+        </div>
+
         {loading ? (
           <div className="rounded-[28px] border border-slate-200 bg-white p-12 text-center text-lg text-slate-600 shadow-sm">
             جاري تحميل بيانات الشركة...
@@ -444,14 +465,6 @@ const CompanyDetailsPage = () => {
                     className={secondaryButtonClassName}
                   >
                     تفريغ
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => navigate(-1)}
-                    className={secondaryButtonClassName}
-                  >
-                    رجوع
                   </button>
                 </>
               }
