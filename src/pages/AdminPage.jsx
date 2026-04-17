@@ -1235,6 +1235,7 @@ const UsersSection = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showAddForm, setShowAddForm] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -1328,90 +1329,139 @@ const UsersSection = () => {
     <div className="surface-card p-6 sm:p-7 page-reveal">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold text-slate-900">إدارة المستخدمين</h2>
-        <button
-          onClick={load}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-        >
-          تحديث
-        </button>
-      </div>
-
-      {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
-      {success && <p className="text-green-600 text-sm mb-3">{success}</p>}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50/80 rounded-[22px] border border-slate-200 mb-4">
-        <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-slate-700 w-28 shrink-0">اسم المستخدم</label>
-          <input
-            placeholder="اسم المستخدم"
-            value={form.username}
-            onChange={(e) => setForm({ ...form, username: e.target.value })}
-            className="input-modern flex-1"
-          />
-        </div>
-        <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-slate-700 w-28 shrink-0">كلمة المرور</label>
-          <input
-            type="password"
-            placeholder="كلمة المرور"
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-            className="input-modern flex-1"
-          />
-        </div>
-        <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-slate-700 w-28 shrink-0">الصلاحية</label>
-          <select
-            value={form.role}
-            onChange={(e) => setForm({ ...form, role: e.target.value })}
-            className="select-modern flex-1"
+        <div className="flex gap-2">
+          <button 
+            onClick={load} 
+            className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors"
+            title="تحديث"
           >
-            <option value="user">user</option>
-            <option value="admin">admin</option>
-          </select>
-        </div>
-        <div className="flex justify-start">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
           <button
-            onClick={createUser}
-            disabled={saving}
-            className="btn-primary px-5 py-2.5 text-sm disabled:opacity-60"
+            onClick={() => {
+              setShowAddForm(!showAddForm);
+              setError('');
+              setSuccess('');
+            }}
+            className="btn-primary px-4 py-2 text-sm flex items-center gap-2"
           >
-            {saving ? 'جاري الإضافة...' : 'إضافة'}
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v6h4a1 1 0 110 2h-4v4a1 1 0 11-2 0v-4H5a1 1 0 110-2h4V4a1 1 0 011-1z" clipRule="evenodd" />
+            </svg>
+            إضافة مستخدم
           </button>
         </div>
       </div>
 
-      {loading ? (
-        <p className="text-slate-500 py-4">جاري التحميل...</p>
-      ) : users.length === 0 ? (
-        <p className="text-slate-500 py-4">لا يوجد مستخدمون</p>
-      ) : (
-        <div className="space-y-3">
-          {users.map((user) => (
-            <div
-              key={user.id}
-              className="content-list-card flex flex-col md:flex-row md:items-center md:justify-between gap-3"
-            >
-              <div>
-                <p className="font-bold text-slate-900">{user.username}</p>
-                <p className="text-sm text-slate-500">
-                  الدور: {user.role || 'user'}
-                </p>
-                {user.last_login && (
-                  <p className="text-xs text-slate-500">
-                    آخر تسجيل دخول: {user.last_login}
-                  </p>
-                )}
-              </div>
+      {error && <p className="text-red-500 text-sm mb-3 bg-red-50 p-3 rounded-xl border border-red-100">{error}</p>}
+      {success && <p className="text-emerald-600 text-sm mb-3 bg-emerald-50 p-3 rounded-xl border border-emerald-100 font-bold">{success}</p>}
 
-              <button
-                onClick={() => handleDeleteUser(user)}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 self-start md:self-auto"
+      {showAddForm && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5 bg-slate-50/80 rounded-[22px] border border-slate-200 mb-6 animate-in slide-in-from-top-2 duration-300">
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-2">اسم المستخدم</label>
+            <input
+              placeholder="مثلاً: ahmad_2024"
+              value={form.username}
+              onChange={(e) => setForm({ ...form, username: e.target.value })}
+              className="input-modern w-full"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-2">كلمة المرور</label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              className="input-modern w-full"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-2">الصلاحية</label>
+            <div className="flex gap-2">
+              <select
+                value={form.role}
+                onChange={(e) => setForm({ ...form, role: e.target.value })}
+                className="select-modern flex-1 bg-white"
               >
-                حذف
+                <option value="user">User (مستخدم)</option>
+                <option value="admin">Admin (مدير نظام)</option>
+              </select>
+              <button
+                onClick={createUser}
+                disabled={saving}
+                className="btn-primary px-6 transition-all shadow-md active:scale-95"
+              >
+                {saving ? '...' : 'حفظ'}
               </button>
             </div>
-          ))}
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="py-12 text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-500 border-t-transparent"></div>
+          <p className="mt-4 text-slate-500">جاري تحميل قائمة المستخدمين...</p>
+        </div>
+      ) : users.length === 0 ? (
+        <div className="py-12 text-center text-slate-400 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+          لا يوجد مستخدمون حالياً
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {users.map((u) => {
+            const isAdmin = u.role === 'admin';
+            return (
+              <div key={u.id} className="surface-card p-5 border border-slate-100 hover:border-emerald-200 hover:shadow-md transition-all group relative overflow-hidden">
+                {/* Role Badge Decor */}
+                <div className={`absolute top-0 right-0 w-1.5 h-full ${isAdmin ? 'bg-amber-400' : 'bg-emerald-500'}`} />
+                
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-bold ${isAdmin ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                      {u.username.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-900">{u.username}</h3>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${isAdmin ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                          {isAdmin ? 'مدير نظام' : 'مستخدم'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={() => handleDeleteUser(u)}
+                    className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                    title="حذف المستخدم"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="space-y-2 mt-auto">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-slate-400 font-bold uppercase tracking-wider">آخر نشاط</span>
+                    <span className="text-slate-600 font-medium">
+                      {u.last_login ? new Date(u.last_login).toLocaleDateString('ar-EG') : 'لم يسجل دخول بعد'}
+                    </span>
+                  </div>
+                  {u.last_login && (
+                    <p className="text-[10px] text-slate-400 text-left dir-ltr">
+                      {new Date(u.last_login).toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
