@@ -55,17 +55,17 @@ const SlideMenu = ({ isOpen, onClose }) => {
       >
         <div className="flex h-full flex-col pb-32">
           <div className="border-b border-white/10 bg-gradient-to-br from-indigo-900 via-indigo-800 to-indigo-700 p-6 text-white">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3">
-                <div className="shrink-0 rounded-[22px] bg-white p-1.5 shadow-lg">
-                  <BrandLogo className="h-14 w-14 rounded-xl" />
+                <div className="shrink-0 rounded-[18px] bg-white p-1 shadow-lg">
+                  <BrandLogo className="h-10 w-10 sm:h-14 sm:w-14 rounded-lg" />
                 </div>
                 <div>
-                  <div className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold text-indigo-50">
+                  <div className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-0.5 text-[10px] sm:text-[11px] font-semibold text-indigo-50">
                     تنقل سريع
                   </div>
-                  <h2 className="mt-3 text-xl font-bold text-white">القائمة الرئيسية</h2>
-                  <p className="mt-1 text-sm text-indigo-100">
+                  <h2 className="mt-1.5 text-lg sm:text-xl font-bold text-white leading-tight">القائمة الرئيسية</h2>
+                  <p className="mt-0.5 text-xs sm:text-sm text-indigo-100/90">
                     {isAdmin ? 'وضع المدير' : 'وضع المستخدم'}
                   </p>
                 </div>
@@ -84,9 +84,9 @@ const SlideMenu = ({ isOpen, onClose }) => {
             </div>
 
             {user?.username ? (
-              <div className="mt-5 rounded-[22px] border border-white/15 bg-white/10 px-4 py-3">
-                <div className="text-xs font-medium text-indigo-100">المستخدم الحالي</div>
-                <div className="mt-1 text-2xl font-bold text-white">{user.username}</div>
+              <div className="mt-4 rounded-[18px] border border-white/12 bg-white/10 px-3.5 py-2.5">
+                <div className="text-[10px] font-medium text-indigo-100/80">المستخدم الحالي</div>
+                <div className="mt-0.5 text-xl sm:text-2xl font-bold text-white leading-tight">{user.username}</div>
               </div>
             ) : null}
           </div>
@@ -106,10 +106,10 @@ const SlideMenu = ({ isOpen, onClose }) => {
                     key={item.path}
                     type="button"
                     onClick={() => handleNavigation(item.path)}
-                    className={`page-reveal stagger-${Math.min(index + 1, 4)} w-full rounded-[22px] border px-4 py-4 text-right ${baseClasses}`}
+                    className={`page-reveal stagger-${Math.min(index + 1, 4)} w-full rounded-[20px] border px-3 sm:px-4 py-3 sm:py-4 text-right ${baseClasses}`}
                   >
-                    <div className="flex items-start gap-3">
-                      <div className={`mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xl ${
+                    <div className="flex items-center gap-3">
+                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg ${
                         item.danger
                           ? 'bg-rose-50 text-rose-600'
                           : isActive
@@ -120,10 +120,10 @@ const SlideMenu = ({ isOpen, onClose }) => {
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <div className={`text-lg font-bold ${item.danger ? 'text-rose-700' : 'text-slate-900'}`}>
+                        <div className={`text-base sm:text-lg font-bold leading-tight ${item.danger ? 'text-rose-700' : 'text-slate-900'}`}>
                           {item.label}
                         </div>
-                        <div className={`mt-1 text-sm ${item.danger ? 'text-rose-500' : 'text-slate-500'}`}>
+                        <div className={`mt-0.5 text-xs sm:text-sm ${item.danger ? 'text-rose-500' : 'text-slate-500'}`}>
                           {item.hint}
                         </div>
                       </div>

@@ -169,16 +169,20 @@ const OrganizationsSection = () => {
 
   return (
     <div className="surface-card p-6 sm:p-7 page-reveal">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-slate-900">إدارة الجهات</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+        <div>
+          <h2 className="section-title">إدارة الجهات</h2>
+          <p className="section-subtitle">تنظيم وإدارة الجهات المستفيدة</p>
+        </div>
         <button
           onClick={() => {
             setShowAddForm(!showAddForm);
             setError('');
           }}
-          className="btn-primary px-4 py-2.5 text-sm"
+          className="btn-primary flex items-center justify-center gap-2 px-4 py-2 text-sm"
         >
-          إضافة جهة
+          <Plus className="h-4 w-4" />
+          <span>إضافة جهة</span>
         </button>
       </div>
 
@@ -1781,17 +1785,17 @@ const AdminPage = () => {
       />
 
       <div className="page-container">
-        <div className="page-hero mb-8 relative overflow-hidden min-h-[160px] flex flex-col justify-center">
+        <div className="page-hero mb-8 relative overflow-hidden min-h-[110px] sm:min-h-[160px] flex flex-col justify-center">
           <div className="absolute inset-0 pointer-events-none opacity-20">
             <div className="absolute -top-10 -left-10 h-40 w-40 rounded-full bg-white/20 blur-3xl" />
             <div className="absolute bottom-0 right-0 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
           </div>
 
-          <div className="relative z-10 flex flex-col gap-6">
+          <div className="relative z-10 flex flex-col gap-4 sm:gap-6">
             <div className="pointer-events-none">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">لوحة تحكم الإدارة</h1>
-              <p className="text-sm sm:text-base text-emerald-50/90 mt-1">
-                مرحباً {currentUser?.username || 'Admin'}
+              <h1 className="hero-title">لوحة تحكم الإدارة</h1>
+              <p className="hero-subtitle">
+                مرحباً <span className="font-bold text-white underline decoration-white/30 underline-offset-4">{currentUser?.username || 'Admin'}</span>
               </p>
             </div>
 
