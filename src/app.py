@@ -682,6 +682,28 @@ def add_org_service(org_id):
         conn.commit()
     return jsonify({'success': True, 'service': service}), 201
 
+# ── App News ──────────────────────────────────────────────────────────────
+
+@app.route('/api/news', methods=['GET'])
+def get_news():
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT content FROM app_news ORDER BY fetched_at DESC LIMIT 1")
+        row = cursor.fetchone()
+        return jsonify({'news': row['content'] if row else ''})
+
+@app.route('/api/news', methods=['POST'])
+def save_news():
+    data = request.json
+    content = data.get('content', '')
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM app_news")
+        is_pg = 'postgres' in str(type(conn)).lower() or not hasattr(conn, 'interrupt')
+        p = "%s" if is_pg else "?"
+        cursor.execute(f"INSERT INTO app_news (content) VALUES ({p})", (content,))
+        conn.commit()
+    return jsonify({'success': True})
 
 # ── Service Items ────────────────────────────────────────────────────────────
 

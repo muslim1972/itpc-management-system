@@ -55,7 +55,7 @@
 
 @layer components {
   .app-shell {
-    @apply min-h-screen relative;
+    @apply min-h-screen relative pb-32;
     background-image: linear-gradient(180deg, #f8fafc 0%, #f8fafc 60%, #f1f5f9 100%);
   }
 
