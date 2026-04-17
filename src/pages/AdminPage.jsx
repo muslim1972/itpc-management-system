@@ -346,17 +346,17 @@ const OrganizationsSection = () => {
                   <>
                     <div 
                       onClick={() => setExpandedId(isExpanded ? null : org.id)}
-                      className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50 transition-colors"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 cursor-pointer hover:bg-slate-50 transition-colors"
                     >
-                      <div className="flex items-center gap-4">
-                        <div className={`w-2 h-2 rounded-full ${org.status === 'active' ? 'bg-emerald-500' : org.status === 'inactive' ? 'bg-rose-500' : 'bg-amber-500'}`} />
-                        <h3 className="font-bold text-slate-900 text-lg">{org.name}</h3>
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full shrink-0 ${org.status === 'active' ? 'bg-emerald-500' : org.status === 'inactive' ? 'bg-rose-500' : 'bg-amber-500'}`} />
+                        <h3 className="font-bold text-slate-900 text-base sm:text-lg leading-tight truncate">{org.name}</h3>
                       </div>
                       
-                      <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
                         <button
                           onClick={() => startEdit(org)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
+                          className="p-2.5 text-blue-600 bg-blue-50 sm:bg-transparent hover:bg-blue-50 rounded-xl transition-colors"
                           title="تعديل"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -365,13 +365,14 @@ const OrganizationsSection = () => {
                         </button>
                         <button
                           onClick={() => handleDelete(org.id)}
-                          className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
+                          className="p-2.5 text-rose-600 bg-rose-50 sm:bg-transparent hover:bg-rose-50 rounded-xl transition-colors"
                           title="حذف"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                           </svg>
                         </button>
+                        <div className="w-px h-6 bg-slate-200 mx-1 hidden sm:block"></div>
                         <svg 
                           xmlns="http://www.w3.org/2000/svg" 
                           className={`h-5 w-5 text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} 
@@ -723,14 +724,14 @@ const CompaniesSection = ({ onDetails }) => {
                   <>
                     <div 
                       onClick={() => setExpandedId(isExpanded ? null : company.id)}
-                      className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50 transition-colors"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 cursor-pointer hover:bg-slate-50 transition-colors"
                     >
-                      <div className="flex items-center gap-4">
-                        <div className={`w-2 h-2 rounded-full ${company.is_active ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                        <h3 className="font-bold text-slate-900 text-lg">{company.name}</h3>
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full shrink-0 ${company.is_active ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                        <h3 className="font-bold text-slate-900 text-base sm:text-lg leading-tight truncate">{company.name}</h3>
                       </div>
                       
-                      <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
                         <button
                           onClick={() => onDetails(company)}
                           className="px-3 py-1.5 text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-lg hover:bg-emerald-100 transition-colors"
@@ -739,7 +740,7 @@ const CompaniesSection = ({ onDetails }) => {
                         </button>
                         <button
                           onClick={() => startEdit(company)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
+                          className="p-2.5 text-blue-600 bg-blue-50 sm:bg-transparent hover:bg-blue-50 rounded-xl transition-colors"
                           title="تعديل"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -748,13 +749,14 @@ const CompaniesSection = ({ onDetails }) => {
                         </button>
                         <button
                           onClick={() => handleDeleteCompany(company)}
-                          className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
+                          className="p-2.5 text-rose-600 bg-rose-50 sm:bg-transparent hover:bg-rose-50 rounded-xl transition-colors"
                           title="حذف"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                           </svg>
                         </button>
+                        <div className="w-px h-6 bg-slate-200 mx-1 hidden sm:block"></div>
                         <svg 
                           xmlns="http://www.w3.org/2000/svg" 
                           className={`h-5 w-5 text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} 
@@ -1759,7 +1761,7 @@ const AdminPage = () => {
   }, [navigate]);
 
   const sectionButtonClass = (key) =>
-    `relative px-6 py-2.5 text-sm font-bold transition-all duration-300 rounded-full ${
+    `relative px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-bold transition-all duration-300 rounded-full whitespace-nowrap flex-shrink-0 ${
       activeSection === key
         ? 'bg-white text-emerald-700 shadow-[0_4px_12px_rgba(255,255,255,0.3)]'
         : 'text-white/80 hover:text-white hover:bg-white/10'
@@ -1793,7 +1795,7 @@ const AdminPage = () => {
               </p>
             </div>
 
-            <div className="relative z-20 flex flex-wrap items-center gap-1 bg-black/10 p-1 rounded-full w-fit backdrop-blur-md border border-white/5">
+            <div className="relative z-20 flex flex-nowrap items-center gap-1.5 bg-black/15 p-1 rounded-full w-full overflow-x-auto scrollbar-hide backdrop-blur-md border border-white/10 sm:w-fit">
               <button
                 type="button"
                 onClick={() => setActiveSection('organizations')}
