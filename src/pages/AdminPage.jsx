@@ -27,6 +27,7 @@ const OrganizationsSection = () => {
   const [organizations, setOrganizations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [expandedId, setExpandedId] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({
     name: '',
@@ -258,129 +259,162 @@ const OrganizationsSection = () => {
       ) : organizations.length === 0 ? (
         <p className="text-slate-500 py-4">لا توجد جهات</p>
       ) : (
-        <ul className="space-y-3">
-          {organizations.map((org) => (
-            <li key={org.id} className="content-list-card">
-              {editingId === org.id ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50/80 rounded-[22px] border border-slate-200 mb-4">
-                  <div className="flex items-center gap-3">
-                    <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">اسم الجهة</label>
-                    <input
-                      value={editForm.name}
-                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className="input-modern flex-1"
-                      placeholder="اسم الجهة"
-                    />
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">رقم الهاتف</label>
-                    <input
-                      value={editForm.phone}
-                      onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                      className="input-modern flex-1"
-                      placeholder="رقم الهاتف"
-                    />
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">الموقع</label>
-                    <input
-                      value={editForm.location}
-                      onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
-                      className="input-modern flex-1"
-                      placeholder="الموقع"
-                    />
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">العنوان</label>
-                    <input
-                      value={editForm.address}
-                      onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                      className="input-modern flex-1"
-                      placeholder="العنوان"
-                    />
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">ملاحظات</label>
-                    <input
-                      value={editForm.notes}
-                      onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                      className="input-modern flex-1"
-                      placeholder="ملاحظات"
-                    />
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">الحالة</label>
-                    <select
-                      value={editForm.status}
-                      onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                      className="select-modern flex-1 bg-white"
-                    >
-                      <option value="active">active</option>
-                      <option value="inactive">inactive</option>
-                      <option value="pending">pending</option>
-                    </select>
-                  </div>
-                  <div className="md:col-span-2 flex justify-end gap-2">
-                    <button
-                      onClick={() => setEditingId(null)}
-                      className="btn-secondary px-5 py-2.5 text-sm"
-                    >
-                      إلغاء
-                    </button>
-                    <button
-                      onClick={handleSave}
-                      className="btn-primary px-5 py-2.5 text-sm"
-                    >
-                      حفظ التعديلات
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-                  <div className="flex-1 space-y-2">
-                    <p className="font-bold text-lg text-slate-900 mb-2">{org.name}</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
-                      <div className="flex gap-2 text-sm text-slate-600">
-                        <span className="font-semibold text-slate-800 shrink-0">رقم الهاتف:</span>
-                        <span className="truncate">{org.phone || '—'}</span>
+        <div className="space-y-3">
+          {organizations.map((org) => {
+            const isExpanded = expandedId === org.id;
+            const isEditing = editingId === org.id;
+
+            return (
+              <div key={org.id} className="surface-card overflow-hidden transition-all duration-300">
+                {isEditing ? (
+                  <div className="p-5 bg-slate-50/50">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex items-center gap-3">
+                        <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">اسم الجهة</label>
+                        <input
+                          value={editForm.name}
+                          onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                          className="input-modern flex-1"
+                          placeholder="اسم الجهة"
+                        />
                       </div>
-                      <div className="flex gap-2 text-sm text-slate-600">
-                        <span className="font-semibold text-slate-800 shrink-0">الموقع:</span>
-                        <span className="truncate">{org.location || '—'}</span>
+                      <div className="flex items-center gap-3">
+                        <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">رقم الهاتف</label>
+                        <input
+                          value={editForm.phone}
+                          onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                          className="input-modern flex-1"
+                          placeholder="رقم الهاتف"
+                        />
                       </div>
-                      <div className="flex gap-2 text-sm text-slate-600">
-                        <span className="font-semibold text-slate-800 shrink-0">الحالة:</span>
-                        <span className="truncate">{org.status || '—'}</span>
+                      <div className="flex items-center gap-3">
+                        <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">الموقع</label>
+                        <input
+                          value={editForm.location}
+                          onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+                          className="input-modern flex-1"
+                          placeholder="الموقع"
+                        />
                       </div>
-                      <div className="flex gap-2 text-sm text-slate-600">
-                        <span className="font-semibold text-slate-800 shrink-0">العنوان:</span>
-                        <span className="truncate">{org.address || '—'}</span>
+                      <div className="flex items-center gap-3">
+                        <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">العنوان</label>
+                        <input
+                          value={editForm.address}
+                          onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                          className="input-modern flex-1"
+                          placeholder="العنوان"
+                        />
                       </div>
-                      <div className="flex gap-2 text-sm text-slate-600 sm:col-span-2">
-                        <span className="font-semibold text-slate-800 shrink-0">ملاحظات:</span>
-                        <span>{org.notes || 'لا توجد'}</span>
+                      <div className="flex items-center gap-3">
+                        <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">ملاحظات</label>
+                        <input
+                          value={editForm.notes}
+                          onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                          className="input-modern flex-1"
+                          placeholder="ملاحظات"
+                        />
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">الحالة</label>
+                        <select
+                          value={editForm.status}
+                          onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                          className="select-modern flex-1 bg-white"
+                        >
+                          <option value="active">active</option>
+                          <option value="inactive">inactive</option>
+                          <option value="pending">pending</option>
+                        </select>
                       </div>
                     </div>
+                    <div className="mt-5 flex justify-end gap-2 border-t pt-4">
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="btn-secondary px-5 py-2.5 text-sm"
+                      >
+                        إلغاء
+                      </button>
+                      <button
+                        onClick={handleSave}
+                        className="btn-primary px-5 py-2.5 text-sm"
+                      >
+                        حفظ التعديلات
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => startEdit(org)}
-                      className="px-3 py-2 text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50"
+                ) : (
+                  <>
+                    <div 
+                      onClick={() => setExpandedId(isExpanded ? null : org.id)}
+                      className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50 transition-colors"
                     >
-                      تعديل
-                    </button>
-                    <button
-                      onClick={() => handleDelete(org.id)}
-                      className="px-3 py-2 text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
-                    >
-                      حذف
-                    </button>
-                  </div>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
+                      <div className="flex items-center gap-4">
+                        <div className={`w-2 h-2 rounded-full ${org.status === 'active' ? 'bg-emerald-500' : org.status === 'inactive' ? 'bg-rose-500' : 'bg-amber-500'}`} />
+                        <h3 className="font-bold text-slate-900 text-lg">{org.name}</h3>
+                      </div>
+                      
+                      <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={() => startEdit(org)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
+                          title="تعديل"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDelete(org.id)}
+                          className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
+                          title="حذف"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                        <svg 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          className={`h-5 w-5 text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} 
+                          viewBox="0 0 20 20" 
+                          fill="currentColor"
+                        >
+                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    {isExpanded && (
+                      <div className="px-5 pb-5 pt-2 border-t border-slate-100 bg-slate-50/30 animate-in slide-in-from-top-2 duration-300">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">رقم الهاتف</span>
+                            <p className="text-sm text-slate-700 font-medium">{org.phone || '—'}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">الموقع</span>
+                            <p className="text-sm text-slate-700 font-medium">{org.location || '—'}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">الحالة</span>
+                            <p className="text-sm font-bold text-emerald-600">{org.status || '—'}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">العنوان</span>
+                            <p className="text-sm text-slate-700 font-medium">{org.address || '—'}</p>
+                          </div>
+                          <div className="sm:col-span-2 space-y-1">
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">ملاحظات</span>
+                            <p className="text-sm text-slate-600 leading-relaxed bg-white/50 p-3 rounded-xl border border-slate-100">{org.notes || 'لا توجد ملاحظات'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );
@@ -1572,10 +1606,10 @@ const AdminPage = () => {
   }, [navigate]);
 
   const sectionButtonClass = (key) =>
-    `relative z-10 px-4 py-2 rounded-xl border transition-all duration-200 ${
+    `relative px-6 py-2.5 text-sm font-bold transition-all duration-300 rounded-full ${
       activeSection === key
-        ? 'bg-white text-violet-700 border-white shadow-sm'
-        : 'bg-white/10 text-white border-white/20 hover:bg-white/20 hover:-translate-y-0.5'
+        ? 'bg-white text-emerald-700 shadow-[0_4px_12px_rgba(255,255,255,0.3)]'
+        : 'text-white/80 hover:text-white hover:bg-white/10'
     }`;
 
   return (
@@ -1592,21 +1626,21 @@ const AdminPage = () => {
       />
 
       <div className="page-container">
-        <div className="page-hero mb-6 relative overflow-hidden">
+        <div className="page-hero mb-8 relative overflow-hidden min-h-[160px] flex flex-col justify-center">
           <div className="absolute inset-0 pointer-events-none opacity-20">
             <div className="absolute -top-10 -left-10 h-40 w-40 rounded-full bg-white/20 blur-3xl" />
             <div className="absolute bottom-0 right-0 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
           </div>
 
-          <div className="relative z-10 flex flex-col gap-5">
+          <div className="relative z-10 flex flex-col gap-6">
             <div className="pointer-events-none">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-white">لوحة تحكم الإدارة</h1>
-              <p className="text-sm sm:text-base text-blue-50/90 mt-2">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">لوحة تحكم الإدارة</h1>
+              <p className="text-sm sm:text-base text-emerald-50/90 mt-1">
                 مرحباً {currentUser?.username || 'Admin'}
               </p>
             </div>
 
-            <div className="relative z-20 flex flex-wrap gap-2 pointer-events-auto">
+            <div className="relative z-20 flex flex-wrap items-center gap-1 bg-black/10 p-1 rounded-full w-fit backdrop-blur-md border border-white/5">
               <button
                 type="button"
                 onClick={() => setActiveSection('organizations')}
@@ -1628,7 +1662,7 @@ const AdminPage = () => {
                 onClick={() => setActiveSection('packages')}
                 className={sectionButtonClass('packages')}
               >
-                الباقات والرينجات
+                الباقات
               </button>
 
               <button

@@ -2,11 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Cairo';
+  src: url('/fonts/Cairo-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Amiri';
+  src: url('/fonts/Amiri-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 @layer base {
   :root {
-    --brand-primary: #4f46e5;
-    --brand-primary-dark: #3730a3;
-    --brand-accent: #7c3aed;
+    --brand-primary: #16a34a; /* Green 600 - Match main app */
+    --brand-primary-dark: #15803d;
+    --brand-accent: #22c55e;
     --page-max-width: 1280px;
   }
 
@@ -16,6 +30,7 @@
 
   body {
     @apply bg-slate-50 text-slate-900 antialiased;
+    font-family: 'Cairo', sans-serif;
     background-image: linear-gradient(180deg, #f8fafc 0%, #f8fafc 55%, #f1f5f9 100%);
   }
 
@@ -74,8 +89,8 @@
 
   .page-hero {
     @apply relative overflow-hidden rounded-[30px] p-6 sm:p-8 lg:p-10 text-white;
-    background-image: linear-gradient(135deg, #312e81 0%, #4338ca 55%, #4f46e5 100%);
-    box-shadow: 0 16px 40px rgba(67, 56, 202, 0.18);
+    background-image: linear-gradient(135deg, #15803d 0%, #16a34a 55%, #22c55e 100%);
+    box-shadow: 0 16px 40px rgba(22, 163, 74, 0.18);
   }
 
   .page-hero::before {
@@ -143,29 +158,29 @@
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-semibold text-white;
-    background-image: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
-    box-shadow: 0 10px 24px rgba(79, 70, 229, 0.2);
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-semibold text-white transition-all duration-300;
+    background-image: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+    box-shadow: 0 10px 24px rgba(22, 163, 74, 0.2);
   }
 
   .btn-primary:hover {
-    @apply -translate-y-0.5;
-    box-shadow: 0 14px 30px rgba(79, 70, 229, 0.24);
+    @apply -translate-y-0.5 brightness-110;
+    box-shadow: 0 14px 30px rgba(22, 163, 74, 0.24);
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 shadow-sm hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50;
   }
 
   .btn-success {
-    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-semibold text-white;
-    background-image: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
-    box-shadow: 0 10px 24px rgba(79, 70, 229, 0.2);
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-semibold text-white transition-all duration-300;
+    background-image: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+    box-shadow: 0 10px 24px rgba(22, 163, 74, 0.2);
   }
 
   .btn-success:hover {
-    @apply -translate-y-0.5;
-    box-shadow: 0 14px 30px rgba(79, 70, 229, 0.24);
+    @apply -translate-y-0.5 brightness-110;
+    box-shadow: 0 14px 30px rgba(22, 163, 74, 0.24);
   }
 
   .btn-danger {
