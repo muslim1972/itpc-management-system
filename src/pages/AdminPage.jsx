@@ -890,6 +890,7 @@ const PackagesSection = () => {
   const [editingRangeForm, setEditingRangeForm] = useState({ from: '', to: '', price: '' });
   const [drafts, setDrafts] = useState(() => Object.fromEntries(serviceNames.map((s) => [s, [{ from: '', to: '', price: '' }]])));
   const [impactModal, setImpactModal] = useState({ open: false, serviceName: '', rangeId: null, oldPrice: 0, newPrice: 0, organizations: [], selectedIds: [], official_book_date: '', official_book_description: '' });
+  const [expandedServiceName, setExpandedServiceName] = useState(null);
 
   const closeImpactModal = () => setImpactModal({ open: false, serviceName: '', rangeId: null, oldPrice: 0, newPrice: 0, organizations: [], selectedIds: [] });
 
@@ -1039,110 +1040,178 @@ const PackagesSection = () => {
     <div className="surface-card p-6 sm:p-7 page-reveal">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold text-slate-900">إدارة الباقات والرينجات</h2>
-        <button onClick={loadRanges} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">تحديث</button>
+        <button 
+          onClick={loadRanges} 
+          className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors"
+          title="تحديث"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </button>
       </div>
 
-      <p className="text-sm text-slate-500 mb-4">هذه section مستقلة عن شركات مقدمة الخدمة، ومخصصة فقط للخدمات: fna / gcc / انترانيت / دولي / LTE</p>
-      {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
+      <p className="text-sm text-slate-500 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+        هذه الواجهة مخصصة لإدارة أسعار الرينجات للخدمات النوعية (fna, gcc, انترانيت, دولي, LTE) وهي مستقلة عن اشتراكات الشركات المجهزة.
+      </p>
+
+      {error && <p className="text-red-500 text-sm mb-4 bg-red-50 p-3 rounded-xl border border-red-100">{error}</p>}
 
       {loading ? (
-        <p className="text-slate-500 py-4">جاري التحميل...</p>
+        <div className="py-12 text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-500 border-t-transparent"></div>
+          <p className="mt-4 text-slate-500">جاري تحميل البيانات...</p>
+        </div>
       ) : (
-        <div className="space-y-5">
-          {serviceNames.map((serviceName) => (
-            <div key={serviceName} className="soft-panel">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
-                <div>
-                  <h3 className="font-bold text-slate-900 text-lg">{serviceName}</h3>
-                  <p className="text-sm text-slate-500">عدد الرينجات: {(serviceRanges[serviceName] || []).length}</p>
+        <div className="space-y-3">
+          {serviceNames.map((serviceName) => {
+            const isExpanded = expandedServiceName === serviceName;
+            const ranges = serviceRanges[serviceName] || [];
+            
+            return (
+              <div key={serviceName} className="surface-card overflow-hidden border border-slate-200 transition-all duration-300">
+                <div 
+                  onClick={() => setExpandedServiceName(isExpanded ? null : serviceName)}
+                  className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50 transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold">
+                      {serviceName.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-lg">{serviceName}</h3>
+                      <p className="text-xs text-slate-500 font-medium">عدد الرينجات المسجلة: {ranges.length}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
+                    <button
+                      onClick={() => setShowAddForService((prev) => ({ ...prev, [serviceName]: !prev[serviceName] }))}
+                      className="px-4 py-2 text-xs font-bold bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all shadow-md active:scale-95"
+                    >
+                      {showAddForService[serviceName] ? 'إلغاء الإضافة' : 'إضافة رينج'}
+                    </button>
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      className={`h-5 w-5 text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} 
+                      viewBox="0 0 20 20" 
+                      fill="currentColor"
+                    >
+                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </div>
                 </div>
-                <button onClick={() => setShowAddForService((prev) => ({ ...prev, [serviceName]: !prev[serviceName] }))} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">إضافة رينج</button>
-              </div>
 
-              {(serviceRanges[serviceName] || []).length > 0 ? (
-                <div className="space-y-2 mb-4">
-                  {(serviceRanges[serviceName] || []).map((row) => {
-                    const isEditing = editingRangeId === row.id;
-                    return (
-                      <div key={row.id} className="p-3 bg-white rounded-lg border">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 items-center">
-                          <div className="grid grid-cols-[50px_1fr] items-center gap-2">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">من</span>
-                            <input type="number" value={isEditing ? editingRangeForm.from : row.from} readOnly={!isEditing} onChange={(e) => setEditingRangeForm((prev) => ({ ...prev, from: e.target.value }))} className={`input-modern w-full ${isEditing ? 'bg-white' : 'bg-slate-100/80 shadow-inner'}`} placeholder="من" />
+                {showAddForService[serviceName] && (
+                  <div className="p-5 border-t border-emerald-100 bg-emerald-50/20 animate-in slide-in-from-top-2">
+                    <div className="space-y-4">
+                      {(drafts[serviceName] || []).map((row, index) => (
+                        <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm">
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-400 uppercase">من (Mb)</label>
+                            <input type="number" value={row.from} onChange={(e) => updateRangeRow(serviceName, index, 'from', e.target.value)} className="input-modern w-full" placeholder="0" />
                           </div>
-                          <div className="grid grid-cols-[50px_1fr] items-center gap-2">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">إلى</span>
-                            <input type="number" value={isEditing ? editingRangeForm.to : row.to} readOnly={!isEditing} onChange={(e) => setEditingRangeForm((prev) => ({ ...prev, to: e.target.value }))} className={`input-modern w-full ${isEditing ? 'bg-white' : 'bg-slate-100/80 shadow-inner'}`} placeholder="إلى" />
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-400 uppercase">إلى (Mb)</label>
+                            <input type="number" value={row.to} onChange={(e) => updateRangeRow(serviceName, index, 'to', e.target.value)} className="input-modern w-full" placeholder="100" />
                           </div>
-                          <div className="grid grid-cols-[50px_1fr] items-center gap-2">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">السعر</span>
-                            <input type="number" value={isEditing ? editingRangeForm.price : row.price} readOnly={!isEditing} onChange={(e) => setEditingRangeForm((prev) => ({ ...prev, price: e.target.value }))} className={`input-modern w-full ${isEditing ? 'bg-white' : 'bg-slate-100/80 shadow-inner'}`} placeholder="السعر" />
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-400 uppercase">السعر</label>
+                            <input type="number" value={row.price} onChange={(e) => updateRangeRow(serviceName, index, 'price', e.target.value)} className="input-modern w-full" placeholder="0.00" />
                           </div>
-                          {isEditing ? (
-                            <div className="flex gap-2 lg:col-span-2">
-                              <button onClick={() => handleUpdateSavedRange(serviceName, row.id)} className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex-1 font-bold shadow-sm">حفظ</button>
-                              <button onClick={cancelEditSavedRange} className="px-3 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50/80 flex-1 font-bold shadow-sm">إلغاء</button>
-                            </div>
-                          ) : (
-                            <div className="flex gap-2 lg:col-span-2">
-                              <button onClick={() => startEditSavedRange(row)} className="px-3 py-2 border border-indigo-200 text-indigo-600 rounded-lg hover:bg-indigo-50 flex-1 font-bold shadow-sm">تعديل</button>
-                              <button onClick={() => handleDeleteSavedRange(row.id)} className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex-1 font-bold shadow-sm">حذف</button>
-                            </div>
-                          )}
+                          <button onClick={() => removeRangeRow(serviceName, index)} className="p-2.5 text-rose-600 hover:bg-rose-50 rounded-xl transition-colors border border-rose-100 flex items-center justify-center gap-2 font-bold text-xs">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                            حذف السطر
+                          </button>
                         </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-3 mt-5">
+                      <button onClick={() => addRangeRow(serviceName)} className="px-4 py-2.5 bg-white text-emerald-600 border border-emerald-200 rounded-xl font-bold text-sm hover:bg-emerald-50 transition-colors shadow-sm">
+                        + إضافة سطر آخر
+                      </button>
+                      <button onClick={() => handleSaveRanges(serviceName)} className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 transition-all shadow-md active:scale-95">
+                        حفظ الرينجات الجديدة
+                      </button>
+                    </div>
+                  </div>
+                )}
 
-                        {!!row.price_history?.length && (
-                          <PriceHistoryDropdown
-                            history={row.price_history}
-                            className="mt-3 border-t pt-3"
-                            itemClassName="text-xs text-slate-500 bg-slate-50/80 rounded-lg border p-2"
-                            latestItemClassName="text-xs text-slate-700 bg-white rounded-lg border p-2"
-                          />
-                        )}
+                {isExpanded && (
+                  <div className="px-5 pb-5 pt-2 border-t border-slate-100 bg-slate-50/30 animate-in slide-in-from-top-2 duration-300">
+                    {ranges.length === 0 ? (
+                      <div className="py-8 text-center text-slate-400 font-medium">
+                        لا توجد رينجات معرفة لهذه الخدمة حالياً.
                       </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-sm text-slate-500 mb-4">لا توجد رينجات لهذه الخدمة.</p>
-              )}
-
-              {showAddForService[serviceName] && (
-                <div className="bg-white border-2 border-indigo-200 rounded-xl p-4">
-                  <div className="space-y-3">
-                    {(drafts[serviceName] || []).map((row, index) => (
-                        <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center border-b pb-3 last:border-0 last:pb-0">
-                          <div className="grid grid-cols-[50px_1fr] items-center gap-2">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">من</span>
-                            <input type="number" value={row.from} onChange={(e) => updateRangeRow(serviceName, index, 'from', e.target.value)} placeholder="من" className="input-modern w-full" />
-                          </div>
-                          <div className="grid grid-cols-[50px_1fr] items-center gap-2">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">إلى</span>
-                            <input type="number" value={row.to} onChange={(e) => updateRangeRow(serviceName, index, 'to', e.target.value)} placeholder="إلى" className="input-modern w-full" />
-                          </div>
-                          <div className="grid grid-cols-[50px_1fr] items-center gap-2">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">السعر</span>
-                            <input type="number" value={row.price} onChange={(e) => updateRangeRow(serviceName, index, 'price', e.target.value)} placeholder="السعر" className="input-modern w-full" />
-                          </div>
-                          <button onClick={() => removeRangeRow(serviceName, index)} className="px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition font-bold">حذف الرينج</button>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="hidden lg:grid lg:grid-cols-5 gap-4 px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                          <div>من (Mb)</div>
+                          <div>إلى (Mb)</div>
+                          <div>السعر (د.ع)</div>
+                          <div className="lg:col-span-2 text-center">الإجراءات</div>
                         </div>
-                    ))}
-                  </div>
+                        
+                        {ranges.map((row) => {
+                          const isEditing = editingRangeId === row.id;
+                          return (
+                            <div key={row.id} className="bg-white rounded-2xl border border-slate-100 p-3 shadow-sm hover:shadow-md transition-shadow">
+                              <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-center">
+                                <div className="flex items-center gap-2 lg:block">
+                                  <span className="lg:hidden text-[10px] font-bold text-slate-400 w-12 shrink-0">من:</span>
+                                  <input type="number" value={isEditing ? editingRangeForm.from : row.from} readOnly={!isEditing} onChange={(e) => setEditingRangeForm((prev) => ({ ...prev, from: e.target.value }))} className={`input-modern w-full ${isEditing ? 'border-emerald-500' : 'bg-slate-50 border-transparent font-bold text-slate-700'}`} />
+                                </div>
+                                <div className="flex items-center gap-2 lg:block">
+                                  <span className="lg:hidden text-[10px] font-bold text-slate-400 w-12 shrink-0">إلى:</span>
+                                  <input type="number" value={isEditing ? editingRangeForm.to : row.to} readOnly={!isEditing} onChange={(e) => setEditingRangeForm((prev) => ({ ...prev, to: e.target.value }))} className={`input-modern w-full ${isEditing ? 'border-emerald-500' : 'bg-slate-50 border-transparent font-bold text-slate-700'}`} />
+                                </div>
+                                <div className="flex items-center gap-2 lg:block">
+                                  <span className="lg:hidden text-[10px] font-bold text-slate-400 w-12 shrink-0">السعر:</span>
+                                  <input type="number" value={isEditing ? editingRangeForm.price : row.price} readOnly={!isEditing} onChange={(e) => setEditingRangeForm((prev) => ({ ...prev, price: e.target.value }))} className={`input-modern w-full ${isEditing ? 'border-emerald-500' : 'bg-slate-50 border-transparent font-bold text-emerald-700'}`} />
+                                </div>
+                                
+                                <div className="lg:col-span-2 flex gap-2">
+                                  {isEditing ? (
+                                    <>
+                                      <button onClick={() => handleUpdateSavedRange(serviceName, row.id)} className="flex-1 bg-emerald-600 text-white px-3 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition-all shadow-sm">حفظ</button>
+                                      <button onClick={cancelEditSavedRange} className="flex-1 bg-slate-100 text-slate-600 px-3 py-2 rounded-xl text-xs font-bold hover:bg-slate-200 transition-all">إلغاء</button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <button onClick={() => startEditSavedRange(row)} className="flex-1 bg-blue-50 text-blue-600 px-3 py-2 rounded-xl text-xs font-bold hover:bg-blue-100 transition-all border border-blue-100">تعديل</button>
+                                      <button onClick={() => handleDeleteSavedRange(row.id)} className="flex-1 bg-rose-50 text-rose-600 px-3 py-2 rounded-xl text-xs font-bold hover:bg-rose-100 transition-all border border-rose-100">حذف</button>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
 
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    <button onClick={() => addRangeRow(serviceName)} className="btn-success px-4 py-2.5 text-sm hover:bg-green-700">إضافة رينج آخر</button>
-                    <button onClick={() => handleSaveRanges(serviceName)} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">حفظ</button>
+                              {!!row.price_history?.length && (
+                                <div className="mt-3 pt-3 border-t border-slate-50">
+                                  <PriceHistoryDropdown
+                                    history={row.price_history}
+                                    itemClassName="text-[10px] text-slate-500 bg-slate-50/50 rounded-lg p-2 mb-1"
+                                    latestItemClassName="text-[10px] text-emerald-700 bg-emerald-50/50 rounded-lg p-2 mb-1 font-bold"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
-            </div>
-          ))}
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
       <PriceImpactModal
         open={impactModal.open}
-        title="الجهات المتأثرة بتعديل الرينج"
+        title="تحديث أسعار الرينجات"
         oldPrice={impactModal.oldPrice}
         newPrice={impactModal.newPrice}
         organizations={impactModal.organizations}
