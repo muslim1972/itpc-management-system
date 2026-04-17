@@ -77,6 +77,7 @@ const CompanyDetailsPage = () => {
   const navigate = useNavigate();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showAddSubscription, setShowAddSubscription] = useState(false);
 
   const [company, setCompany] = useState(null);
   const [subscriptions, setSubscriptions] = useState([]);
@@ -213,6 +214,7 @@ const CompanyDetailsPage = () => {
       }
 
       resetCreateForm();
+      setShowAddSubscription(false);
       await loadCompanyDetails();
       alert('تمت إضافة الاشتراك بنجاح');
     } catch (err) {
@@ -369,24 +371,25 @@ const CompanyDetailsPage = () => {
       <SlideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
       <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-        <div className="mb-6 flex items-center justify-between">
+        {/* Floating Back Button - Left Side */}
+        <div className="fixed top-24 left-6 z-40">
           <button
             onClick={() => navigate(-1)}
-            className="group flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm border border-slate-200 transition-all hover:bg-slate-50 hover:border-slate-300 hover:-translate-x-1"
+            className="group flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-xl border border-slate-200 transition-all hover:bg-slate-50 hover:border-slate-300 hover:scale-105 active:scale-95"
           >
+            رجوع للخلف
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 transition-transform group-hover:translate-x-1"
+              className="h-5 w-5 transition-transform group-hover:-translate-x-1"
               viewBox="0 0 20 20"
               fill="currentColor"
             >
               <path
                 fillRule="evenodd"
-                d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
                 clipRule="evenodd"
               />
             </svg>
-            رجوع للخلف
           </button>
         </div>
 
@@ -441,100 +444,119 @@ const CompanyDetailsPage = () => {
               <SummaryCard label="Other" value={groupedStats.Other} tone="slate" />
             </div>
 
-            <SectionCard
-              title="إضافة اشتراك جديد"
-              subtitle="إدخال بيانات الاشتراك الجديد بشكل منظم وواضح"
-              className="border-blue-200 bg-gradient-to-b from-blue-50 to-white"
-              actions={
-                <>
-                  <button
-                    type="button"
-                    onClick={handleCreate}
-                    disabled={saving}
-                    className={`rounded-xl px-5 py-3 text-sm font-semibold text-white transition ${
-                      saving ? 'cursor-not-allowed bg-slate-400' : 'bg-green-600 hover:bg-green-700'
-                    }`}
-                  >
-                    {saving ? 'جاري الحفظ...' : 'إضافة الاشتراك'}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={resetCreateForm}
-                    disabled={saving}
-                    className={secondaryButtonClassName}
-                  >
-                    تفريغ
-                  </button>
-                </>
-              }
+            <section 
+              className={`rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6 overflow-hidden transition-all duration-300 ${
+                showAddSubscription ? 'ring-2 ring-emerald-500/20' : ''
+              }`}
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center gap-3">
-                  <label className="text-sm font-semibold text-slate-700 w-28 shrink-0">نوع الخدمة</label>
-                  <select
-                    value={form.service_type}
-                    onChange={(e) => setForm((prev) => ({ ...prev, service_type: e.target.value }))}
-                    className={`${inputClassName} flex-1`}
-                  >
-                    {SERVICE_TYPES.map((item) => (
-                      <option key={item} value={item}>
-                        {item}
-                      </option>
-                    ))}
-                  </select>
+              <div 
+                onClick={() => setShowAddSubscription(!showAddSubscription)}
+                className="flex items-center justify-between cursor-pointer group"
+              >
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">إضافة اشتراك جديد</h2>
+                  <p className="mt-1 text-sm text-slate-500">إدخال بيانات الاشتراك الجديد بشكل منظم وواضح</p>
                 </div>
-
-                <div className="flex items-center gap-3">
-                  <label className="text-sm font-semibold text-slate-700 w-28 shrink-0">التصنيف</label>
-                  <select
-                    value={form.item_category}
-                    onChange={(e) => setForm((prev) => ({ ...prev, item_category: e.target.value }))}
-                    className={`${inputClassName} flex-1`}
-                  >
-                    {ITEM_CATEGORIES.map((item) => (
-                      <option key={item} value={item}>
-                        {item}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <label className="text-sm font-semibold text-slate-700 w-28 shrink-0">اسم الاشتراك</label>
-                  <input
-                    type="text"
-                    value={form.item_name}
-                    onChange={(e) => setForm((prev) => ({ ...prev, item_name: e.target.value }))}
-                    placeholder="مثال: Premium / Gold"
-                    className={`${inputClassName} flex-1`}
-                  />
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <label className="text-sm font-semibold text-slate-700 w-28 shrink-0">السعر</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={form.price}
-                    onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
-                    placeholder="0"
-                    className={`${inputClassName} flex-1`}
-                  />
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <label className="text-sm font-semibold text-slate-700 w-28 shrink-0">الوحدة</label>
-                  <input
-                    type="text"
-                    value={form.unit_label}
-                    onChange={(e) => setForm((prev) => ({ ...prev, unit_label: e.target.value }))}
-                    placeholder="مثال: خط / حزمة"
-                    className={`${inputClassName} flex-1`}
-                  />
+                <div className={`p-2 rounded-xl transition-all duration-300 ${showAddSubscription ? 'bg-emerald-50 text-emerald-600 rotate-180' : 'bg-slate-50 text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-600'}`}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
                 </div>
               </div>
-            </SectionCard>
+
+              {showAddSubscription && (
+                <div className="mt-6 pt-6 border-t border-slate-100 animate-in slide-in-from-top-4 duration-300">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center gap-3">
+                      <label className="text-sm font-semibold text-slate-700 w-28 shrink-0">نوع الخدمة</label>
+                      <select
+                        value={form.service_type}
+                        onChange={(e) => setForm((prev) => ({ ...prev, service_type: e.target.value }))}
+                        className={`${inputClassName} flex-1`}
+                      >
+                        {SERVICE_TYPES.map((item) => (
+                          <option key={item} value={item}>
+                            {item}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <label className="text-sm font-semibold text-slate-700 w-28 shrink-0">التصنيف</label>
+                      <select
+                        value={form.item_category}
+                        onChange={(e) => setForm((prev) => ({ ...prev, item_category: e.target.value }))}
+                        className={`${inputClassName} flex-1`}
+                      >
+                        {ITEM_CATEGORIES.map((item) => (
+                          <option key={item} value={item}>
+                            {item}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <label className="text-sm font-semibold text-slate-700 w-28 shrink-0">اسم الاشتراك</label>
+                      <input
+                        type="text"
+                        value={form.item_name}
+                        onChange={(e) => setForm((prev) => ({ ...prev, item_name: e.target.value }))}
+                        placeholder="مثال: Premium / Gold"
+                        className={`${inputClassName} flex-1`}
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <label className="text-sm font-semibold text-slate-700 w-28 shrink-0">السعر</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={form.price}
+                        onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
+                        placeholder="0"
+                        className={`${inputClassName} flex-1`}
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <label className="text-sm font-semibold text-slate-700 w-28 shrink-0">الوحدة</label>
+                      <input
+                        type="text"
+                        value={form.unit_label}
+                        onChange={(e) => setForm((prev) => ({ ...prev, unit_label: e.target.value }))}
+                        placeholder="مثال: خط / حزمة"
+                        className={`${inputClassName} flex-1`}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-6">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        resetCreateForm();
+                        setShowAddSubscription(false);
+                      }}
+                      className={secondaryButtonClassName}
+                    >
+                      إلغاء
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCreate}
+                      disabled={saving}
+                      className={`rounded-xl px-5 py-3 text-sm font-semibold text-white transition ${
+                        saving ? 'cursor-not-allowed bg-slate-400' : 'bg-green-600 hover:bg-green-700'
+                      }`}
+                    >
+                      {saving ? 'جاري الحفظ...' : 'حفظ الاشتراك'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </section>
 
             <SectionCard
               title="قائمة الاشتراكات"
