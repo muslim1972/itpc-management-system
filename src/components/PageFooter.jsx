@@ -21,7 +21,7 @@ const PageFooter = ({ onDeveloperClick }) => {
                 className="fill-blue-400 font-bold"
                 style={{ fontSize: '15px', filter: 'drop-shadow(0 2px 4px rgba(96, 165, 250, 0.3))', fontFamily: 'Tajawal, sans-serif' }}
               >
-                نظام الادارة الموحد / اتصالات ومعلوماتية كربلاء المقدسة
+                نظام قسم تجهيز خدمات المعلوماتية
               </text>
             </svg>
 

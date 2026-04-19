@@ -25,7 +25,7 @@ const Navbar = ({ onMenuClick }) => {
             <div className="flex items-center justify-center sm:justify-start gap-3 sm:gap-4">
               <BrandLogo className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl shrink-0 transition-transform duration-300 group-hover:scale-[1.03]" imageClassName="scale-[1.03]" />
               <h1 className="min-w-0 truncate text-[11px] xs:text-sm sm:text-lg lg:text-[1.3rem] font-bold text-slate-900 group-hover:text-indigo-700 transition-colors">
-                نظام إدارة اتصالات ومعلوماتية كربلاء
+                نظام قسم تجهيز خدمات المعلوماتية
               </h1>
             </div>
           </button>
