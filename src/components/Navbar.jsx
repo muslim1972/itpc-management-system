@@ -1,9 +1,14 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { ArrowRightLeft } from 'lucide-react';
 import BrandLogo from './BrandLogo';
+import { isAdmin } from '../utils/auth';
 
 const Navbar = ({ onMenuClick }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const is_admin = isAdmin();
+  const isAdminPath = location.pathname.startsWith('/admin');
 
   return (
     <nav className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/92 backdrop-blur-xl shadow-[0_8px_18px_rgba(15,23,42,0.04)] pt-[env(safe-area-inset-top,0px)]">
@@ -21,14 +26,25 @@ const Navbar = ({ onMenuClick }) => {
             <span className="hidden sm:inline">القائمة</span>
           </button>
 
-          <button type="button" onClick={() => navigate('/main')} className="group min-w-0 w-full text-right">
-            <div className="flex items-center justify-center sm:justify-start gap-3 sm:gap-4">
-              <BrandLogo className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl shrink-0 transition-transform duration-300 group-hover:scale-[1.03]" imageClassName="scale-[1.03]" />
-              <h1 className="min-w-0 truncate text-[11px] xs:text-sm sm:text-lg lg:text-[1.3rem] font-bold text-slate-900 group-hover:text-indigo-700 transition-colors">
-                نظام قسم تجهيز خدمات المعلوماتية
-              </h1>
-            </div>
-          </button>
+          <div className="flex items-center justify-center sm:justify-start gap-3 sm:gap-4 min-w-0 flex-1">
+            <BrandLogo className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl shrink-0 transition-transform duration-300 hover:scale-[1.03]" imageClassName="scale-[1.03]" />
+            <h1 className="min-w-0 truncate text-[11px] xs:text-sm sm:text-lg lg:text-[1.3rem] font-bold text-slate-900">
+              نظام قسم تجهيز خدمات المعلوماتية
+            </h1>
+
+            {is_admin && (
+              <button
+                onClick={() => navigate(isAdminPath ? '/main' : '/admin')}
+                className="mr-auto ml-2 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition-all border border-indigo-200 shadow-sm text-[10px] sm:text-xs font-bold whitespace-nowrap"
+                title={isAdminPath ? "التحويل لوضع المستخدم" : "التحويل لوضع المسؤول"}
+              >
+                <ArrowRightLeft className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">
+                  {isAdminPath ? "وضع المستخدم" : "وضع المسؤول"}
+                </span>
+              </button>
+            )}
+          </div>
 
           <div className="w-10 sm:w-0" />
         </div>
