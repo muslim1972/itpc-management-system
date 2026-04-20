@@ -22,7 +22,7 @@ env/
 venv/
 .env
 
-# Database
+###### Database
 src/itpc.db
 *.sqlite3
 
