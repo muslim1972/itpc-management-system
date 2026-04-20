@@ -71,11 +71,23 @@ def debug_db():
         }), 500
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
+def format_date(d_obj):
+    if not d_obj: return None
+    if isinstance(d_obj, (datetime, date)):
+        return d_obj.isoformat()
+    return str(d_obj)
+
 def row_to_dict(row):
-    return dict(row) if row else None
+    if not row:
+        return None
+    d = dict(row)
+    for k, v in d.items():
+        if isinstance(v, (datetime, date)):
+            d[k] = format_date(v)
+    return d
 
 def rows_to_list(rows):
-    return [dict(r) for r in rows]
+    return [row_to_dict(r) for r in rows]
 
 def parse_date(d_str):
     if not d_str: return None
@@ -83,9 +95,6 @@ def parse_date(d_str):
         try: return datetime.strptime(d_str.split('T')[0], fmt).date()
         except: continue
     return None
-
-def format_date(d_obj):
-    return d_obj.isoformat() if d_obj else None
 
 # ── Database Migration/Failsafe for Render ───────────────────────────────────
 # ── Auth & Session (Improved for Production) ──────────────────────────────────
@@ -866,11 +875,28 @@ def add_payment(service_id):
 def get_dashboard_stats():
     with get_db() as conn:
         cursor = conn.cursor()
+        
+        cursor.execute("SELECT COUNT(*) as count FROM organizations")
+        row = cursor.fetchone()
+        total_orgs = row['count'] if isinstance(row, dict) else row[0]
+        
+        cursor.execute("SELECT COUNT(*) as count FROM organization_services WHERE is_active = 1")
+        row = cursor.fetchone()
+        active_services = row['count'] if isinstance(row, dict) else row[0]
+        
+        cursor.execute("SELECT COUNT(*) as count FROM payments")
+        row = cursor.fetchone()
+        total_payments = row['count'] if isinstance(row, dict) else row[0]
+        
+        cursor.execute("SELECT COALESCE(SUM(due_amount), 0) as total FROM organization_services")
+        row = cursor.fetchone()
+        total_due = row['total'] if isinstance(row, dict) else row[0]
+        
         stats = {
-            'total_organizations': cursor.execute("SELECT COUNT(*) FROM organizations").fetchone()[0],
-            'active_services': cursor.execute("SELECT COUNT(*) FROM organization_services WHERE is_active = 1").fetchone()[0],
-            'total_payments_count': cursor.execute("SELECT COUNT(*) FROM payments").fetchone()[0],
-            'total_due_amount': cursor.execute("SELECT COALESCE(SUM(due_amount), 0) FROM organization_services").fetchone()[0],
+            'total_organizations': total_orgs,
+            'active_services': active_services,
+            'total_payments_count': total_payments,
+            'total_due_amount': total_due,
         }
         # Recent items
         cursor.execute("SELECT id, name, status, created_at FROM organizations ORDER BY created_at DESC LIMIT 5")
