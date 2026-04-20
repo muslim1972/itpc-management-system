@@ -71,6 +71,8 @@ def debug_db():
         }), 500
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
+from decimal import Decimal
+
 def format_date(d_obj):
     if not d_obj: return None
     if isinstance(d_obj, (datetime, date)):
@@ -84,6 +86,8 @@ def row_to_dict(row):
     for k, v in d.items():
         if isinstance(v, (datetime, date)):
             d[k] = format_date(v)
+        elif isinstance(v, Decimal):
+            d[k] = float(v)
     return d
 
 def rows_to_list(rows):
