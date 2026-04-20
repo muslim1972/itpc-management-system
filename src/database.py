@@ -83,8 +83,23 @@ class DbWrapper:
 
 def get_db():
     database_url, _ = get_config()
-    conn = psycopg2.connect(database_url)
-    return DbWrapper(conn)
+    
+    # Ensure sslmode=require is passed for external Render urls if it's missing
+    if 'render.com' in database_url and 'sslmode' not in database_url:
+        separator = '&' if '?' in database_url else '?'
+        database_url += f"{separator}sslmode=require"
+        
+    retries = 3
+    for attempt in range(retries):
+        try:
+            conn = psycopg2.connect(database_url)
+            return DbWrapper(conn)
+        except psycopg2.OperationalError as e:
+            if attempt < retries - 1 and "SSL connection has been closed unexpectedly" in str(e):
+                import time
+                time.sleep(1) # Wait 1 second before retrying
+                continue
+            raise e
 
 
 # ── Helpers from New Version ──────────────────────────────────────────────────
