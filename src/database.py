@@ -88,16 +88,18 @@ def get_db():
     if 'sslmode' not in database_url:
         database_url += ('&' if '?' in database_url else '?') + 'sslmode=require'
     
-    # Strip pgbouncer safely
+    # Fail fast to prevent Vercel 60-second timeouts
+    if 'connect_timeout' not in database_url:
+        database_url += '&connect_timeout=5'
+        
+    # Strip pgbouncer safely because psycopg2 doesn't recognize it
     url_to_use = database_url.replace('pgbouncer=true', '')
-    # Clean up double characters that might result from stripping
     url_to_use = url_to_use.replace('&&', '&').replace('?&', '?').rstrip('&').rstrip('?')
     
-    retries = 3
+    retries = 1  # Reduce retries to fail fast in Serverless
     for attempt in range(retries):
         try:
             conn = psycopg2.connect(url_to_use)
-            # استخدام كوتيشن للسكيما لضمان عدم وجود أخطاء في التسمية
             with conn.cursor() as cur:
                 cur.execute('SET search_path TO "itpc", "public";')
             return DbWrapper(conn)
