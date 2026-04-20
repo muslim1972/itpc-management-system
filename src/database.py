@@ -93,9 +93,9 @@ def get_db():
     for attempt in range(retries):
         try:
             conn = psycopg2.connect(database_url)
-            # تعيين السكيما الافتراضية بمجرد الاتصال لضمان عزل البيانات
+            # استخدام كوتيشن للسكيما لضمان عدم وجود أخطاء في التسمية
             with conn.cursor() as cur:
-                cur.execute("SET SEARCH_PATH TO itpc, public;")
+                cur.execute('SET search_path TO "itpc", "public";')
             return DbWrapper(conn)
         except psycopg2.OperationalError as e:
             if attempt < retries - 1:

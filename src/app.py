@@ -50,6 +50,26 @@ def serve(path):
 def health():
     return jsonify({'status': 'ok', 'timestamp': datetime.now().isoformat()}), 200
 
+@app.route('/api/debug-db')
+def debug_db():
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("SELECT current_schema(), current_database();")
+        res = cursor.fetchone()
+        db.close()
+        return jsonify({
+            'status': 'connected',
+            'schema': res[0] if isinstance(res, tuple) else res.get('current_schema'),
+            'database': res[1] if isinstance(res, tuple) else res.get('current_database')
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'error': str(e),
+            'suggestion': 'Check if your password has special characters like @ and encoding them (e.g. @ -> %40)'
+        }), 500
+
 # ── Helpers ──────────────────────────────────────────────────────────────────
 def row_to_dict(row):
     return dict(row) if row else None
