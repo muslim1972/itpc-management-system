@@ -3,7 +3,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import datetime, date, timedelta
 
-# جلب الرابط من بيئة فيرسل مباشرة
+# جلب الرابط من بيئة فيرسل
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def get_config():
@@ -16,15 +16,15 @@ class DbWrapper:
         self.conn = conn
 
     def cursor(self):
-        # هذه الدالة هي ما كان ينقص الكود السابق ليعمل app.py
+        # توفير الكرسر بتنسيق القاموس كما يطلبه ملف app.py
         return self.conn.cursor(cursor_factory=RealDictCursor)
 
     def execute(self, sql, params=()):
-        # دعم التوافق مع استعلامات SQLite القديمة وتحويلها لـ Postgres
+        # دعم تحويل استعلامات SQLite إلى Postgres (مثل ? إلى %s)
         sql = sql.replace('?', '%s').replace("datetime('now')", "CURRENT_TIMESTAMP")
         cur = self.cursor()
         
-        # منطق الـ ID لعمليات الإضافة المستعمل في تطبيقك
+        # منطق استرجاع الـ ID لعمليات الإضافة
         if sql.strip().upper().startswith("INSERT") and "RETURNING" not in sql.upper():
             sql = sql.rstrip().rstrip(';') + " RETURNING id"
             cur.execute(sql, params)
@@ -50,20 +50,28 @@ class DbWrapper:
 def get_db():
     url, _ = get_config()
     
-    # تحسين الرابط: إضافة السكيما مباشرة لتقليل زمن الاستجابة (من 60 ثانية إلى ثانية واحدة)
-    if 'options=' not in url:
-        sep = '&' if '?' in url else '?'
-        # إجبار الاتصال على الدخول لسكيما itpc فوراً
-        url += f"{sep}options=-csearch_path%3Ditpc,public&sslmode=require&connect_timeout=5"
+    # 1. تنظيف الرابط من pgbouncer لأن psycopg2 لا تدعمه وتسبب الخطأ (image_681b5a.png)
+    url_to_use = url.replace('pgbouncer=true', '')
+    url_to_use = url_to_use.replace('&&', '&').replace('?&', '?').rstrip('&').rstrip('?')
+    
+    # 2. إضافة إعدادات الأمان والوقت
+    if 'sslmode' not in url_to_use:
+        sep = '&' if '?' in url_to_use else '?'
+        url_to_use += f"{sep}sslmode=require"
+    if 'connect_timeout' not in url_to_use:
+        url_to_use += "&connect_timeout=10"
     
     try:
-        conn = psycopg2.connect(url)
+        conn = psycopg2.connect(url_to_use)
+        # 3. ضبط السكيما itpc فور الاتصال لضمان سرعة الوصول للجداول
+        with conn.cursor() as cur:
+            cur.execute('SET search_path TO "itpc", "public";')
         return DbWrapper(conn)
     except Exception as e:
-        print(f"❌ Connection Error: {e}")
+        print(f"❌ Database Connection Error: {e}")
         raise e
 
-# دوال المساعدات التي يحتاجها ملف app.py الخاص بك
+# دوال المساعدات الضرورية لملف app.py
 def _safe_parse_date(value):
     if not value: return None
     if isinstance(value, (date, datetime)): return value
@@ -76,7 +84,6 @@ def _add_months(base_date, months):
     target_month = base_date.month + months
     year = base_date.year + (target_month - 1) // 12
     month = (target_month - 1) % 12 + 1
-    # حساب آخر يوم في الشهر بدقة
     day = min(base_date.day, [31, 29 if year%4==0 and (year%100!=0 or year%400==0) else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month-1])
     return date(year, month, day)
 
@@ -87,6 +94,4 @@ def _calculate_period_end_date(start_date, unit, val):
     if unit == "سنوي": return _add_months(start, val * 12)
     return _add_months(start, val)
 
-def init_db():
-    # دالة فارغة لتجنب الخطأ في app.py إذا تم استدعاؤها
-    pass
+def init_db(): pass
