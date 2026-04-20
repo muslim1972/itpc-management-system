@@ -1,5 +1,6 @@
 import sys
 import os
+import traceback
 
 # Add 'src' to the path so we can import from it easily in Vercel
 current_dir = os.path.dirname(__file__)
@@ -13,17 +14,19 @@ if parent_dir not in sys.path:
 
 try:
     from src.app import app
-    # Vercel needs the variable to be named 'app' or 'handler'
-    app = app
+    # Flask will handle paths correctly if we don't mess with them too much
+    handler = app
 except Exception as e:
-    import traceback
     error_msg = f"Error during boot: {str(e)}\n{traceback.format_exc()}"
     print(error_msg)
     
     # Simple fallback Flask app to show the error in the browser
     from flask import Flask
-    app = Flask(__name__)
-    @app.route('/', defaults={'path': ''})
-    @app.route('/<path:path>')
+    handler = Flask(__name__)
+    @handler.route('/', defaults={'path': ''})
+    @handler.route('/<path:path>')
     def catch_all(path):
-        return f"<pre>ITPC Backend Error:\n{error_msg}</pre>", 500
+        return f"<pre>ITPC Backend Error (Detector):\n{error_msg}</pre>", 500
+
+# Vercel needs 'app' or 'handler'
+app = handler
