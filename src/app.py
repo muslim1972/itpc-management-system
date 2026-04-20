@@ -5,7 +5,6 @@ Flask + PostgreSQL/SQLite Backend with Static Serving
 """
 
 import os
-import sqlite3
 import json
 from datetime import datetime, date, timedelta
 from flask import Flask, request, jsonify, Response, send_from_directory
