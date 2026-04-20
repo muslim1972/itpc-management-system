@@ -84,19 +84,18 @@ class DbWrapper:
 def get_db():
     database_url, _ = get_config()
     
-    # Ensure sslmode=require for Supabase/External DBs
+    # Ensure sslmode=require and strip pgbouncer (Robust version)
     if 'sslmode' not in database_url:
-        separator = '&' if '?' in database_url else '?'
-        database_url += f"{separator}sslmode=require"
-        
+        database_url += ('&' if '?' in database_url else '?') + 'sslmode=require'
+    
+    # Strip pgbouncer safely
+    url_to_use = database_url.replace('pgbouncer=true', '')
+    # Clean up double characters that might result from stripping
+    url_to_use = url_to_use.replace('&&', '&').replace('?&', '?').rstrip('&').rstrip('?')
+    
     retries = 3
     for attempt in range(retries):
         try:
-            # تنظيف الرابط من معاملات سوبابيس التي قد تزعج مكتبة psycopg2
-            url_to_use = database_url
-            if 'pgbouncer=true' in url_to_use:
-                url_to_use = url_to_use.replace('?pgbouncer=true', '').replace('&pgbouncer=true', '')
-            
             conn = psycopg2.connect(url_to_use)
             # استخدام كوتيشن للسكيما لضمان عدم وجود أخطاء في التسمية
             with conn.cursor() as cur:
