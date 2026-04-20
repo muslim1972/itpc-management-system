@@ -40,7 +40,13 @@ def add_cors_headers(response):
 def serve(path):
     if path != "" and os.path.exists(os.path.join(dist_path, path)):
         return send_from_directory(dist_path, path)
-    return send_from_directory(dist_path, 'index.html')
+    
+    # In Vercel, static files are handled by rewrites in vercel.json
+    # But we keep this for local development compatibility
+    if os.path.exists(os.path.join(dist_path, 'index.html')):
+        return send_from_directory(dist_path, 'index.html')
+    
+    return jsonify({"status": "api_ready", "message": "ITPC API is running. Static files should be served by the host."})
 
 # ── Health Check ─────────────────────────────────────────────────────────────
 @app.route('/api/health')

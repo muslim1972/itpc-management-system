@@ -84,8 +84,8 @@ class DbWrapper:
 def get_db():
     database_url, _ = get_config()
     
-    # Ensure sslmode=require is passed for external Render urls if it's missing
-    if 'render.com' in database_url and 'sslmode' not in database_url:
+    # Ensure sslmode=require for Supabase/External DBs
+    if 'sslmode' not in database_url:
         separator = '&' if '?' in database_url else '?'
         database_url += f"{separator}sslmode=require"
         
@@ -93,11 +93,14 @@ def get_db():
     for attempt in range(retries):
         try:
             conn = psycopg2.connect(database_url)
+            # تعيين السكيما الافتراضية بمجرد الاتصال لضمان عزل البيانات
+            with conn.cursor() as cur:
+                cur.execute("SET SEARCH_PATH TO itpc, public;")
             return DbWrapper(conn)
         except psycopg2.OperationalError as e:
-            if attempt < retries - 1 and "SSL connection has been closed unexpectedly" in str(e):
+            if attempt < retries - 1:
                 import time
-                time.sleep(1) # Wait 1 second before retrying
+                time.sleep(1)
                 continue
             raise e
 
@@ -296,6 +299,9 @@ def init_db():
             sql = sql.replace("AUTOINCREMENT", "")
             sql = sql.replace("INTEGER PRIMARY KEY AUTOINCREMENT", "SERIAL PRIMARY KEY")
             sql = sql.replace("datetime('now')", "CURRENT_TIMESTAMP")
+            # ضمان تشغيل الكود في السكيما الصحيحة
+            if "CREATE TABLE" in sql.upper() and "ITPC." not in sql.upper():
+                sql = sql.replace("CREATE TABLE", "CREATE TABLE itpc.")
         if is_postgres and "COUNT(*)" in sql.upper() and " AS " not in sql.upper():
             sql = sql.replace("COUNT(*)", "COUNT(*) AS count")
         cursor.execute(sql)
