@@ -18,11 +18,8 @@ app.config['SECRET_KEY'] = 'itpc-secret-change-in-production'
 # Enable CORS (Producing identical behavior to local while allowing Render Origin)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-# Ensure Database is initialized for Render
-try:
-    init_db()
-except Exception as e:
-    print(f"⚠️ Initial DB Seeding Warning: {e}")
+# Database initialization is now handled manually via SQL script to prevent Vercel timeouts.
+# ensure_db_initialized() removed.
 
 dist_path = os.path.join(os.path.dirname(__file__), '..', 'dist')
 

@@ -151,3 +151,8 @@ CREATE TABLE IF NOT EXISTS itpc.app_news (
 CREATE INDEX IF NOT EXISTS idx_itpc_org_name ON itpc.organizations(name);
 CREATE INDEX IF NOT EXISTS idx_itpc_service_org ON itpc.organization_services(organization_id);
 CREATE INDEX IF NOT EXISTS idx_itpc_item_service ON itpc.service_items(service_id);
+
+-- إضافة المستخدم المدير (Admin) افتراضياً
+INSERT INTO itpc.users (username, password, role) 
+VALUES ('muslim', '123', 'admin')
+ON CONFLICT (username) DO NOTHING;
