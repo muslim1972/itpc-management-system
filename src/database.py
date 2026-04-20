@@ -92,7 +92,12 @@ def get_db():
     retries = 3
     for attempt in range(retries):
         try:
-            conn = psycopg2.connect(database_url)
+            # تنظيف الرابط من معاملات سوبابيس التي قد تزعج مكتبة psycopg2
+            url_to_use = database_url
+            if 'pgbouncer=true' in url_to_use:
+                url_to_use = url_to_use.replace('?pgbouncer=true', '').replace('&pgbouncer=true', '')
+            
+            conn = psycopg2.connect(url_to_use)
             # استخدام كوتيشن للسكيما لضمان عدم وجود أخطاء في التسمية
             with conn.cursor() as cur:
                 cur.execute('SET search_path TO "itpc", "public";')
