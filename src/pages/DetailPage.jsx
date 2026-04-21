@@ -347,13 +347,13 @@ const DetailPage = () => {
       return { wireless: [], ftth: [], optical: [], other: [] };
     }
 
-    const typeEquals = (s, type) => s.service_type?.toLowerCase() === type.toLowerCase();
+    const typeEquals = (s, type) => s.service_type?.trim().toLowerCase() === type.toLowerCase();
 
     return {
       wireless: organization.services.filter((s) => typeEquals(s, 'Wireless')),
       ftth: organization.services.filter((s) => typeEquals(s, 'FTTH')),
       optical: organization.services.filter((s) => typeEquals(s, 'Optical')),
-      other: organization.services.filter((s) => !['wireless', 'ftth', 'optical'].includes(s.service_type?.toLowerCase())),
+      other: organization.services.filter((s) => !['wireless', 'ftth', 'optical'].includes(s.service_type?.trim().toLowerCase())),
     };
   }, [organization]);
 
