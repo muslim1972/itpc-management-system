@@ -714,12 +714,18 @@ def add_org_service(org_id):
             user_id = request.headers.get('X-User-Id')
             if service and (book_date or book_desc):
                 try:
+                    if is_pg:
+                        cursor.execute("SAVEPOINT sp_official_book")
                     cursor.execute(f"""
                         INSERT INTO official_book_records (operation_type, entity_type, organization_id, official_book_date, official_book_description, created_by)
                         VALUES ('SERVICE_CREATION', 'service', {placeholder}, {placeholder}, {placeholder}, {placeholder})
                     """, (org_id, book_date, book_desc, user_id))
+                    if is_pg:
+                        cursor.execute("RELEASE SAVEPOINT sp_official_book")
                 except Exception as _e:
                     print(f"Error logging official_book_records: {_e}")
+                    if is_pg:
+                        cursor.execute("ROLLBACK TO SAVEPOINT sp_official_book")
 
             # Create Initial Contract Period
             if service:
