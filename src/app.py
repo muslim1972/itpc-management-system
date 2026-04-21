@@ -195,46 +195,56 @@ def delete_organization(id):
 
 @app.route('/api/organizations/<int:id>', methods=['GET'])
 def get_organization_detail(id):
-    with get_db() as conn:
-        cursor = conn.cursor()
-        is_pg = getattr(conn, 'is_postgres', False)
-        placeholder = "%s" if is_pg else "?"
-        
-        # 1. Fetch Organization
-        cursor.execute(f"SELECT * FROM organizations WHERE id = {placeholder}", (id,))
-        org = row_to_dict(cursor.fetchone())
-        if not org: return jsonify({'error': 'Not found'}), 404
-        
-        # 2. Fetch Services
-        cursor.execute(f"SELECT * FROM organization_services WHERE organization_id = {placeholder} ORDER BY created_at DESC", (id,))
-        services = rows_to_list(cursor.fetchall())
-        
-        # 3. Enrich Services with Items, Payments, and Periods
-        for s in services:
-            sid = s['id']
-            # Items
-            cursor.execute(f"SELECT * FROM service_items WHERE service_id = {placeholder} ORDER BY created_at ASC", (sid,))
-            s['service_items'] = rows_to_list(cursor.fetchall())
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            is_pg = getattr(conn, 'is_postgres', False)
+            placeholder = "%s" if is_pg else "?"
             
-            # Payments
-            cursor.execute(f"SELECT p.*, u.username as created_by_username FROM payments p LEFT JOIN users u ON p.created_by = u.id WHERE p.service_id = {placeholder} ORDER BY p.payment_date DESC", (sid,))
-            s['payments'] = rows_to_list(cursor.fetchall())
+            # 1. Fetch Organization
+            cursor.execute(f"SELECT * FROM organizations WHERE id = {placeholder}", (id,))
+            org = row_to_dict(cursor.fetchone())
+            if not org: return jsonify({'error': 'Not found'}), 404
             
-            # Active Period
-            cursor.execute(f"SELECT * FROM service_contract_periods WHERE service_id = {placeholder} AND status = 'active' LIMIT 1", (sid,))
-            s['active_contract_period'] = row_to_dict(cursor.fetchone())
+            # 2. Fetch Services
+            cursor.execute(f"SELECT * FROM organization_services WHERE organization_id = {placeholder} ORDER BY created_at DESC", (id,))
+            services = rows_to_list(cursor.fetchall())
             
-            # Closed Periods (History)
-            cursor.execute(f"SELECT * FROM service_contract_periods WHERE service_id = {placeholder} AND status != 'active' ORDER BY period_number DESC", (sid,))
-            s['closed_contract_periods'] = rows_to_list(cursor.fetchall())
-            
-            # Latest Suspension info if any
-            cursor.execute(f"SELECT * FROM service_suspensions WHERE service_id = {placeholder} ORDER BY created_at DESC LIMIT 1", (sid,))
-            s['latest_suspension'] = row_to_dict(cursor.fetchone())
+            # 3. Enrich Services with Items, Payments, and Periods
+            for s in services:
+                sid = s['id']
+                # Items
+                cursor.execute(f"SELECT * FROM service_items WHERE service_id = {placeholder} ORDER BY created_at ASC", (sid,))
+                s['service_items'] = rows_to_list(cursor.fetchall())
+                
+                # Payments
+                cursor.execute(f"SELECT p.*, u.username as created_by_username FROM payments p LEFT JOIN users u ON p.created_by = u.id WHERE p.service_id = {placeholder} ORDER BY p.payment_date DESC", (sid,))
+                s['payments'] = rows_to_list(cursor.fetchall())
+                
+                # Active Period
+                cursor.execute(f"SELECT * FROM service_contract_periods WHERE service_id = {placeholder} AND status = 'active' LIMIT 1", (sid,))
+                s['active_contract_period'] = row_to_dict(cursor.fetchone())
+                
+                # Closed Periods (History)
+                cursor.execute(f"SELECT * FROM service_contract_periods WHERE service_id = {placeholder} AND status != 'active' ORDER BY period_number DESC", (sid,))
+                s['closed_contract_periods'] = rows_to_list(cursor.fetchall())
+                
+                # Latest Suspension info if any
+                try:
+                    cursor.execute(f"SELECT * FROM service_suspensions WHERE service_id = {placeholder} ORDER BY created_at DESC LIMIT 1", (sid,))
+                    s['latest_suspension'] = row_to_dict(cursor.fetchone())
+                except Exception as e:
+                    print(f"Error fetching service_suspensions for service {sid}: {e}")
+                    s['latest_suspension'] = None
 
-        org['services'] = services
+            org['services'] = services
 
-    return jsonify({'organization': org})
+        return jsonify({'organization': org})
+    except Exception as e:
+        import traceback
+        error_details = f"{str(e)}\n{traceback.format_exc()}"
+        print(f"❌ Error getting org details: {error_details}")
+        return jsonify({'error': error_details}), 500
 
 
 
