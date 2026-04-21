@@ -772,6 +772,31 @@ def add_org_service(org_id):
         print(f"❌ Error adding org service: {error_details}")
         return jsonify({'success': False, 'error': error_details}), 500
 
+@app.route('/api/organization-services/<int:service_id>', methods=['DELETE'])
+def delete_org_service(service_id):
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            is_pg = getattr(conn, 'is_postgres', False)
+            placeholder = "%s" if is_pg else "?"
+            
+            # Cascade delete dependents safely
+            cursor.execute(f"DELETE FROM service_items WHERE service_id = {placeholder}", (service_id,))
+            cursor.execute(f"DELETE FROM service_payments WHERE service_id = {placeholder}", (service_id,))
+            cursor.execute(f"DELETE FROM service_status_history WHERE service_id = {placeholder}", (service_id,))
+            cursor.execute(f"DELETE FROM service_contract_periods WHERE service_id = {placeholder}", (service_id,))
+            
+            # Finally delete the actual service
+            cursor.execute(f"DELETE FROM organization_services WHERE id = {placeholder}", (service_id,))
+            
+            conn.commit()
+            return jsonify({'success': True}), 200
+    except Exception as e:
+        import traceback
+        error_details = f"{str(e)}\n{traceback.format_exc()}"
+        print(f"❌ Error deleting org service: {error_details}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # ── App News ──────────────────────────────────────────────────────────────
 
 @app.route('/api/news', methods=['GET'])
@@ -890,6 +915,61 @@ def add_service_item(service_id):
         conn.commit()
 
     return jsonify({'success': True, 'service_item': service_item}), 201
+
+@app.route('/api/service-items/<int:item_id>', methods=['DELETE'])
+def delete_service_item(item_id):
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            is_pg = getattr(conn, 'is_postgres', False)
+            placeholder = "%s" if is_pg else "?"
+            
+            cursor.execute(f"SELECT service_id FROM service_items WHERE id = {placeholder}", (item_id,))
+            item = cursor.fetchone()
+            if not item:
+                return jsonify({'success': False, 'error': 'العنصر غير موجود'}), 404
+            
+            service_id = item['service_id'] if isinstance(item, dict) else item[0]
+            
+            cursor.execute(f"DELETE FROM service_items WHERE id = {placeholder}", (item_id,))
+            
+            # Recalculate parent service financials
+            cursor.execute(f"SELECT COALESCE(SUM(total_price), 0) as total FROM service_items WHERE service_id = {placeholder}", (service_id,))
+            res = cursor.fetchone()
+            monthly_sum = float(res['total'] if isinstance(res, dict) else res[0])
+            
+            cursor.execute(f"SELECT contract_duration_unit, contract_duration_value FROM organization_services WHERE id = {placeholder}", (service_id,))
+            svc_info = row_to_dict(cursor.fetchone())
+            
+            if svc_info:
+                dur_unit = svc_info['contract_duration_unit']
+                dur_val = svc_info['contract_duration_value']
+                new_contract_total = calculate_contract_total_py(monthly_sum, dur_unit, dur_val)
+                
+                cursor.execute(f"""
+                    UPDATE organization_services 
+                    SET annual_amount = {placeholder},
+                        due_amount = {placeholder} - COALESCE(paid_amount, 0),
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = {placeholder}
+                """, (new_contract_total, new_contract_total, service_id))
+                
+                cursor.execute(f"""
+                    UPDATE service_contract_periods
+                    SET base_amount = {placeholder},
+                        total_amount = {placeholder},
+                        due_amount = {placeholder} - COALESCE(paid_amount, 0),
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE service_id = {placeholder} AND status = 'active'
+                """, (new_contract_total, new_contract_total, new_contract_total, service_id))
+            
+            conn.commit()
+            return jsonify({'success': True}), 200
+    except Exception as e:
+        import traceback
+        error_details = f"{str(e)}\n{traceback.format_exc()}"
+        print(f"❌ Error deleting service item: {error_details}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # ── Payments Processing ──────────────────────────────────────────────────────
 
