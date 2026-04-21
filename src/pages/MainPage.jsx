@@ -81,7 +81,7 @@ const MainPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-2 mt-2">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-2 mt-2">
               <div className="flex items-center justify-between border-b border-white/10 pb-1">
                 <span className="text-sm text-white/70 font-medium">نشطة</span>
                 <span className="text-lg font-bold text-white">{stats.active}</span>
@@ -131,8 +131,8 @@ const MainPage = () => {
             </div>
 
             {/* Filter Row */}
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              <div className="relative flex-1 w-full">
+            <div className="flex items-center gap-3">
+              <div className="relative w-48 sm:w-64">
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" />
@@ -141,7 +141,7 @@ const MainPage = () => {
                 <select 
                   value={filter} 
                   onChange={(e) => setFilter(e.target.value)} 
-                  className="select-modern w-full pr-9 pl-3 text-sm h-11"
+                  className="select-modern w-full pr-9 pl-3 text-xs h-10"
                 >
                   <option value="all">كل الجهات</option>
                   <option value="active">نشطة</option>
@@ -150,12 +150,12 @@ const MainPage = () => {
                 </select>
               </div>
 
-              <div className="flex items-center gap-2 bg-slate-100/80 px-4 h-11 rounded-2xl border border-slate-200 min-w-fit">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-500" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7a1 1 0 011.414-1.414L4 10.586V3a1 1 0 112 0v7.586l3.293-3.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              <div className="flex items-center gap-2 bg-slate-100/80 px-3 h-10 rounded-2xl border border-slate-200 min-w-fit">
+                <span className="text-xs font-bold text-slate-700">{filteredOrganizations.length}</span>
+                <span className="text-[10px] text-slate-500 font-medium">نتيجة</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
                 </svg>
-                <span className="text-sm font-bold text-slate-700">{filteredOrganizations.length}</span>
-                <span className="text-xs text-slate-500 font-medium">نتيجة</span>
               </div>
             </div>
           </div>

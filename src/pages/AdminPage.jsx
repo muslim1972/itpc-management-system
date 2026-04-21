@@ -356,7 +356,7 @@ const OrganizationsSection = () => {
                     >
                       <div className="flex items-center gap-3">
                         <div className={`w-2 h-2 rounded-full shrink-0 ${org.status === 'active' ? 'bg-emerald-500' : org.status === 'inactive' ? 'bg-rose-500' : 'bg-amber-500'}`} />
-                        <h3 className="font-bold text-slate-900 text-xl sm:text-2xl leading-tight truncate">{org.name}</h3>
+                        <h3 className="font-bold text-slate-800 text-xs sm:text-sm leading-tight truncate">{org.name}</h3>
                       </div>
                       
                       <div className="flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
@@ -740,7 +740,7 @@ const CompaniesSection = ({ onDetails }) => {
                     >
                       <div className="flex items-center gap-3">
                         <div className={`w-2 h-2 rounded-full shrink-0 ${company.is_active ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                        <h3 className="font-bold text-slate-900 text-xl sm:text-2xl leading-tight truncate">{company.name}</h3>
+                        <h3 className="font-bold text-slate-800 text-xs sm:text-sm leading-tight truncate">{company.name}</h3>
                       </div>
                       
                       <div className="flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
