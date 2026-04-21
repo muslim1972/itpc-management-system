@@ -111,10 +111,16 @@ const sectionTitleMap = {
 };
 
 const serviceLabelMap = {
-  Wireless: 'Wireless',
-  FTTH: 'FTTH',
-  Optical: 'Optical',
-  Other: 'أخرى',
+  wireless: 'Wireless',
+  ftth: 'FTTH',
+  optical: 'Optical',
+  other: 'أخرى',
+};
+
+const getServiceLabel = (type) => {
+  if (!type) return 'خدمة';
+  const t = String(type).trim().toLowerCase();
+  return serviceLabelMap[t] || type;
 };
 
 const shellInput = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100 disabled:text-slate-600';
@@ -574,7 +580,7 @@ const DetailPage = () => {
             sequence: sequence++,
             organization_name: organization.name || '',
             provider_name: 'بدون مزود',
-            service_type: serviceLabelMap[service.service_type] || service.service_type || '',
+            service_type: getServiceLabel(service.service_type),
             service_amount: '',
             lines_count: '',
             count: '',
@@ -595,7 +601,7 @@ const DetailPage = () => {
             sequence: sequence++,
             organization_name: organization.name || '',
             provider_name: item.provider_company_name || 'بدون مزود',
-            service_type: serviceLabelMap[service.service_type] || service.service_type || '',
+            service_type: getServiceLabel(service.service_type),
             service_amount: detailParts || category,
             lines_count: category === 'Line' ? quantity : '',
             count: category === 'Line' ? '' : quantity,
@@ -736,7 +742,7 @@ const DetailPage = () => {
           <section class="service-card">
             <div class="service-head">
               <div>
-                <h2>${index + 1}. ${escapeHtml(serviceLabelMap[service.service_type] || service.service_type || 'خدمة')}</h2>
+                <h2>${index + 1}. ${escapeHtml(getServiceLabel(service.service_type))}</h2>
                 <p>الحالة: <span class="status">${escapeHtml(statusMeta.label)}</span></p>
               </div>
               <div class="service-totals">
@@ -1173,7 +1179,7 @@ const DetailPage = () => {
     const firstItemName = items.length > 0 ? items[0].item_name : '';
     const displayTitle = (isOtherService && firstItemName) 
       ? firstItemName 
-      : (serviceLabelMap[service.service_type] || service.service_type);
+      : getServiceLabel(service.service_type);
 
     const isExpanded = expandedServiceId === service.id;
 
@@ -1949,7 +1955,7 @@ const DetailPage = () => {
                     }}
                     className={`rounded-full border px-3 py-2 text-sm font-semibold transition ${expandedServiceId === service.id ? 'border-blue-400 bg-blue-100 text-blue-800' : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700'}`}
                   >
-                    {index + 1}. {serviceLabelMap[service.service_type] || service.service_type} #{service.id}
+                    {index + 1}. {getServiceLabel(service.service_type)} #{service.id}
                   </button>
                 ))}
               </div>
