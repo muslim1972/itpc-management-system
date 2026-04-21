@@ -1746,8 +1746,8 @@ const DetailPage = () => {
         </div>
 
         <div className="space-y-6">
-          <section className="rounded-[28px] bg-emerald-600 p-6 shadow-lg text-white mb-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <section className="rounded-[28px] bg-emerald-600 px-6 py-5 shadow-lg text-white mb-4">
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
               <div className="flex-1">
                 <h1 className="text-3xl font-bold">{organization?.name}</h1>
                 <div className="mt-2 flex items-center gap-3">
@@ -1760,9 +1760,9 @@ const DetailPage = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col lg:items-end gap-1">
-                <div className="text-[11px] font-bold text-white/70 uppercase tracking-wider text-left w-full">المبلغ المتبقي</div>
-                <div className="text-3xl font-black text-white">{formatMoney(totalDueAmount)}</div>
+              <div className="flex flex-col lg:items-end gap-0.5 pt-1">
+                <div className="text-[11px] font-bold text-white/80 uppercase tracking-wider text-left w-full">المبلغ المتبقي</div>
+                <div className="text-3xl font-black text-white leading-none">{formatMoney(totalDueAmount)}</div>
               </div>
             </div>
           </section>
