@@ -1746,11 +1746,12 @@ const DetailPage = () => {
         </div>
 
         <div className="space-y-6">
-          <section className="rounded-[28px] bg-emerald-600 px-6 py-5 shadow-lg text-white mb-4">
-            <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-              <div className="flex-1">
-                <h1 className="text-3xl font-bold">{organization?.name}</h1>
-                <div className="mt-2 flex items-center gap-3">
+          <section className="rounded-[28px] bg-emerald-600 px-6 py-5 shadow-lg text-white">
+            <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+              {/* Right Side: Name & Badges */}
+              <div className="flex flex-col gap-2.5">
+                <h1 className="text-3xl font-bold leading-snug">{organization?.name}</h1>
+                <div className="flex flex-wrap items-center gap-3">
                   <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold backdrop-blur-sm">
                     رقم الجهة: {organization?.id}
                   </span>
@@ -1760,8 +1761,9 @@ const DetailPage = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col lg:items-end gap-0.5 pt-1">
-                <div className="text-[11px] font-bold text-white/80 uppercase tracking-wider text-left w-full">المبلغ المتبقي</div>
+              {/* Left Side: Remaining Amount */}
+              <div className="flex flex-col items-start md:items-end gap-1">
+                <div className="text-[11px] font-bold text-white/80 uppercase tracking-wider">المبلغ المتبقي</div>
                 <div className="text-3xl font-black text-white leading-none">{formatMoney(totalDueAmount)}</div>
               </div>
             </div>
