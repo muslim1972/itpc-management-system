@@ -223,6 +223,7 @@ const DetailPage = () => {
   const [exportingExcel, setExportingExcel] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [activeServiceViews, setActiveServiceViews] = useState({});
+  const [expandedServiceId, setExpandedServiceId] = useState(null);
 
   const loadDetails = async () => {
     try {
@@ -340,11 +341,13 @@ const DetailPage = () => {
       return { wireless: [], ftth: [], optical: [], other: [] };
     }
 
+    const typeEquals = (s, type) => s.service_type?.toLowerCase() === type.toLowerCase();
+
     return {
-      wireless: organization.services.filter((s) => s.service_type === 'Wireless'),
-      ftth: organization.services.filter((s) => s.service_type === 'FTTH'),
-      optical: organization.services.filter((s) => s.service_type === 'Optical'),
-      other: organization.services.filter((s) => s.service_type === 'Other'),
+      wireless: organization.services.filter((s) => typeEquals(s, 'Wireless')),
+      ftth: organization.services.filter((s) => typeEquals(s, 'FTTH')),
+      optical: organization.services.filter((s) => typeEquals(s, 'Optical')),
+      other: organization.services.filter((s) => !['wireless', 'ftth', 'optical'].includes(s.service_type?.toLowerCase())),
     };
   }, [organization]);
 
@@ -1172,70 +1175,83 @@ const DetailPage = () => {
       ? firstItemName 
       : (serviceLabelMap[service.service_type] || service.service_type);
 
+    const isExpanded = expandedServiceId === service.id;
+
     return (
-      <div id={`service-card-${service.id}`} key={service.id} className="scroll-mt-24 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 bg-white p-5 sm:p-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div id={`service-card-${service.id}`} key={service.id} className="scroll-mt-24 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm transition-all duration-300">
+        <div 
+          onClick={() => setExpandedServiceId(isExpanded ? null : service.id)}
+          className={`bg-white p-5 sm:p-6 cursor-pointer hover:bg-slate-50 transition-colors ${isExpanded ? 'border-b border-slate-200' : ''}`}
+        >
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-2xl font-bold text-slate-900">
+              <div className="flex flex-wrap items-center gap-2 text-right">
+                <div className={`w-3 h-3 rounded-full shrink-0 ${isSuspended ? 'bg-red-500' : isScheduledSuspend ? 'bg-amber-500' : 'bg-green-500'}`} />
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight">
                   {displayTitle}
                 </h3>
                 <span className={`rounded-full border px-3 py-1 text-xs font-bold ${serviceStatusMeta.className}`}>
                   {serviceStatusMeta.label}
                 </span>
-              </div>
-
-              <div className="flex flex-wrap gap-2 text-sm">
-                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 font-semibold text-slate-700">
-                  رقم الخدمة: {service.id}
-                </span>
-                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 font-semibold text-slate-700">
-                  الفترة الحالية: {activePeriod?.period_label || `الفترة ${activePeriod?.period_number || 1}`}
-                </span>
-                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 font-semibold text-slate-700">
-                  آلية الدفع: {edit.payment_method || '-'}
+                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
+                  #{service.id}
                 </span>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              {!isSuspended && (
+            <div className="flex items-center justify-end gap-3" onClick={e => e.stopPropagation()}>
+              {!isSuspended && isExpanded && (
                 <button
                   type="button"
                   onClick={() => handleOpenSuspendModal(service)}
-                  className="rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-700"
+                  className="rounded-xl bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-100 transition-colors"
                 >
-                  ايقاف الخدمة
+                  ايقاف
                 </button>
               )}
-              <button
-                type="button"
-                onClick={() => handleDeleteService(service.id)}
-                className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700"
-              >
-                حذف الخدمة
-              </button>
+              {isExpanded && (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteService(service.id)}
+                  className="rounded-xl bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 transition-colors"
+                >
+                  حذف
+                </button>
+              )}
+              <div className="rounded-full bg-slate-100 p-2 shadow-sm border border-slate-200 pointer-events-none transition-transform duration-300">
+                {isExpanded ? <ChevronUp className="h-5 w-5 text-slate-600" /> : <ChevronDown className="h-5 w-5 text-slate-600" />}
+              </div>
             </div>
-          </div>
-
-          <div className="mt-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:w-[420px]">
-              <MetricCard label="المدفوع" value={formatMoney(servicePaidAmount)} tone="green" />
-              <MetricCard label="المتبقي" value={formatMoney(serviceDueAmount)} tone="red" />
-            </div>
-
-            <ServiceViewTabs
-              activeView={activeView}
-              onChange={(view) => setActiveServiceViews((prev) => ({ ...prev, [service.id]: view }))}
-              paymentCount={payments.length}
-              historyCount={closedPeriods.length}
-              itemCount={items.length}
-            />
           </div>
         </div>
 
-        <div className="space-y-6 bg-slate-50 p-5 sm:p-6">
+        {isExpanded && (
+          <div className="animate-in slide-in-from-top-2 duration-300">
+            <div className="border-b border-slate-200 bg-white/50 px-5 pb-5 sm:px-6">
+              <div className="mb-5 flex flex-wrap gap-2 text-sm">
+                <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-700">
+                  الفترة الحالية: {activePeriod?.period_label || `الفترة ${activePeriod?.period_number || 1}`}
+                </span>
+                <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-700">
+                  آلية الدفع: {edit.payment_method || '-'}
+                </span>
+              </div>
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:w-[420px]">
+                  <MetricCard label="المدفوع" value={formatMoney(servicePaidAmount)} tone="green" />
+                  <MetricCard label="المتبقي" value={formatMoney(serviceDueAmount)} tone="red" />
+                </div>
+                <ServiceViewTabs
+                  activeView={activeView}
+                  onChange={(view) => setActiveServiceViews((prev) => ({ ...prev, [service.id]: view }))}
+                  paymentCount={payments.length}
+                  historyCount={closedPeriods.length}
+                  itemCount={items.length}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-6 bg-slate-50 p-5 sm:p-6">
           {(isSuspended || isScheduledSuspend) && (
             <div className={`rounded-2xl border px-4 py-4 ${isSuspended ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50'}`}>
               <div className="mb-3 text-base font-bold text-slate-900">
@@ -1782,10 +1798,9 @@ const DetailPage = () => {
               className="flex w-full items-center justify-between bg-slate-50/70 p-5 text-right transition-colors hover:bg-slate-100/80"
             >
               <div>
-                <h2 className="text-lg font-bold text-slate-800">بيانات الجهة</h2>
-                <p className="text-sm text-slate-500">يمكن مراجعة أو تعديل بيانات الجهة من هذا القسم</p>
+                <h2 className="text-lg font-bold text-slate-800">بيانات ({organization?.name || 'الجهة'})</h2>
               </div>
-              <div className="rounded-full bg-white p-2 shadow-sm border border-slate-200">
+              <div className="rounded-full bg-white p-2 shadow-sm border border-slate-200 transition-transform duration-300">
                 {isOrgDataOpen ? <ChevronUp className="h-5 w-5 text-slate-600" /> : <ChevronDown className="h-5 w-5 text-slate-600" />}
               </div>
             </button>
@@ -1924,8 +1939,13 @@ const DetailPage = () => {
                   <button
                     key={service.id}
                     type="button"
-                    onClick={() => document.getElementById(`service-card-${service.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+                    onClick={() => {
+                      setExpandedServiceId(service.id);
+                      setTimeout(() => {
+                        document.getElementById(`service-card-${service.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }, 50);
+                    }}
+                    className={`rounded-full border px-3 py-2 text-sm font-semibold transition ${expandedServiceId === service.id ? 'border-blue-400 bg-blue-100 text-blue-800' : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700'}`}
                   >
                     {index + 1}. {serviceLabelMap[service.service_type] || service.service_type} #{service.id}
                   </button>
