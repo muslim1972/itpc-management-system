@@ -231,9 +231,15 @@ def get_organization_detail(id):
                 
                 # Latest Suspension info if any
                 try:
+                    if is_pg:
+                        cursor.execute("SAVEPOINT sp_suspensions")
                     cursor.execute(f"SELECT * FROM service_suspensions WHERE service_id = {placeholder} ORDER BY created_at DESC LIMIT 1", (sid,))
                     s['latest_suspension'] = row_to_dict(cursor.fetchone())
+                    if is_pg:
+                        cursor.execute("RELEASE SAVEPOINT sp_suspensions")
                 except Exception as e:
+                    if is_pg:
+                        cursor.execute("ROLLBACK TO SAVEPOINT sp_suspensions")
                     print(f"Error fetching service_suspensions for service {sid}: {e}")
                     s['latest_suspension'] = None
 
@@ -333,18 +339,24 @@ def get_provider_detail(id):
             if not company: return jsonify({'error': 'Not found'}), 404
             
             try:
+                if is_pg: cursor.execute("SAVEPOINT sp_prov_subs")
                 cursor.execute(f"SELECT * FROM provider_subscriptions WHERE provider_company_id = {placeholder} ORDER BY item_name ASC", (id,))
                 subs = rows_to_list(cursor.fetchall())
+                if is_pg: cursor.execute("RELEASE SAVEPOINT sp_prov_subs")
             except Exception as e:
+                if is_pg: cursor.execute("ROLLBACK TO SAVEPOINT sp_prov_subs")
                 print(f"Error fetching subscriptions: {e}")
                 subs = []
             
             # Get price history for each subscription gracefully
             for s in subs:
                 try:
+                    if is_pg: cursor.execute("SAVEPOINT sp_prov_price_hist")
                     cursor.execute(f"SELECT * FROM provider_subscription_price_history WHERE provider_subscription_id = {placeholder} ORDER BY changed_at DESC", (s['id'],))
                     s['price_history'] = rows_to_list(cursor.fetchall())
+                    if is_pg: cursor.execute("RELEASE SAVEPOINT sp_prov_price_hist")
                 except Exception as e:
+                    if is_pg: cursor.execute("ROLLBACK TO SAVEPOINT sp_prov_price_hist")
                     print(f"Error fetching price history for sub {s['id']}: {e}")
                     s['price_history'] = []
                 
