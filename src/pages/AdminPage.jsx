@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import SlideMenu from '../components/SlideMenu';
 import PageFooter from '../components/PageFooter';
 import PriceHistoryDropdown from '../components/PriceHistoryDropdown';
+import { logout } from '../utils/auth';
 
 const API = '/api';
 
@@ -1771,6 +1772,14 @@ const AdminPage = () => {
     }
   }, [navigate]);
 
+  const handleLogout = () => {
+    const ok = window.confirm('هل أنت متأكد من تسجيل الخروج؟');
+    if (ok) {
+      logout();
+      navigate('/');
+    }
+  };
+
   const sectionButtonClass = (key) =>
     `relative px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-bold transition-all duration-300 rounded-full whitespace-nowrap flex-shrink-0 ${
       activeSection === key
@@ -1799,11 +1808,23 @@ const AdminPage = () => {
           </div>
 
           <div className="relative z-10 flex flex-col gap-4 sm:gap-6">
-            <div className="pointer-events-none">
-              <h1 className="hero-title">لوحة تحكم الإدارة</h1>
-              <p className="hero-subtitle">
-                مرحباً <span className="font-bold text-white underline decoration-white/30 underline-offset-4">{currentUser?.username || 'Admin'}</span>
-              </p>
+            <div className="flex items-start justify-between">
+              <div className="pointer-events-none">
+                <h1 className="hero-title">لوحة تحكم الإدارة</h1>
+                <p className="hero-subtitle">
+                  مرحباً <span className="font-bold text-white underline decoration-white/30 underline-offset-4">{currentUser?.username || 'Admin'}</span>
+                </p>
+              </div>
+
+              <button
+                onClick={handleLogout}
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 text-white backdrop-blur-md transition-all hover:bg-rose-500 hover:scale-105 active:scale-95 shadow-lg border border-white/10"
+                title="تسجيل الخروج"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
             </div>
 
             <div className="relative z-20 flex flex-nowrap items-center gap-1.5 bg-black/15 p-1 rounded-full w-full overflow-x-auto scrollbar-hide backdrop-blur-md border border-white/10 sm:w-fit">

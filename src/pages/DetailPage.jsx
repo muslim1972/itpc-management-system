@@ -4,6 +4,8 @@ import Navbar from '../components/Navbar';
 import SlideMenu from '../components/SlideMenu';
 import PageFooter from '../components/PageFooter';
 
+import { ChevronDown, ChevronUp, FileText, Download, Edit, Printer, ArrowRight } from 'lucide-react';
+
 const API = '/api';
 
 const PAYMENT_METHODS = ['يومي', 'شهري', 'كل 3 أشهر', 'سنوي'];
@@ -194,6 +196,7 @@ const DetailPage = () => {
   const navigate = useNavigate();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isOrgDataOpen, setIsOrgDataOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -1730,165 +1733,179 @@ const DetailPage = () => {
       <Navbar onMenuClick={() => setIsMenuOpen(true)} />
       <SlideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:py-8">
-        <div className="space-y-6">
-          {error && (
-            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          )}
+      <main className="page-container space-y-6">
+        {/* Floating Back Button - Left Side */}
+        <div className="fixed top-20 left-6 z-40">
+          <button
+            onClick={() => navigate(-1)}
+            className="group flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-xl border border-slate-200 transition-all hover:bg-slate-50 hover:border-slate-300 hover:scale-105 active:scale-95"
+          >
+            رجوع للخلف
+            <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+          </button>
+        </div>
 
-          <section className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-7 shadow-sm">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <div className="mb-1 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">صفحة التفاصيل</div>
-                <h1 className="hero-title !text-slate-900">{organization?.name || 'تفاصيل الجهة'}</h1>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
-                    الخدمات: {organization?.services?.length || 0}
+        <div className="space-y-6">
+          <section className="rounded-[28px] bg-emerald-600 p-6 shadow-lg text-white mb-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold">{organization?.name}</h1>
+                <div className="mt-2 flex items-center gap-3">
+                  <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold backdrop-blur-sm">
+                    رقم الجهة: {organization?.id}
                   </span>
-                  <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${isContractFullyPaid ? 'border-green-200 bg-green-50 text-green-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
+                  <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${isContractFullyPaid ? 'border-green-400 bg-green-500/20 text-white' : 'border-amber-400 bg-amber-500/20 text-white'}`}>
                     {isContractFullyPaid ? 'مكتمل الدفع' : 'يوجد مبالغ متبقية'}
                   </span>
                 </div>
               </div>
 
-              <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
-                <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">المتبقي الكلي</div>
-                <div className="mt-0.5 text-2xl font-bold text-slate-900">{formatMoney(totalDueAmount)}</div>
+              <div className="flex flex-col lg:items-end gap-1">
+                <div className="text-[11px] font-bold text-white/70 uppercase tracking-wider text-left w-full">المبلغ المتبقي</div>
+                <div className="text-3xl font-black text-white">{formatMoney(totalDueAmount)}</div>
               </div>
             </div>
           </section>
 
           {isContractFullyPaid && (
-            <div className="rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-base font-bold text-green-700">
+            <div className="rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-base font-bold text-green-700 shadow-sm">
               تم دفع أجور العقد بالكامل
             </div>
           )}
 
-          <Block
-            title="بيانات الجهة"
-            subtitle="يمكن مراجعة أو تعديل بيانات الجهة من هذا القسم"
-            actions={
-              <>
-                {!editMode ? (
+          {/* Organization Data Accordion */}
+          <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all duration-300">
+            <button
+              onClick={() => setIsOrgDataOpen(!isOrgDataOpen)}
+              className="flex w-full items-center justify-between bg-slate-50/70 p-5 text-right transition-colors hover:bg-slate-100/80"
+            >
+              <div>
+                <h2 className="text-lg font-bold text-slate-800">بيانات الجهة</h2>
+                <p className="text-sm text-slate-500">يمكن مراجعة أو تعديل بيانات الجهة من هذا القسم</p>
+              </div>
+              <div className="rounded-full bg-white p-2 shadow-sm border border-slate-200">
+                {isOrgDataOpen ? <ChevronUp className="h-5 w-5 text-slate-600" /> : <ChevronDown className="h-5 w-5 text-slate-600" />}
+              </div>
+            </button>
+
+            {isOrgDataOpen && (
+              <div className="flex flex-col lg:flex-row border-t border-slate-100">
+                {/* Vertical Actions Panel */}
+                <div className="flex flex-row flex-wrap lg:flex-col gap-3 p-5 border-b lg:border-b-0 lg:border-l border-slate-100 bg-slate-50/30 min-w-[210px]">
+                  {!editMode ? (
+                    <button
+                      onClick={handleEnableEdit}
+                      className="flex items-center gap-3 rounded-xl bg-amber-500 px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-amber-600 shadow-sm grow lg:grow-0"
+                    >
+                      <Edit className="h-4 w-4" />
+                      إمكانية التعديل
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleSaveAll}
+                      disabled={saving}
+                      className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white transition-all shadow-sm grow lg:grow-0 ${saving ? 'bg-slate-400' : 'bg-blue-600 hover:bg-blue-700'}`}
+                    >
+                      <FileText className="h-4 w-4" />
+                      {saving ? 'جاري الحفظ...' : 'حفظ التعديل'}
+                    </button>
+                  )}
+
                   <button
-                    type="button"
-                    onClick={handleEnableEdit}
-                    className="rounded-xl bg-amber-500 px-5 py-3 text-sm font-semibold text-white hover:bg-amber-600"
+                    onClick={handleExportDetailReport}
+                    disabled={exportingExcel || loading || !organization}
+                    className="flex items-center gap-3 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-emerald-700 shadow-sm disabled:bg-emerald-300 grow lg:grow-0"
                   >
-                    إمكانية التعديل
+                    <Download className="h-4 w-4" />
+                    {exportingExcel ? 'جاري التصدير...' : 'تصدير Excel'}
                   </button>
-                ) : (
+
                   <button
-                    type="button"
-                    onClick={handleSaveAll}
-                    disabled={saving}
-                    className={`rounded-xl px-5 py-3 text-sm font-semibold text-white ${saving ? 'cursor-not-allowed bg-slate-400' : 'bg-blue-600 hover:bg-blue-700'}`}
+                    onClick={handleExportPdfReport}
+                    disabled={exportingPdf || loading || !organization}
+                    className="flex items-center gap-3 rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-rose-700 shadow-sm disabled:bg-rose-300 grow lg:grow-0"
                   >
-                    {saving ? 'جاري الحفظ...' : 'حفظ التعديل'}
+                    <Printer className="h-4 w-4" />
+                    {exportingPdf ? 'جاري التجهيز...' : 'تصدير PDF'}
                   </button>
-                )}
+                </div>
 
-                <button
-                  type="button"
-                  onClick={handleExportDetailReport}
-                  disabled={exportingExcel || loading || !organization}
-                  className={`rounded-xl px-5 py-3 text-sm font-semibold text-white ${exportingExcel || loading || !organization ? 'cursor-not-allowed bg-emerald-300' : 'bg-emerald-600 hover:bg-emerald-700'}`}
-                >
-                  {exportingExcel ? 'جاري التصدير...' : 'تصدير التقرير Excel'}
-                </button>
+                {/* Form Data */}
+                <div className="flex-1 p-6">
+                  <div className="grid grid-cols-1 gap-x-8 gap-y-5 lg:grid-cols-2">
+                    <div className="flex items-center gap-3">
+                      <label className="w-28 shrink-0 text-sm font-semibold text-slate-500">اسم الجهة</label>
+                      <input
+                        type="text"
+                        value={orgForm.name}
+                        disabled={!editMode}
+                        onChange={(e) => setOrgForm((prev) => ({ ...prev, name: e.target.value }))}
+                        className={editMode ? shellInput : shellReadOnly}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <label className="w-28 shrink-0 text-sm font-semibold text-slate-500">رقم الهاتف</label>
+                      <input
+                        type="text"
+                        value={orgForm.phone}
+                        disabled={!editMode}
+                        onChange={(e) => setOrgForm((prev) => ({ ...prev, phone: e.target.value }))}
+                        className={editMode ? shellInput : shellReadOnly}
+                      />
+                    </div>
 
-                <button
-                  type="button"
-                  onClick={handleExportPdfReport}
-                  disabled={exportingPdf || loading || !organization}
-                  className={`rounded-xl px-5 py-3 text-sm font-semibold text-white ${exportingPdf || loading || !organization ? 'cursor-not-allowed bg-rose-300' : 'bg-rose-600 hover:bg-rose-700'}`}
-                >
-                  {exportingPdf ? 'جاري تجهيز PDF...' : 'تصدير التقرير PDF'}
-                </button>
+                    <div className="flex items-center gap-3">
+                      <label className="w-28 shrink-0 text-sm font-semibold text-slate-500">الموقع</label>
+                      <input
+                        type="text"
+                        value={orgForm.location}
+                        disabled={!editMode}
+                        onChange={(e) => setOrgForm((prev) => ({ ...prev, location: e.target.value }))}
+                        className={editMode ? shellInput : shellReadOnly}
+                      />
+                    </div>
 
-                <button
-                  type="button"
-                  onClick={() => navigate(-1)}
-                  className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                >
-                  رجوع
-                </button>
-              </>
-            }
-          >
-            <div className="grid grid-cols-1 gap-x-8 gap-y-4 lg:grid-cols-2">
-              <div className="flex items-center gap-3">
-                <label className="w-32 shrink-0 text-sm font-semibold text-slate-600">اسم الجهة</label>
-                <input
-                  type="text"
-                  value={orgForm.name}
-                  disabled={!editMode}
-                  onChange={(e) => setOrgForm((prev) => ({ ...prev, name: e.target.value }))}
-                  className={editMode ? shellInput : shellReadOnly}
-                />
+                    <div className="flex items-center gap-3">
+                      <label className="w-28 shrink-0 text-sm font-semibold text-slate-500">الحالة</label>
+                      <select
+                        value={orgForm.status}
+                        disabled={!editMode}
+                        onChange={(e) => setOrgForm((prev) => ({ ...prev, status: e.target.value }))}
+                        className={editMode ? shellInput : shellReadOnly}
+                      >
+                        <option value="active">نشط (Active)</option>
+                        <option value="inactive">غير نشط (Inactive)</option>
+                        <option value="pending">معلق (Pending)</option>
+                      </select>
+                    </div>
+
+                    <div className="flex items-center gap-3 lg:col-span-2">
+                      <label className="w-28 shrink-0 text-sm font-semibold text-slate-500">العنوان</label>
+                      <input
+                        type="text"
+                        value={orgForm.address}
+                        disabled={!editMode}
+                        onChange={(e) => setOrgForm((prev) => ({ ...prev, address: e.target.value }))}
+                        className={editMode ? shellInput : shellReadOnly}
+                      />
+                    </div>
+
+                    <div className="flex items-start gap-3 lg:col-span-2">
+                      <label className="mt-3 w-28 shrink-0 text-sm font-semibold text-slate-500">ملاحظات</label>
+                      <textarea
+                        rows="2"
+                        value={orgForm.notes}
+                        disabled={!editMode}
+                        onChange={(e) => setOrgForm((prev) => ({ ...prev, notes: e.target.value }))}
+                        className={editMode ? shellInput : shellReadOnly}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
-              
-              <div className="flex items-center gap-3">
-                <label className="w-32 shrink-0 text-sm font-semibold text-slate-600">رقم الهاتف</label>
-                <input
-                  type="text"
-                  value={orgForm.phone}
-                  disabled={!editMode}
-                  onChange={(e) => setOrgForm((prev) => ({ ...prev, phone: e.target.value }))}
-                  className={editMode ? shellInput : shellReadOnly}
-                />
-              </div>
-
-              <div className="flex items-center gap-3">
-                <label className="w-32 shrink-0 text-sm font-semibold text-slate-600">الموقع</label>
-                <input
-                  type="text"
-                  value={orgForm.location}
-                  disabled={!editMode}
-                  onChange={(e) => setOrgForm((prev) => ({ ...prev, location: e.target.value }))}
-                  className={editMode ? shellInput : shellReadOnly}
-                />
-              </div>
-
-              <div className="flex items-center gap-3">
-                <label className="w-32 shrink-0 text-sm font-semibold text-slate-600">الحالة</label>
-                <select
-                  value={orgForm.status}
-                  disabled={!editMode}
-                  onChange={(e) => setOrgForm((prev) => ({ ...prev, status: e.target.value }))}
-                  className={editMode ? shellInput : shellReadOnly}
-                >
-                  <option value="active">نشط (Active)</option>
-                  <option value="inactive">غير نشط (Inactive)</option>
-                  <option value="pending">معلق (Pending)</option>
-                </select>
-              </div>
-
-              <div className="flex items-center gap-3 lg:col-span-2">
-                <label className="w-32 shrink-0 text-sm font-semibold text-slate-600">العنوان</label>
-                <input
-                  type="text"
-                  value={orgForm.address}
-                  disabled={!editMode}
-                  onChange={(e) => setOrgForm((prev) => ({ ...prev, address: e.target.value }))}
-                  className={editMode ? shellInput : shellReadOnly}
-                />
-              </div>
-
-              <div className="flex items-start gap-3 lg:col-span-2">
-                <label className="mt-3 w-32 shrink-0 text-sm font-semibold text-slate-600">ملاحظات</label>
-                <textarea
-                  rows="3"
-                  value={orgForm.notes}
-                  disabled={!editMode}
-                  onChange={(e) => setOrgForm((prev) => ({ ...prev, notes: e.target.value }))}
-                  className={editMode ? shellInput : shellReadOnly}
-                />
-              </div>
-            </div>
-          </Block>
+            )}
+          </section>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <MetricCard label="إجمالي العقد الحالي" value={formatMoney(totalContractAmount)} tone="blue" />

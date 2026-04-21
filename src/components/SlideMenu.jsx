@@ -18,6 +18,8 @@ const SlideMenu = ({ isOpen, onClose }) => {
 
   const handleNavigation = (path) => {
     if (path === '/') {
+      const ok = window.confirm('هل أنت متأكد من تسجيل الخروج؟');
+      if (!ok) return;
       logout();
       navigate('/');
     } else {
