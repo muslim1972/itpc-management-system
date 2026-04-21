@@ -1189,8 +1189,9 @@ const DetailPage = () => {
           onClick={() => setExpandedServiceId(isExpanded ? null : service.id)}
           className={`bg-white p-5 sm:p-6 cursor-pointer hover:bg-slate-50 transition-colors ${isExpanded ? 'border-b border-slate-200' : ''}`}
         >
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="space-y-3">
+          <div className="flex flex-col gap-3">
+            {/* السطر الأول: العنوان + الأزرار */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-2 text-right">
                 <div className={`w-3 h-3 rounded-full shrink-0 ${isSuspended ? 'bg-red-500' : isScheduledSuspend ? 'bg-amber-500' : 'bg-green-500'}`} />
                 <h3 className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight">
@@ -1203,31 +1204,40 @@ const DetailPage = () => {
                   #{service.id}
                 </span>
               </div>
-            </div>
 
-            <div className="flex items-center justify-end gap-3" onClick={e => e.stopPropagation()}>
-              {!isSuspended && isExpanded && (
-                <button
-                  type="button"
-                  onClick={() => handleOpenSuspendModal(service)}
-                  className="rounded-xl bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-100 transition-colors"
-                >
-                  ايقاف
-                </button>
-              )}
-              {isExpanded && (
+              <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                {!isSuspended && (
+                  <button
+                    type="button"
+                    onClick={() => handleOpenSuspendModal(service)}
+                    className="rounded-xl bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition-colors border border-amber-200"
+                  >
+                    ايقاف
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => handleDeleteService(service.id)}
-                  className="rounded-xl bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 transition-colors"
+                  className="rounded-xl bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 transition-colors border border-red-200"
                 >
                   حذف
                 </button>
-              )}
-              <div className="rounded-full bg-slate-100 p-2 shadow-sm border border-slate-200 pointer-events-none transition-transform duration-300">
-                {isExpanded ? <ChevronUp className="h-5 w-5 text-slate-600" /> : <ChevronDown className="h-5 w-5 text-slate-600" />}
+                <div className="rounded-full bg-slate-100 p-2 shadow-sm border border-slate-200 pointer-events-none transition-transform duration-300">
+                  {isExpanded ? <ChevronUp className="h-5 w-5 text-slate-600" /> : <ChevronDown className="h-5 w-5 text-slate-600" />}
+                </div>
               </div>
             </div>
+
+            {/* السطر الثاني: الشركة المجهزة */}
+            {(() => {
+              const providerName = items.find(i => i.provider_company_name)?.provider_company_name;
+              return providerName ? (
+                <div className="flex items-center gap-2 text-sm text-slate-600 mr-5">
+                  <span className="font-semibold text-slate-500">الشركة المجهزة:</span>
+                  <span className="font-bold text-slate-800">{providerName}</span>
+                </div>
+              ) : null;
+            })()}
           </div>
         </div>
 

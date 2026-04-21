@@ -214,7 +214,13 @@ def get_organization_detail(id):
             for s in services:
                 sid = s['id']
                 # Items
-                cursor.execute(f"SELECT * FROM service_items WHERE service_id = {placeholder} ORDER BY created_at ASC", (sid,))
+                cursor.execute(f"""
+                    SELECT si.*, pc.name as provider_company_name 
+                    FROM service_items si 
+                    LEFT JOIN provider_companies pc ON si.provider_company_id = pc.id 
+                    WHERE si.service_id = {placeholder} 
+                    ORDER BY si.created_at ASC
+                """, (sid,))
                 s['service_items'] = rows_to_list(cursor.fetchall())
                 
                 # Payments
@@ -827,7 +833,13 @@ def get_service_items(service_id):
         cursor = conn.cursor()
         is_pg = getattr(conn, 'is_postgres', False)
         placeholder = "%s" if is_pg else "?"
-        cursor.execute(f"SELECT * FROM service_items WHERE service_id = {placeholder} ORDER BY created_at ASC", (service_id,))
+        cursor.execute(f"""
+            SELECT si.*, pc.name as provider_company_name 
+            FROM service_items si 
+            LEFT JOIN provider_companies pc ON si.provider_company_id = pc.id 
+            WHERE si.service_id = {placeholder} 
+            ORDER BY si.created_at ASC
+        """, (service_id,))
         return jsonify({'service_items': rows_to_list(cursor.fetchall())})
 
 @app.route('/api/organization-services/<int:service_id>/items', methods=['POST'])
