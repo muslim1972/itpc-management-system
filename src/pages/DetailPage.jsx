@@ -1970,7 +1970,6 @@ const DetailPage = () => {
                       {list.length} خدمة
                     </div>
                   </div>
-                  <div className="text-sm text-slate-500">كل خدمة تعرض على شكل بطاقة مستقلة مع تبويبات واضحة للوصول السريع.</div>
                   <div className="space-y-5">{list.map(renderServiceCard)}</div>
                 </section>
               );
