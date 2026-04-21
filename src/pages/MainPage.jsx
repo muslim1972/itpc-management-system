@@ -23,14 +23,6 @@ const MainPage = () => {
   const navigate = useNavigate();
   const user = getUser();
 
-  const handleLogout = () => {
-    const ok = window.confirm('هل أنت متأكد من تسجيل الخروج؟');
-    if (ok) {
-      logout();
-      navigate('/');
-    }
-  };
-
   const [organizations, setOrganizations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -84,19 +76,8 @@ const MainPage = () => {
           <div className="relative z-10 flex flex-col gap-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <h1 className="text-xl sm:text-2xl font-bold text-white">الجهات واشتراكاتها</h1>
-              <div className="flex items-center gap-3">
-                <div className="text-xs sm:text-sm text-white/90 bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-sm border border-white/10">
-                  {user?.username}, مرحباً بك في واجهة المستخدم
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20 text-white backdrop-blur-sm transition-all hover:bg-rose-500 hover:scale-105 active:scale-95 shadow-lg border border-white/10"
-                  title="تسجيل الخروج"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                </button>
+              <div className="text-xs sm:text-sm text-white/90 bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-sm border border-white/10">
+                {user?.username}, مرحباً بك في واجهة المستخدم
               </div>
             </div>
 

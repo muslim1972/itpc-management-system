@@ -1,14 +1,22 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowRightLeft } from 'lucide-react';
+import { ArrowRightLeft, LogOut } from 'lucide-react';
 import BrandLogo from './BrandLogo';
-import { isAdmin } from '../utils/auth';
+import { isAdmin, logout } from '../utils/auth';
 
 const Navbar = ({ onMenuClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const is_admin = isAdmin();
   const isAdminPath = location.pathname.startsWith('/admin');
+
+  const handleLogout = () => {
+    const ok = window.confirm('هل أنت متأكد من تسجيل الخروج؟');
+    if (ok) {
+      logout();
+      navigate('/');
+    }
+  };
 
   return (
     <nav className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/92 backdrop-blur-xl shadow-[0_8px_18px_rgba(15,23,42,0.04)] pt-[env(safe-area-inset-top,0px)]">
@@ -44,6 +52,14 @@ const Navbar = ({ onMenuClick }) => {
                 </span>
               </button>
             )}
+
+            <button
+              onClick={handleLogout}
+              className="ml-2 flex items-center justify-center p-2 rounded-xl text-rose-600 hover:bg-rose-50 transition-all border border-transparent hover:border-rose-100"
+              title="تسجيل الخروج"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
           </div>
 
           <div className="w-10 sm:w-0" />

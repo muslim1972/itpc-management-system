@@ -1735,7 +1735,7 @@ const DetailPage = () => {
 
       <main className="page-container space-y-6">
         {/* Floating Back Button - Left Side */}
-        <div className="fixed top-20 left-6 z-40">
+        <div className="fixed top-[72px] left-6 z-40">
           <button
             onClick={() => navigate(-1)}
             className="group flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-xl border border-slate-200 transition-all hover:bg-slate-50 hover:border-slate-300 hover:scale-105 active:scale-95"
