@@ -1747,23 +1747,23 @@ const DetailPage = () => {
 
         <div className="space-y-6">
           <section className="rounded-[28px] bg-emerald-600 px-6 py-5 shadow-lg text-white">
-            <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+            <div className="flex flex-row justify-between items-start gap-4 w-full">
               {/* Right Side: Name & Badges */}
-              <div className="flex flex-col gap-2.5">
-                <h1 className="text-3xl font-bold leading-snug">{organization?.name}</h1>
+              <div className="flex flex-col gap-2">
+                <h1 className="text-3xl font-bold leading-none">{organization?.name}</h1>
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold backdrop-blur-sm">
+                  <span className="rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-semibold backdrop-blur-sm">
                     رقم الجهة: {organization?.id}
                   </span>
-                  <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${isContractFullyPaid ? 'border-green-400 bg-green-500/20 text-white' : 'border-amber-400 bg-amber-500/20 text-white'}`}>
+                  <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold ${isContractFullyPaid ? 'border-green-400 bg-green-500/20 text-white' : 'border-amber-400 bg-amber-500/20 text-white'}`}>
                     {isContractFullyPaid ? 'مكتمل الدفع' : 'يوجد مبالغ متبقية'}
                   </span>
                 </div>
               </div>
 
               {/* Left Side: Remaining Amount */}
-              <div className="flex flex-col items-start md:items-end gap-1">
-                <div className="text-[11px] font-bold text-white/80 uppercase tracking-wider">المبلغ المتبقي</div>
+              <div className="flex flex-col items-end text-left pt-1">
+                <div className="text-[10px] font-bold text-white/90 uppercase tracking-wider mb-1">المبلغ المتبقي</div>
                 <div className="text-3xl font-black text-white leading-none">{formatMoney(totalDueAmount)}</div>
               </div>
             </div>
