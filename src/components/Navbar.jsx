@@ -40,14 +40,6 @@ const Navbar = ({ onMenuClick }) => {
               نظام قسم تجهيز خدمات المعلوماتية
             </h1>
 
-            <button
-              onClick={handleLogout}
-              className="ml-2 flex items-center justify-center p-2 rounded-xl text-rose-600 hover:bg-rose-50 transition-all border border-transparent hover:border-rose-100"
-              title="تسجيل الخروج"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
-
             {is_admin && (
               <button
                 onClick={() => navigate(isAdminPath ? '/main' : '/admin')}
@@ -60,9 +52,15 @@ const Navbar = ({ onMenuClick }) => {
                 </span>
               </button>
             )}
-          </div>
 
-          <div className="w-10 sm:w-0" />
+            <button
+              onClick={handleLogout}
+              className="ml-0 flex items-center justify-center p-2 rounded-xl text-rose-600 hover:bg-rose-50 transition-all border border-transparent hover:border-rose-100"
+              title="تسجيل الخروج"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
     </nav>
