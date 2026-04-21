@@ -131,7 +131,15 @@ const MainPage = () => {
             </div>
 
             {/* Filter Row */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between gap-3 w-full">
+              <div className="flex items-center gap-2 bg-slate-100/80 px-3 h-10 rounded-2xl border border-slate-200 min-w-fit">
+                <span className="text-xs font-bold text-slate-700">{filteredOrganizations.length}</span>
+                <span className="text-[10px] text-slate-500 font-medium">نتيجة</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
+                </svg>
+              </div>
+
               <div className="relative w-48 sm:w-64">
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
@@ -148,14 +156,6 @@ const MainPage = () => {
                   <option value="inactive">غير نشطة</option>
                   <option value="pending">معلقة</option>
                 </select>
-              </div>
-
-              <div className="flex items-center gap-2 bg-slate-100/80 px-3 h-10 rounded-2xl border border-slate-200 min-w-fit">
-                <span className="text-xs font-bold text-slate-700">{filteredOrganizations.length}</span>
-                <span className="text-[10px] text-slate-500 font-medium">نتيجة</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
-                </svg>
               </div>
             </div>
           </div>
