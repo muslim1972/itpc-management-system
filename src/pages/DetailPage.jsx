@@ -1725,7 +1725,9 @@ const DetailPage = () => {
             )}
           </Block>
           )}
-        </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
