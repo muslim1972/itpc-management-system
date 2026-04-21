@@ -169,9 +169,9 @@ const OrganizationsSection = () => {
 
   return (
     <div className="surface-card p-6 sm:p-7 page-reveal">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+      <div className="flex items-center justify-between gap-4 mb-6">
         <div>
-          <h2 className="section-title">إدارة الجهات</h2>
+          <h2 className="section-title text-xl sm:text-2xl">إدارة الجهات</h2>
           <p className="section-subtitle">تنظيم وإدارة الجهات المستفيدة</p>
         </div>
         <button
@@ -179,12 +179,12 @@ const OrganizationsSection = () => {
             setShowAddForm(!showAddForm);
             setError('');
           }}
-          className="btn-primary flex items-center justify-center gap-2 px-4 py-2 text-sm"
+          className="btn-primary flex items-center justify-center gap-2 px-4 py-2.5 text-sm shadow-md transition-all active:scale-95"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
           </svg>
-          <span>إضافة جهة</span>
+          <span className="font-bold">إضافة جهة</span>
         </button>
       </div>
 
@@ -356,7 +356,7 @@ const OrganizationsSection = () => {
                     >
                       <div className="flex items-center gap-3">
                         <div className={`w-2 h-2 rounded-full shrink-0 ${org.status === 'active' ? 'bg-emerald-500' : org.status === 'inactive' ? 'bg-rose-500' : 'bg-amber-500'}`} />
-                        <h3 className="font-bold text-slate-900 text-base sm:text-lg leading-tight truncate">{org.name}</h3>
+                        <h3 className="font-bold text-slate-900 text-xl sm:text-2xl leading-tight truncate">{org.name}</h3>
                       </div>
                       
                       <div className="flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
@@ -571,9 +571,9 @@ const CompaniesSection = ({ onDetails }) => {
 
   return (
     <div className="surface-card p-6 sm:p-7 page-reveal">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+      <div className="flex items-center justify-between gap-4 mb-6">
         <div>
-          <h2 className="section-title">إدارة الشركات المزودة</h2>
+          <h2 className="section-title text-xl sm:text-2xl">إدارة الشركات المزودة</h2>
           <p className="section-subtitle">إجمالي الشركات: {companies.length}</p>
         </div>
         <button
@@ -581,12 +581,12 @@ const CompaniesSection = ({ onDetails }) => {
             setShowAddForm(!showAddForm);
             setError('');
           }}
-          className="btn-primary flex items-center justify-center gap-2 px-4 py-2 text-sm"
+          className="btn-primary flex items-center justify-center gap-2 px-4 py-2.5 text-sm shadow-md transition-all active:scale-95"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
           </svg>
-          <span>إضافة شركة</span>
+          <span className="font-bold">إضافة شركة</span>
         </button>
       </div>
 
@@ -740,7 +740,7 @@ const CompaniesSection = ({ onDetails }) => {
                     >
                       <div className="flex items-center gap-3">
                         <div className={`w-2 h-2 rounded-full shrink-0 ${company.is_active ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                        <h3 className="font-bold text-slate-900 text-base sm:text-lg leading-tight truncate">{company.name}</h3>
+                        <h3 className="font-bold text-slate-900 text-xl sm:text-2xl leading-tight truncate">{company.name}</h3>
                       </div>
                       
                       <div className="flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import SlideMenu from '../components/SlideMenu';
 import PageFooter from '../components/PageFooter';
+import { getUser } from '../utils/auth';
 
 const getStatusClasses = (status) => {
   if (status === 'active') return 'status-badge status-active';
@@ -20,6 +21,7 @@ const getStatusLabel = (status) => {
 const MainPage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const user = getUser();
 
   const [organizations, setOrganizations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -64,11 +66,6 @@ const MainPage = () => {
     pending: organizations.filter((org) => org.status === 'pending').length,
   }), [organizations]);
 
-  const resetFilters = () => {
-    setSearchTerm('');
-    setFilter('all');
-  };
-
   return (
     <div className="app-shell">
       <Navbar onMenuClick={() => setIsMenuOpen(true)} />
@@ -76,45 +73,91 @@ const MainPage = () => {
 
       <main className="page-container space-y-6">
         <section className="page-hero page-reveal">
-          <div className="relative z-10 flex flex-col gap-6">
-            <div>
-              <div className="brand-chip">الواجهة الرئيسية</div>
-              <h1 className="hero-title mt-4">الجهات المشتركة</h1>
-              <p className="hero-subtitle">عرض العقود والخدمات والدفعات ضمن واجهة أوضح، بمحاذاة موحدة، وفلاتر أسرع.</p>
+          <div className="relative z-10 flex flex-col gap-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <h1 className="text-xl sm:text-2xl font-bold text-white">الجهات واشتراكاتها</h1>
+              <div className="text-xs sm:text-sm text-white/90 bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-sm border border-white/10">
+                {user?.username}, مرحباً بك في واجهة المستخدم
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <div className="hero-stat-tile"><div className="hero-stat-label">إجمالي الجهات</div><div className="hero-stat-value">{stats.total}</div></div>
-              <div className="hero-stat-tile"><div className="hero-stat-label">نشطة</div><div className="hero-stat-value">{stats.active}</div></div>
-              <div className="hero-stat-tile"><div className="hero-stat-label">غير نشطة</div><div className="hero-stat-value">{stats.inactive}</div></div>
-              <div className="hero-stat-tile"><div className="hero-stat-label">معلقة</div><div className="hero-stat-value">{stats.pending}</div></div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-2 mt-2">
+              <div className="flex items-center justify-between border-b border-white/10 pb-1">
+                <span className="text-sm text-white/70 font-medium">نشطة</span>
+                <span className="text-lg font-bold text-white">{stats.active}</span>
+              </div>
+              <div className="flex items-center justify-between border-b border-white/10 pb-1">
+                <span className="text-sm text-white/70 font-medium">غير نشطة</span>
+                <span className="text-lg font-bold text-white">{stats.inactive}</span>
+              </div>
+              <div className="flex items-center justify-between border-b border-white/10 pb-1">
+                <span className="text-sm text-white/70 font-medium">معلقة</span>
+                <span className="text-lg font-bold text-white">{stats.pending}</span>
+              </div>
+              <div className="flex items-center justify-between border-b border-white/10 pb-1">
+                <span className="text-sm text-white/70 font-medium">إجمالي الجهات</span>
+                <span className="text-lg font-bold text-white">{stats.total}</span>
+              </div>
             </div>
           </div>
         </section>
 
         <section className="filter-panel page-reveal stagger-1">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-end">
-            <div className="flex-1">
-              <label className="field-label">البحث</label>
-              <input type="text" placeholder="ابحث باسم الجهة..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="input-modern" />
+          <div className="flex flex-col gap-6">
+            {/* Search Row */}
+            <div className="relative">
+              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <input 
+                type="text" 
+                placeholder="ابحث باسم الجهة..." 
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)} 
+                className="input-modern w-full pr-11 pl-11 text-right" 
+              />
+              {searchTerm && (
+                <button 
+                  onClick={() => setSearchTerm('')}
+                  className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              )}
             </div>
 
-            <div className="w-full xl:w-56">
-              <label className="field-label">الحالة</label>
-              <select value={filter} onChange={(e) => setFilter(e.target.value)} className="select-modern">
-                <option value="all">كل الجهات</option>
-                <option value="active">نشطة</option>
-                <option value="inactive">غير نشطة</option>
-                <option value="pending">معلقة</option>
-              </select>
-            </div>
+            {/* Filter Row */}
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="relative flex-1 w-full">
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <select 
+                  value={filter} 
+                  onChange={(e) => setFilter(e.target.value)} 
+                  className="select-modern w-full pr-9 pl-3 text-sm h-11"
+                >
+                  <option value="all">كل الجهات</option>
+                  <option value="active">نشطة</option>
+                  <option value="inactive">غير نشطة</option>
+                  <option value="pending">معلقة</option>
+                </select>
+              </div>
 
-            <div className="w-full xl:w-40">
-              <label className="field-label">عدد النتائج</label>
-              <div className="input-modern flex items-center justify-between">{filteredOrganizations.length}<span className="text-xs text-slate-400">نتيجة</span></div>
+              <div className="flex items-center gap-2 bg-slate-100/80 px-4 h-11 rounded-2xl border border-slate-200 min-w-fit">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7a1 1 0 011.414-1.414L4 10.586V3a1 1 0 112 0v7.586l3.293-3.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                <span className="text-sm font-bold text-slate-700">{filteredOrganizations.length}</span>
+                <span className="text-xs text-slate-500 font-medium">نتيجة</span>
+              </div>
             </div>
-
-            <button type="button" onClick={resetFilters} className="btn-secondary px-4 py-3 text-sm">Reset</button>
           </div>
         </section>
 
