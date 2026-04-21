@@ -680,16 +680,14 @@ def add_org_service(org_id):
                 INSERT INTO organization_services (
                     organization_id, service_type, payment_method, device_ownership, 
                     annual_amount, paid_amount, due_amount, payment_interval_days,
-                    contract_created_at, contract_duration_unit, contract_duration_value, due_date,
-                    official_book_date, official_book_description
-                ) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, 0, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
+                    contract_created_at, contract_duration_unit, contract_duration_value, due_date
+                ) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, 0, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
                 RETURNING *
             """, (
                 org_id, service_type, payment_method, 
                 data.get('device_ownership', 'الشركة'), annual_amount, annual_amount,
                 data.get('payment_interval_days', 1), created_at_str,
-                duration_unit, duration_value, end_date.isoformat(),
-                data.get('official_book_date'), data.get('official_book_description')
+                duration_unit, duration_value, end_date.isoformat()
             ))
             service = row_to_dict(cursor.fetchone())
         else:
@@ -697,19 +695,30 @@ def add_org_service(org_id):
                 INSERT INTO organization_services (
                     organization_id, service_type, payment_method, device_ownership, 
                     annual_amount, paid_amount, due_amount, payment_interval_days,
-                    contract_created_at, contract_duration_unit, contract_duration_value, due_date,
-                    official_book_date, official_book_description
-                ) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, 0, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
+                    contract_created_at, contract_duration_unit, contract_duration_value, due_date
+                ) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, 0, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
             """, (
                 org_id, service_type, payment_method, 
                 data.get('device_ownership', 'الشركة'), annual_amount, annual_amount,
                 data.get('payment_interval_days', 1), created_at_str,
-                duration_unit, duration_value, end_date.isoformat(),
-                data.get('official_book_date'), data.get('official_book_description')
+                duration_unit, duration_value, end_date.isoformat()
             ))
             new_id = cursor.lastrowid
             cursor.execute(f"SELECT * FROM organization_services WHERE id = {placeholder}", (new_id,))
             service = row_to_dict(cursor.fetchone())
+
+        # Safely log official book info if available
+        book_date = data.get('official_book_date')
+        book_desc = data.get('official_book_description')
+        user_id = request.headers.get('X-User-Id')
+        if service and (book_date or book_desc):
+            try:
+                cursor.execute(f"""
+                    INSERT INTO official_book_records (operation_type, entity_type, organization_id, official_book_date, official_book_description, created_by)
+                    VALUES ('SERVICE_CREATION', 'service', {placeholder}, {placeholder}, {placeholder}, {placeholder})
+                """, (org_id, book_date, book_desc, user_id))
+            except Exception as _e:
+                print(f"Error logging official_book_records (maybe table doesn't exist): {_e}")
 
 
         # Create Initial Contract Period
