@@ -28,6 +28,7 @@ const MainPage = () => {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
+  const [expandedId, setExpandedId] = useState(null);
 
   useEffect(() => {
     const fetchOrganizations = async () => {
@@ -162,12 +163,8 @@ const MainPage = () => {
         </section>
 
         <section className="surface-card overflow-hidden page-reveal stagger-2">
-          <div className="px-6 py-5 border-b border-slate-200/80 bg-slate-50/70 flex items-center justify-between gap-4 flex-wrap">
-            <div>
-              <h2 className="section-title text-lg sm:text-xl">قائمة الجهات</h2>
-              <p className="section-subtitle">بطاقات أبسط وأوضح للوصول السريع إلى التفاصيل.</p>
-            </div>
-            <div className="metric-pill">محاذاة موحدة على كامل الصفحة</div>
+          <div className="px-6 py-5 border-b border-slate-200/80 bg-slate-50/70">
+            <h2 className="section-title text-lg sm:text-xl">قائمة الجهات</h2>
           </div>
 
           <div className="p-4 sm:p-5">
@@ -186,30 +183,68 @@ const MainPage = () => {
             ) : error ? (
               <div className="danger-text">{error}</div>
             ) : filteredOrganizations.length > 0 ? (
-              <div className="grid gap-4">
-                {filteredOrganizations.map((org, index) => (
-                  <div key={org.id} className={`content-list-card page-reveal stagger-${(index % 4) + 1}`}>
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                      <div className="min-w-0 flex-1">
-                        <div className="mb-3 flex flex-wrap items-center gap-3">
-                          <h3 className="text-lg sm:text-xl font-bold text-slate-900">{org.name}</h3>
-                          <span className={getStatusClasses(org.status)}>{getStatusLabel(org.status)}</span>
+              <div className="space-y-3">
+                {filteredOrganizations.map((org, index) => {
+                  const isExpanded = expandedId === org.id;
+                  return (
+                    <div key={org.id} className={`surface-card overflow-hidden transition-all duration-300 page-reveal stagger-${(index % 4) + 1}`}>
+                      <div 
+                        onClick={() => setExpandedId(isExpanded ? null : org.id)}
+                        className="flex items-center justify-between p-4 gap-3 cursor-pointer hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-2 h-2 rounded-full shrink-0 ${org.status === 'active' ? 'bg-emerald-500' : org.status === 'inactive' ? 'bg-rose-500' : 'bg-amber-500'}`} />
+                          <h3 className="font-bold text-slate-800 text-xs sm:text-sm leading-tight truncate">{org.name}</h3>
                         </div>
-
-                        <div className="mb-3 flex flex-wrap gap-2">
-                          <span className="metric-pill">الموقع: {org.location || 'غير محدد'}</span>
-                          <span className="metric-pill">الهاتف: {org.phone || 'غير متوفر'}</span>
-                        </div>
-
-                        <p className="text-sm text-slate-500">عرض العقود والخدمات والدفعات.</p>
+                        
+                        <svg 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          className={`h-5 w-5 text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} 
+                          viewBox="0 0 20 20" 
+                          fill="currentColor"
+                        >
+                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
                       </div>
 
-                      <div className="flex items-center gap-3 lg:self-stretch">
-                        <button onClick={() => navigate(`/detail/${org.id}`)} className="btn-secondary px-4 py-2.5 text-sm whitespace-nowrap">التفاصيل</button>
-                      </div>
+                      {isExpanded && (
+                        <div className="px-5 pb-5 pt-2 border-t border-slate-100 bg-slate-50/30 animate-in slide-in-from-top-2 duration-300">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">رقم الهاتف</span>
+                              <p className="text-sm text-slate-700 font-medium">{org.phone || '—'}</p>
+                            </div>
+                            <div className="space-y-1">
+                              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">الموقع</span>
+                              <p className="text-sm text-slate-700 font-medium">{org.location || '—'}</p>
+                            </div>
+                            <div className="space-y-1">
+                              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">الحالة</span>
+                              <p className={`text-sm font-bold ${org.status === 'active' ? 'text-emerald-600' : org.status === 'inactive' ? 'text-rose-600' : 'text-amber-600'}`}>
+                                {org.status === 'active' ? 'نشطة' : org.status === 'inactive' ? 'غير نشطة' : 'معلقة'}
+                              </p>
+                            </div>
+                            <div className="space-y-1">
+                              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">العنوان</span>
+                              <p className="text-sm text-slate-700 font-medium">{org.address || '—'}</p>
+                            </div>
+                            <div className="sm:col-span-2 space-y-2 pt-2 flex justify-end">
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/detail/${org.id}`);
+                                }} 
+                                className="btn-secondary px-6 py-2 text-sm font-bold shadow-sm"
+                              >
+                                عرض التفاصيل والخدمات
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="empty-state">لا توجد جهات مطابقة للبحث الحالي.</div>
