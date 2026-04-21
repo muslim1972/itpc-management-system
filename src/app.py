@@ -5,6 +5,7 @@ Flask + PostgreSQL/SQLite Backend with Static Serving
 """
 
 import os
+import sqlite3
 import json
 from datetime import datetime, date, timedelta
 from flask import Flask, request, jsonify, Response, send_from_directory
@@ -312,24 +313,36 @@ def add_provider():
 
 @app.route('/api/provider-companies/<int:id>', methods=['GET'])
 def get_provider_detail(id):
-    with get_db() as conn:
-        cursor = conn.cursor()
-        is_pg = getattr(conn, 'is_postgres', False)
-        placeholder = "%s" if is_pg else "?"
-        cursor.execute(f"SELECT * FROM provider_companies WHERE id = {placeholder}", (id,))
-        company = row_to_dict(cursor.fetchone())
-        if not company: return jsonify({'error': 'Not found'}), 404
-        
-        cursor.execute(f"SELECT * FROM provider_subscriptions WHERE provider_company_id = {placeholder} ORDER BY item_name ASC", (id,))
-        subs = rows_to_list(cursor.fetchall())
-        
-        # Get price history for each subscription
-        for s in subs:
-            cursor.execute(f"SELECT * FROM provider_subscription_price_history WHERE provider_subscription_id = {placeholder} ORDER BY changed_at DESC", (s['id'],))
-            s['price_history'] = rows_to_list(cursor.fetchall())
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            is_pg = getattr(conn, 'is_postgres', False)
+            placeholder = "%s" if is_pg else "?"
+            cursor.execute(f"SELECT * FROM provider_companies WHERE id = {placeholder}", (id,))
+            company = row_to_dict(cursor.fetchone())
+            if not company: return jsonify({'error': 'Not found'}), 404
             
-        company['subscriptions'] = subs
-    return jsonify({'provider_company': company})
+            try:
+                cursor.execute(f"SELECT * FROM provider_subscriptions WHERE provider_company_id = {placeholder} ORDER BY item_name ASC", (id,))
+                subs = rows_to_list(cursor.fetchall())
+            except Exception as e:
+                print(f"Error fetching subscriptions: {e}")
+                subs = []
+            
+            # Get price history for each subscription gracefully
+            for s in subs:
+                try:
+                    cursor.execute(f"SELECT * FROM provider_subscription_price_history WHERE provider_subscription_id = {placeholder} ORDER BY changed_at DESC", (s['id'],))
+                    s['price_history'] = rows_to_list(cursor.fetchall())
+                except Exception as e:
+                    print(f"Error fetching price history for sub {s['id']}: {e}")
+                    s['price_history'] = []
+                
+            company['subscriptions'] = subs
+        return jsonify({'provider_company': company})
+    except Exception as e:
+        print(f"Error in get_provider_detail: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/provider-companies/<int:id>', methods=['PUT'])
 def update_provider(id):
