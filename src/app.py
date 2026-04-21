@@ -782,8 +782,7 @@ def delete_org_service(service_id):
             
             # Cascade delete dependents safely
             cursor.execute(f"DELETE FROM service_items WHERE service_id = {placeholder}", (service_id,))
-            cursor.execute(f"DELETE FROM service_payments WHERE service_id = {placeholder}", (service_id,))
-            cursor.execute(f"DELETE FROM service_status_history WHERE service_id = {placeholder}", (service_id,))
+            cursor.execute(f"DELETE FROM payments WHERE service_id = {placeholder}", (service_id,))
             cursor.execute(f"DELETE FROM service_contract_periods WHERE service_id = {placeholder}", (service_id,))
             
             # Finally delete the actual service
