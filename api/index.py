@@ -22,7 +22,9 @@ except Exception as e:
     
     # Simple fallback Flask app to show the error in the browser
     from flask import Flask
+    from flask_cors import CORS
     handler = Flask(__name__)
+    CORS(handler, resources={r"/*": {"origins": "*"}})
     @handler.route('/', defaults={'path': ''})
     @handler.route('/<path:path>')
     def catch_all(path):
