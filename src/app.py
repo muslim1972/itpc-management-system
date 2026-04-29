@@ -10,6 +10,8 @@ import json
 from datetime import datetime, date, timedelta
 from flask import Flask, request, jsonify, Response, send_from_directory
 from flask_cors import CORS
+import jwt
+import os
 from database import get_db, init_db, DbWrapper
 
 app = Flask(__name__, static_folder='../dist')
@@ -29,6 +31,34 @@ def add_cors_headers(response):
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-User-Id'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
     return response
+
+@app.before_request
+def check_auth():
+    if request.method == 'OPTIONS':
+        return
+        
+    path = request.path
+    if path.startswith('/api/'):
+        # Allow public endpoints
+        if path in ['/api/auth/login', '/api/health', '/api/debug-db']:
+            return
+            
+        token = None
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
+            
+        if not token:
+            return jsonify({'success': False, 'error': 'Token is missing or unauthorized!'}), 401
+            
+        try:
+            secret = os.environ.get('JWT_SECRET', app.config.get('SECRET_KEY', 'itpc-secret-change-in-production'))
+            data = jwt.decode(token, secret, algorithms=["HS256"])
+            request.user = data
+        except jwt.ExpiredSignatureError:
+            return jsonify({'success': False, 'error': 'Token has expired! Please log in again.'}), 401
+        except Exception as e:
+            return jsonify({'success': False, 'error': f'Invalid token!'}), 401
 
 # ── Static File Serving ──────────────────────────────────────────────────────
 
@@ -111,13 +141,12 @@ def login():
         password = data.get('password')
         
         with get_db() as conn:
-            # دمج التأكد من وجود المستخدمين الافتراضيين مباشرة وبطريقة آمنة
             is_pg = 'postgres' in str(type(conn)).lower() or not hasattr(conn, 'interrupt')
             p = "%s" if is_pg else "?"
             
             cursor = conn.cursor()
             
-            # عملية تسجيل الدخول החقيقية
+            # عملية تسجيل الدخول
             cursor.execute(f"SELECT id, username, role FROM users WHERE username = {p} AND password = {p}", (username, password))
             user = cursor.fetchone()
             
@@ -125,7 +154,18 @@ def login():
                 user_dict = dict(user)
                 cursor.execute(f"UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = {p}", (user_dict['id'],))
                 conn.commit()
-                return jsonify({'success': True, 'user': user_dict})
+                
+                # Generate JWT Token
+                secret = os.environ.get('JWT_SECRET', app.config.get('SECRET_KEY', 'itpc-secret-change-in-production'))
+                token_payload = {
+                    'id': user_dict['id'],
+                    'username': user_dict['username'],
+                    'role': user_dict['role'],
+                    'exp': datetime.utcnow() + timedelta(hours=24)
+                }
+                token = jwt.encode(token_payload, secret, algorithm="HS256")
+                
+                return jsonify({'success': True, 'user': user_dict, 'token': token})
             
         return jsonify({'success': False, 'error': 'اسم المستخدم أو كلمة المرور غير صحيحة'}), 401
     except Exception as e:

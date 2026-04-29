@@ -1,13 +1,23 @@
 export const getUser = () => {
     try {
-      return JSON.parse(localStorage.getItem('user'));
+      const user = JSON.parse(localStorage.getItem('user'));
+      return user;
     } catch {
       return null;
     }
   };
+
+  export const getToken = () => {
+    return localStorage.getItem('token');
+  };
   
   export const isAuthenticated = () => {
-    return !!getUser();
+    // Check if token exists and is valid format
+    const token = getToken();
+    if (!token) return false;
+    
+    // Optionally check token expiration here
+    return true;
   };
   
   export const isAdmin = () => {
@@ -22,6 +32,7 @@ export const getUser = () => {
   
   export const logout = () => {
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
     // إبلاغ التطبيق الأب (InfTeleKarbala) بتسجيل الخروج لإغلاق الـ iframe
     if (window.parent !== window) {
       window.parent.postMessage({ type: 'capacities-logout' }, '*');
@@ -29,9 +40,11 @@ export const getUser = () => {
   };
   
   export const getAuthHeaders = () => {
+    const token = getToken();
     const user = getUser();
     return {
       'Content-Type': 'application/json',
       'X-User-Id': user?.id ? String(user.id) : '',
+      'Authorization': token ? `Bearer ${token}` : '',
     };
   };

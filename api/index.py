@@ -26,7 +26,7 @@ except Exception as e:
     @handler.route('/', defaults={'path': ''})
     @handler.route('/<path:path>')
     def catch_all(path):
-        return f"<pre>ITPC Backend Error (Detector):\n{error_msg}</pre>", 500
+        return f"<pre>ITPC Backend Error. Please check server logs.</pre>", 500
 
 # Vercel needs 'app' or 'handler'
 app = handler
