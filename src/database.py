@@ -2,7 +2,9 @@ import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import datetime, date, timedelta
+from dotenv import load_dotenv
 
+load_dotenv()
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def get_config():
