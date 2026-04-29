@@ -1231,12 +1231,12 @@ const DetailPage = () => {
             {/* السطر الثاني: الشركة المجهزة */}
             {(() => {
               const providerName = items.find(i => i.provider_company_name)?.provider_company_name;
-              return providerName ? (
+              return (
                 <div className="flex items-center gap-2 text-sm text-slate-600 mr-5">
                   <span className="font-semibold text-slate-500">الشركة المجهزة:</span>
-                  <span className="font-bold text-slate-800">{providerName}</span>
+                  <span className="font-bold text-slate-800">{providerName || 'غير محدد'}</span>
                 </div>
-              ) : null;
+              );
             })()}
           </div>
         </div>
