@@ -14,7 +14,16 @@ import UserOrganizationsPage from './pages/UserOrganizationsPage';
 
 const getStoredUser = () => {
   try {
-    return JSON.parse(localStorage.getItem('user'));
+    const user = JSON.parse(localStorage.getItem('user'));
+    const token = localStorage.getItem('token');
+    
+    // Force re-login if user exists but token is missing (transitioning to JWT)
+    if (user && !token) {
+      localStorage.removeItem('user');
+      return null;
+    }
+    
+    return user;
   } catch {
     return null;
   }
