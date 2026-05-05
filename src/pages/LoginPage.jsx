@@ -15,37 +15,51 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      // البحث عن المستخدم في جدول users داخل سكيما itpc
-      const { data: user, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('username', username)
-        .eq('password', password)
-        .single();
+      // 1. استخدام نظام Supabase Auth للمصادقة الرسمية (JWT)
+      // ملاحظة: سنستخدم الإيميل (username@itpc.gov.iq) كمعرف فريد لنظام Supabase
+      const email = `${username}@itpc.gov.iq`;
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      if (error || !user) {
-        alert('اسم المستخدم أو كلمة المرور غير صحيحة');
-        setLoading(false);
+      if (authError) {
+        // إذا فشل النظام الرسمي، نجرب البحث اليدوي في جدول itpc.users (للمرحلة الانتقالية)
+        const { data: user, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('username', username)
+          .eq('password', password) // سيتم استبداله بمقارنة الهاش لاحقاً
+          .single();
+
+        if (userError || !user) {
+          alert('اسم المستخدم أو كلمة المرور غير صحيحة');
+          setLoading(false);
+          return;
+        }
+
+        // حفظ البيانات محلياً
+        localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem('token', 'legacy-session');
+        
+        if (user.role === 'admin') navigate('/admin');
+        else navigate('/main');
         return;
       }
 
-      // تحديث آخر تسجيل دخول
-      await supabase
+      // 2. إذا نجح تسجيل الدخول الرسمي، نجلب بيانات الدور من جدولنا
+      const { data: profile } = await supabase
         .from('users')
-        .update({ last_login: new Date().toISOString() })
-        .eq('id', user.id);
+        .select('*')
+        .eq('username', username)
+        .single();
 
-      // حفظ البيانات محلياً (محاكاة لسلوك Flask السابق)
-      localStorage.setItem('user', JSON.stringify(user));
-      // ملاحظة: في الـ Zero-Backend لا نحتاج توكن JWT من Flask لأننا نستخدم Supabase Session
-      // ولكن سنضع قيمة وهمية للحفاظ على توافق الكود الحالي إذا كان يفحص وجودها
-      localStorage.setItem('token', 'supabase-session-active');
+      localStorage.setItem('user', JSON.stringify(profile));
+      localStorage.setItem('token', authData.session.access_token);
 
-      if (user.role === 'admin') {
-        navigate('/admin');
-      } else {
-        navigate('/main');
-      }
+      if (profile?.role === 'admin') navigate('/admin');
+      else navigate('/main');
+
     } catch (err) {
       console.error('Login error:', err);
       alert('حدث خطأ أثناء محاولة تسجيل الدخول');

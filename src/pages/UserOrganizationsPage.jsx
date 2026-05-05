@@ -3,9 +3,7 @@ import { Navigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import SlideMenu from '../components/SlideMenu';
 import PageFooter from '../components/PageFooter';
-import { getUser, getAuthHeaders } from '../utils/auth';
-
-const API = '/api';
+import { supabase } from '../lib/supabase';
 
 const emptyForm = {
   name: '',
@@ -39,17 +37,16 @@ const UserOrganizationsPage = () => {
     setError('');
 
     try {
-      const res = await fetch(`${API}/organizations`);
-      const data = await res.json();
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      if (!res.ok) {
-        throw new Error(data.error || 'فشل تحميل الجهات');
-      }
-
-      setOrganizations(data.organizations || []);
+      if (error) throw error;
+      setOrganizations(data || []);
     } catch (err) {
       setOrganizations([]);
-      setError(err.message || 'خطأ في الاتصال');
+      setError('خطأ في تحميل الجهات من قاعدة البيانات');
     } finally {
       setLoading(false);
     }
@@ -83,25 +80,21 @@ const UserOrganizationsPage = () => {
     setError('');
 
     try {
-      const res = await fetch(`${API}/organizations`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(addForm),
-      });
+      const { error } = await supabase
+        .from('organizations')
+        .insert([{
+          ...addForm,
+          created_at: new Date().toISOString()
+        }]);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || 'فشل الحفظ');
-        return;
-      }
+      if (error) throw error;
 
       setAddForm(emptyForm);
       setShowAddForm(false);
       setEditingId(null);
       await loadOrganizations();
     } catch {
-      setError('خطأ في الاتصال');
+      setError('فشل حفظ الجهة في قاعدة البيانات');
     }
   };
 
@@ -127,23 +120,20 @@ const UserOrganizationsPage = () => {
     setError('');
 
     try {
-      const res = await fetch(`${API}/organizations/${editingId}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(editForm),
-      });
+      const { error } = await supabase
+        .from('organizations')
+        .update({
+          ...editForm,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editingId);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || 'فشل التحديث');
-        return;
-      }
+      if (error) throw error;
 
       setEditingId(null);
       await loadOrganizations();
     } catch {
-      setError('خطأ في الاتصال');
+      setError('فشل تحديث البيانات في قاعدة البيانات');
     }
   };
 
@@ -155,21 +145,15 @@ const UserOrganizationsPage = () => {
     setError('');
 
     try {
-      const res = await fetch(`${API}/organizations/${id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      });
+      const { error } = await supabase
+        .from('organizations')
+        .delete()
+        .eq('id', id);
 
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        setError(data.error || 'فشل الحذف');
-        return;
-      }
-
+      if (error) throw error;
       await loadOrganizations();
     } catch {
-      setError('خطأ في الاتصال');
+      setError('فشل الحذف من قاعدة البيانات');
     }
   };
 

@@ -12,7 +12,7 @@ const TipsMarquee = ({ appName = 'InfTeleKarbala' }) => {
         const { data, error } = await supabase
           .from('app_news')
           .select('content')
-          .order('created_at', { ascending: false })
+          .order('id', { ascending: false }) // Sort by ID instead of timestamp to be safer
           .limit(1)
           .maybeSingle();
 
