@@ -4,7 +4,7 @@ import Navbar from '../components/Navbar';
 import SlideMenu from '../components/SlideMenu';
 import PageFooter from '../components/PageFooter';
 
-const API = '/api';
+import { supabase } from '../lib/supabase';
 
 const getStatusClasses = (status) => {
   if (status === 'active') return 'status-badge status-active';
@@ -31,17 +31,17 @@ const AddPage = () => {
       setLoading(true);
       setError('');
 
-      const res = await fetch(`${API}/organizations`);
-      const data = await res.json();
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      if (!res.ok) {
-        throw new Error(data.error || 'فشل تحميل الجهات');
-      }
+      if (error) throw error;
 
-      setOrganizations(data.organizations || []);
+      setOrganizations(data || []);
     } catch (err) {
       console.error(err);
-      setError(err.message || 'حدث خطأ أثناء تحميل الجهات');
+      setError('حدث خطأ أثناء تحميل الجهات من قاعدة البيانات');
     } finally {
       setLoading(false);
     }

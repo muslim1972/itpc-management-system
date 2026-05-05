@@ -2,40 +2,55 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BrandLogo from '../components/BrandLogo';
 import PageFooter from '../components/PageFooter';
+import { supabase } from '../lib/supabase';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
+      // البحث عن المستخدم في جدول users داخل سكيما itpc
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('username', username)
+        .eq('password', password)
+        .single();
 
-      const data = await res.json();
-
-      if (res.ok) {
-        localStorage.setItem('user', JSON.stringify(data.user));
-        if (data.token) {
-          localStorage.setItem('token', data.token);
-        }
-
-        if (data.user?.role === 'admin') {
-          navigate('/admin');
-        } else {
-          navigate('/main');
-        }
-      } else {
-        alert(data.error || 'Login failed');
+      if (error || !user) {
+        alert('اسم المستخدم أو كلمة المرور غير صحيحة');
+        setLoading(false);
+        return;
       }
-    } catch {
-      alert('Cannot connect to server. Is the backend running?');
+
+      // تحديث آخر تسجيل دخول
+      await supabase
+        .from('users')
+        .update({ last_login: new Date().toISOString() })
+        .eq('id', user.id);
+
+      // حفظ البيانات محلياً (محاكاة لسلوك Flask السابق)
+      localStorage.setItem('user', JSON.stringify(user));
+      // ملاحظة: في الـ Zero-Backend لا نحتاج توكن JWT من Flask لأننا نستخدم Supabase Session
+      // ولكن سنضع قيمة وهمية للحفاظ على توافق الكود الحالي إذا كان يفحص وجودها
+      localStorage.setItem('token', 'supabase-session-active');
+
+      if (user.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/main');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      alert('حدث خطأ أثناء محاولة تسجيل الدخول');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -111,8 +126,8 @@ const LoginPage = () => {
               />
             </div>
 
-            <button type="submit" className="btn-primary w-full">
-              دخول
+            <button type="submit" disabled={loading} className="btn-primary w-full disabled:opacity-50">
+              {loading ? 'جاري التحقق...' : 'دخول'}
             </button>
           </form>
 

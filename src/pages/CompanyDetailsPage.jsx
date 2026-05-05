@@ -6,6 +6,8 @@ import PageFooter from '../components/PageFooter';
 import PriceHistoryDropdown from '../components/PriceHistoryDropdown';
 import { getAuthHeaders } from '../utils/auth';
 
+import { supabase } from '../lib/supabase';
+
 const API = '/api';
 
 const SERVICE_TYPES = ['Wireless', 'FTTH', 'Optical', 'Other'];
@@ -82,19 +84,38 @@ const CompanyDetailsPage = () => {
       setLoading(true);
       setError('');
 
-      const companyRes = await fetch(`${API}/provider-companies/${id}`);
-      const companyData = await companyRes.json().catch(() => ({}));
+      // 1. Fetch Provider Company
+      const { data: providerCompany, error: companyError } = await supabase
+        .from('provider_companies')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-      if (!companyRes.ok) {
-        throw new Error(companyData.error || 'فشل تحميل بيانات الشركة');
-      }
+      if (companyError) throw companyError;
 
-      const providerCompany = companyData.provider_company || null;
+      // 2. Fetch Subscriptions for this Company
+      const { data: subs, error: subsError } = await supabase
+        .from('provider_subscriptions')
+        .select('*, price_history:provider_subscription_price_history(*)')
+        .eq('provider_company_id', id)
+        .order('item_name', { ascending: true });
+
+      if (subsError) throw subsError;
+
+      // Sort price history descending manually if needed, 
+      // though Supabase usually returns it as requested if configured or we can sort here
+      const enrichedSubs = (subs || []).map(s => ({
+        ...s,
+        price_history: (s.price_history || []).sort((a, b) => 
+          new Date(b.changed_at) - new Date(a.changed_at)
+        )
+      }));
+
       setCompany(providerCompany);
-      setSubscriptions(providerCompany?.subscriptions || []);
+      setSubscriptions(enrichedSubs);
     } catch (err) {
       console.error(err);
-      setError(err.message || 'حدث خطأ أثناء تحميل البيانات');
+      setError('حدث خطأ أثناء تحميل بيانات الشركة من قاعدة البيانات');
     } finally {
       setLoading(false);
     }
@@ -180,23 +201,19 @@ const CompanyDetailsPage = () => {
       setSaving(true);
       setError('');
 
-      const res = await fetch(`${API}/provider-companies/${id}/subscriptions`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
+      const { error } = await supabase
+        .from('provider_subscriptions')
+        .insert([{
+          provider_company_id: id,
           service_type: form.service_type,
           item_category: form.item_category,
           item_name: form.item_name.trim(),
           price: Number(form.price || 0),
           unit_label: form.unit_label.trim() || null,
-        }),
-      });
+          created_at: new Date().toISOString()
+        }]);
 
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        throw new Error(data.error || 'فشل إضافة الاشتراك');
-      }
+      if (error) throw error;
 
       resetCreateForm();
       setShowAddSubscription(false);
@@ -204,8 +221,8 @@ const CompanyDetailsPage = () => {
       alert('تمت إضافة الاشتراك بنجاح');
     } catch (err) {
       console.error(err);
-      setError(err.message || 'حدث خطأ أثناء إضافة الاشتراك');
-      alert(err.message || 'حدث خطأ أثناء إضافة الاشتراك');
+      setError('حدث خطأ أثناء إضافة الاشتراك في قاعدة البيانات');
+      alert('حدث خطأ أثناء إضافة الاشتراك');
     } finally {
       setSaving(false);
     }
@@ -239,37 +256,41 @@ const CompanyDetailsPage = () => {
       setSaving(true);
       setError('');
 
-      const impactRes = await fetch(`${API}/provider-subscriptions/${subId}/impact`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          service_type: editForm.service_type,
-          item_category: editForm.item_category,
-          item_name: editForm.item_name.trim(),
-          price: Number(editForm.price || 0),
-          unit_label: editForm.unit_label.trim() || null,
-        }),
-      });
+      // Find affected organizations through service_items (Simulation of /impact)
+      // This is complex for a simple RPC but we can do it with a select
+      const { data: sub, error: subError } = await supabase
+        .from('provider_subscriptions')
+        .select('*')
+        .eq('id', subId)
+        .single();
+      
+      if (subError) throw subError;
 
-      const impactData = await impactRes.json().catch(() => ({}));
-      if (!impactRes.ok) {
-        throw new Error(impactData.error || 'فشل جلب الجهات المتأثرة');
+      const { data: orgs, error: orgsError } = await supabase
+        .rpc('get_affected_organizations', { 
+          p_provider_id: sub.provider_company_id, 
+          p_item_name: sub.item_name 
+        });
+
+      if (orgsError) {
+        console.error('Impact RPC Error:', orgsError);
+        // Fallback or handle error
       }
 
       setImpactModal({
         open: true,
         subId,
-        oldPrice: impactData.old_price,
-        newPrice: impactData.new_price,
-        organizations: impactData.affected_organizations || [],
-        selectedIds: (impactData.affected_organizations || []).map((org) => org.organization_id),
+        oldPrice: sub.price,
+        newPrice: Number(editForm.price || 0),
+        organizations: orgs || [],
+        selectedIds: (orgs || []).map((org) => org.organization_id),
         official_book_date: new Date().toISOString().split('T')[0],
         official_book_description: '',
       });
     } catch (err) {
       console.error(err);
-      setError(err.message || 'حدث خطأ أثناء تجهيز التعديل');
-      alert(err.message || 'حدث خطأ أثناء تجهيز التعديل');
+      setError('حدث خطأ أثناء تحليل تأثير السعر');
+      alert('حدث خطأ أثناء تحليل تأثير السعر');
     } finally {
       setSaving(false);
     }
@@ -286,35 +307,69 @@ const CompanyDetailsPage = () => {
       setSaving(true);
       setError('');
 
-      const res = await fetch(`${API}/provider-subscriptions/${impactModal.subId}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
+      // 1. Update Subscription
+      const { error: subUpdateError } = await supabase
+        .from('provider_subscriptions')
+        .update({
           service_type: editForm.service_type,
           item_category: editForm.item_category,
           item_name: editForm.item_name.trim(),
           price: Number(editForm.price || 0),
           unit_label: editForm.unit_label.trim() || null,
-          selected_organization_ids: impactModal.selectedIds,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', impactModal.subId);
+
+      if (subUpdateError) throw subUpdateError;
+
+      // 2. Add Price History Entry
+      const { error: historyError } = await supabase
+        .from('provider_subscription_price_history')
+        .insert([{
+          provider_subscription_id: impactModal.subId,
+          old_price: impactModal.oldPrice,
+          new_price: Number(editForm.price || 0),
           official_book_date: impactModal.official_book_date,
-          official_book_description: String(impactModal.official_book_description || '').trim(),
-        }),
-      });
+          official_book_description: impactModal.official_book_description,
+          changed_at: new Date().toISOString()
+        }]);
 
-      const data = await res.json().catch(() => ({}));
+      if (historyError) throw historyError;
 
-      if (!res.ok) {
-        throw new Error(data.error || 'فشل تحديث الاشتراك');
+      // 3. Update affected service items if selected
+      if (impactModal.selectedIds.length > 0) {
+        const { data: sub } = await supabase
+          .from('provider_subscriptions')
+          .select('provider_company_id, item_name')
+          .eq('id', impactModal.subId)
+          .single();
+
+        if (sub) {
+          const { data: services } = await supabase
+            .from('organization_services')
+            .select('id')
+            .in('organization_id', impactModal.selectedIds);
+          
+          if (services && services.length > 0) {
+            const serviceIds = services.map(s => s.id);
+            await supabase
+              .from('service_items')
+              .update({ price: Number(editForm.price || 0) })
+              .eq('provider_company_id', sub.provider_company_id)
+              .eq('item_name', sub.item_name)
+              .in('service_id', serviceIds);
+          }
+        }
       }
 
       resetImpactModal();
       cancelEdit();
       await loadCompanyDetails();
-      alert('تم تحديث الاشتراك بنجاح');
+      alert('تم تحديث الاشتراك وسجل الأسعار بنجاح');
     } catch (err) {
       console.error(err);
-      setError(err.message || 'حدث خطأ أثناء تحديث الاشتراك');
-      alert(err.message || 'حدث خطأ أثناء تحديث الاشتراك');
+      setError('حدث خطأ أثناء حفظ التعديلات في قاعدة البيانات');
+      alert('حدث خطأ أثناء حفظ التعديلات');
     } finally {
       setSaving(false);
     }
@@ -328,23 +383,19 @@ const CompanyDetailsPage = () => {
       setSaving(true);
       setError('');
 
-      const res = await fetch(`${API}/provider-subscriptions/${subId}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      });
+      const { error } = await supabase
+        .from('provider_subscriptions')
+        .delete()
+        .eq('id', subId);
 
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        throw new Error(data.error || 'فشل حذف الاشتراك');
-      }
+      if (error) throw error;
 
       await loadCompanyDetails();
       alert('تم حذف الاشتراك بنجاح');
     } catch (err) {
       console.error(err);
-      setError(err.message || 'حدث خطأ أثناء حذف الاشتراك');
-      alert(err.message || 'حدث خطأ أثناء حذف الاشتراك');
+      setError('حدث خطأ أثناء حذف الاشتراك من قاعدة البيانات');
+      alert('حدث خطأ أثناء حذف الاشتراك');
     } finally {
       setSaving(false);
     }

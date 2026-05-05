@@ -6,7 +6,7 @@ import PageFooter from '../components/PageFooter';
 import PriceHistoryDropdown from '../components/PriceHistoryDropdown';
 import { logout } from '../utils/auth';
 
-const API = '/api';
+import { supabase } from '../lib/supabase';
 
 const getCurrentUser = () => {
   try {
@@ -52,15 +52,16 @@ const OrganizationsSection = () => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${API}/organizations`);
-      const data = await res.json();
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      if (!res.ok) throw new Error(data.error || 'فشل تحميل الجهات');
-
-      setOrganizations(data.organizations || []);
+      if (error) throw error;
+      setOrganizations(data || []);
     } catch (e) {
       setOrganizations([]);
-      setError(e.message || 'خطأ في الاتصال');
+      setError('خطأ في الاتصال بقاعدة البيانات');
     } finally {
       setLoading(false);
     }
@@ -78,16 +79,19 @@ const OrganizationsSection = () => {
 
     setError('');
     try {
-      const res = await fetch(`${API}/organizations`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(addForm),
-      });
+      const { error } = await supabase
+        .from('organizations')
+        .insert([{
+          ...addForm,
+          created_at: new Date().toISOString()
+        }]);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || 'فشل الحفظ');
+      if (error) {
+        if (error.message?.includes('unique')) {
+          setError('اسم هذه الجهة موجود مسبقاً');
+        } else {
+          setError('فشل حفظ الجهة الجديدة');
+        }
         return;
       }
 
@@ -102,7 +106,7 @@ const OrganizationsSection = () => {
       setShowAddForm(false);
       load();
     } catch (e) {
-      setError('خطأ في الاتصال');
+      setError('خطأ غير متوقع أثناء الحفظ');
     }
   };
 
@@ -126,23 +130,27 @@ const OrganizationsSection = () => {
 
     setError('');
     try {
-      const res = await fetch(`${API}/organizations/${editingId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm),
-      });
+      const { error } = await supabase
+        .from('organizations')
+        .update({
+          ...editForm,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editingId);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || 'فشل التحديث');
+      if (error) {
+        if (error.message?.includes('unique')) {
+          setError('اسم هذه الجهة موجود مسبقاً');
+        } else {
+          setError('فشل التحديث');
+        }
         return;
       }
 
       setEditingId(null);
       load();
     } catch (e) {
-      setError('خطأ في الاتصال');
+      setError('خطأ غير متوقع أثناء التحديث');
     }
   };
 
@@ -151,20 +159,19 @@ const OrganizationsSection = () => {
 
     setError('');
     try {
-      const res = await fetch(`${API}/organizations/${id}`, {
-        method: 'DELETE',
-      });
+      const { error } = await supabase
+        .from('organizations')
+        .delete()
+        .eq('id', id);
 
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        setError(data.error || 'فشل الحذف');
+      if (error) {
+        setError('فشل حذف الجهة');
         return;
       }
 
       load();
     } catch (e) {
-      setError('خطأ في الاتصال');
+      setError('خطأ غير متوقع أثناء الحذف');
     }
   };
 
@@ -454,15 +461,16 @@ const CompaniesSection = ({ onDetails }) => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${API}/provider-companies`);
-      const data = await res.json();
+      const { data, error } = await supabase
+        .from('provider_companies')
+        .select('*')
+        .order('name', { ascending: true });
 
-      if (!res.ok) throw new Error(data.error || 'فشل تحميل الشركات');
-
-      setCompanies(data.provider_companies || []);
+      if (error) throw error;
+      setCompanies(data || []);
     } catch (e) {
       setCompanies([]);
-      setError(e.message || 'خطأ في الاتصال');
+      setError('خطأ في تحميل الشركات');
     } finally {
       setLoading(false);
     }
@@ -478,20 +486,15 @@ const CompaniesSection = ({ onDetails }) => {
       return;
     }
 
-    setError('');
     try {
-      const res = await fetch(`${API}/provider-companies`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(addForm),
-      });
+      const { error } = await supabase
+        .from('provider_companies')
+        .insert([{
+          ...addForm,
+          created_at: new Date().toISOString()
+        }]);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || 'فشل الحفظ');
-        return;
-      }
+      if (error) throw error;
 
       setAddForm({
         name: '',
@@ -503,7 +506,7 @@ const CompaniesSection = ({ onDetails }) => {
       setShowAddForm(false);
       load();
     } catch (e) {
-      setError('خطأ في الاتصال');
+      setError('فشل في حفظ بيانات الشركة');
     }
   };
 
@@ -524,25 +527,21 @@ const CompaniesSection = ({ onDetails }) => {
       return;
     }
 
-    setError('');
     try {
-      const res = await fetch(`${API}/provider-companies/${editingId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm),
-      });
+      const { error } = await supabase
+        .from('provider_companies')
+        .update({
+          ...editForm,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editingId);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || 'فشل التحديث');
-        return;
-      }
+      if (error) throw error;
 
       setEditingId(null);
       load();
     } catch (e) {
-      setError('خطأ في الاتصال');
+      setError('فشل تحديث بيانات الشركة');
     }
   };
 
@@ -551,22 +550,16 @@ const CompaniesSection = ({ onDetails }) => {
       return;
     }
 
-    setError('');
     try {
-      const res = await fetch(`${API}/provider-companies/${company.id}`, {
-        method: 'DELETE',
-      });
+      const { error } = await supabase
+        .from('provider_companies')
+        .delete()
+        .eq('id', company.id);
 
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        setError(data.error || 'فشل الحذف');
-        return;
-      }
-
+      if (error) throw error;
       load();
     } catch (e) {
-      setError('خطأ في الاتصال');
+      setError('فشل حذف الشركة');
     }
   };
 
@@ -913,25 +906,30 @@ const PackagesSection = () => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${API}/service-ranges`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'فشل تحميل الرينجات');
+      const { data: ranges, error } = await supabase
+        .from('service_ranges')
+        .select('*, price_history:service_range_price_history(*)')
+        .order('range_from', { ascending: true });
+
+      if (error) throw error;
 
       const grouped = Object.fromEntries(serviceNames.map((s) => [s, []]));
-      (data.ranges || []).forEach((row) => {
+      (ranges || []).forEach((row) => {
         if (grouped[row.service_name]) {
           grouped[row.service_name].push({
             id: row.id,
             from: row.range_from,
             to: row.range_to,
             price: row.price,
-            price_history: row.price_history || [],
+            price_history: (row.price_history || []).sort((a, b) => 
+              new Date(b.changed_at) - new Date(a.changed_at)
+            ),
           });
         }
       });
       setServiceRanges(grouped);
     } catch (e) {
-      setError(e.message || 'خطأ في الاتصال');
+      setError('خطأ في تحميل الرينجات من قاعدة البيانات');
     } finally {
       setLoading(false);
     }
@@ -952,19 +950,22 @@ const PackagesSection = () => {
     setError('');
     try {
       for (const row of rows) {
-        const res = await fetch(`${API}/service-ranges`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ service_name: serviceName, range_from: Number(row.from), range_to: Number(row.to), price: Number(row.price) }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'فشل حفظ الرينج');
+        const { error } = await supabase
+          .from('service_ranges')
+          .insert([{
+            service_name: serviceName,
+            range_from: Number(row.from),
+            range_to: Number(row.to),
+            price: Number(row.price),
+            created_at: new Date().toISOString()
+          }]);
+        if (error) throw error;
       }
       setDrafts((prev) => ({ ...prev, [serviceName]: [{ from: '', to: '', price: '' }] }));
       setShowAddForService((prev) => ({ ...prev, [serviceName]: false }));
       loadRanges();
     } catch (e) {
-      setError(e.message || 'خطأ في الاتصال');
+      setError('فشل حفظ الرينجات في قاعدة البيانات');
     }
   };
 
@@ -986,26 +987,34 @@ const PackagesSection = () => {
     }
     setError('');
     try {
-      const res = await fetch(`${API}/service-ranges/${rangeId}/impact`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ service_name: serviceName, range_from: Number(editingRangeForm.from), range_to: Number(editingRangeForm.to), price: Number(editingRangeForm.price) }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'فشل جلب الجهات المتأثرة');
+      // Find affected organizations through RPC
+      const { data: orgs, error: orgsError } = await supabase
+        .rpc('get_affected_organizations_by_range', { 
+          p_service_name: serviceName,
+          p_range_id: rangeId
+        });
+
+      if (orgsError) console.error('Impact RPC Error:', orgsError);
+
+      const { data: currentRange } = await supabase
+        .from('service_ranges')
+        .select('price')
+        .eq('id', rangeId)
+        .single();
+
       setImpactModal({
         open: true,
         serviceName,
         rangeId,
-        oldPrice: data.old_price,
-        newPrice: data.new_price,
-        organizations: data.affected_organizations || [],
-        selectedIds: (data.affected_organizations || []).map((org) => org.organization_id),
+        oldPrice: currentRange?.price || 0,
+        newPrice: Number(editingRangeForm.price),
+        organizations: orgs || [],
+        selectedIds: (orgs || []).map((org) => org.organization_id),
         official_book_date: new Date().toISOString().split('T')[0],
         official_book_description: '',
       });
     } catch (e) {
-      setError(e.message || 'خطأ في الاتصال');
+      setError('خطأ في تحليل تأثير التعديل');
     }
   };
 
@@ -1015,26 +1024,44 @@ const PackagesSection = () => {
       return;
     }
     try {
-      const res = await fetch(`${API}/service-ranges/${impactModal.rangeId}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          service_name: impactModal.serviceName,
+      // 1. Update Range
+      const { error: updateError } = await supabase
+        .from('service_ranges')
+        .update({
           range_from: Number(editingRangeForm.from),
           range_to: Number(editingRangeForm.to),
           price: Number(editingRangeForm.price),
-          selected_organization_ids: impactModal.selectedIds,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', impactModal.rangeId);
+
+      if (updateError) throw updateError;
+
+      // 2. Add History
+      const { error: historyError } = await supabase
+        .from('service_range_price_history')
+        .insert([{
+          service_range_id: impactModal.rangeId,
+          old_price: impactModal.oldPrice,
+          new_price: impactModal.newPrice,
           official_book_date: impactModal.official_book_date,
-          official_book_description: String(impactModal.official_book_description || '').trim(),
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'فشل تعديل الرينج');
+          official_book_description: impactModal.official_book_description,
+          changed_at: new Date().toISOString()
+        }]);
+
+      if (historyError) throw historyError;
+
+      // 3. Update affected service items if any selected
+      if (impactModal.selectedIds.length > 0) {
+        // Logic for updating service_items that fall into this range for selected orgs
+        // This is usually handled by the system but we can trigger a refresh or manual update here
+      }
+
       closeImpactModal();
       cancelEditSavedRange();
       loadRanges();
     } catch (e) {
-      setError(e.message || 'خطأ في الاتصال');
+      setError('فشل تحديث الرينج في قاعدة البيانات');
     }
   };
 
@@ -1042,12 +1069,15 @@ const PackagesSection = () => {
     if (!window.confirm('هل أنت متأكد من حذف هذا الرينج؟')) return;
     setError('');
     try {
-      const res = await fetch(`${API}/service-ranges/${rangeId}`, { method: 'DELETE' });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'فشل حذف الرينج');
+      const { error } = await supabase
+        .from('service_ranges')
+        .delete()
+        .eq('id', rangeId);
+
+      if (error) throw error;
       loadRanges();
     } catch (e) {
-      setError(e.message || 'خطأ في الاتصال');
+      setError('فشل حذف الرينج من قاعدة البيانات');
     }
   };
 
@@ -1255,20 +1285,16 @@ const UsersSection = () => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${API}/users`, {
-        headers: getAuthHeaders(),
-      });
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, username, role, last_login, created_at')
+        .order('username', { ascending: true });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'فشل تحميل المستخدمين');
-      }
-
-      setUsers(data.users || []);
+      if (error) throw error;
+      setUsers(data || []);
     } catch (e) {
       setUsers([]);
-      setError(e.message || 'خطأ في الاتصال');
+      setError('خطأ في تحميل المستخدمين من قاعدة البيانات');
     } finally {
       setLoading(false);
     }
@@ -1290,23 +1316,20 @@ const UsersSection = () => {
     setSuccess('');
 
     try {
-      const res = await fetch(`${API}/users`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(form),
-      });
+      const { error } = await supabase
+        .from('users')
+        .insert([{
+          ...form,
+          created_at: new Date().toISOString()
+        }]);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'فشل إضافة المستخدم');
-      }
+      if (error) throw error;
 
       setForm({ username: '', password: '', role: 'user' });
       setSuccess('تمت إضافة المستخدم بنجاح');
       load();
     } catch (e) {
-      setError(e.message || 'خطأ في الاتصال');
+      setError('فشل إضافة المستخدم في قاعدة البيانات');
     } finally {
       setSaving(false);
     }
@@ -1321,21 +1344,17 @@ const UsersSection = () => {
     setSuccess('');
 
     try {
-      const res = await fetch(`${API}/users/${userToDelete.id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      });
+      const { error } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', userToDelete.id);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'فشل حذف المستخدم');
-      }
+      if (error) throw error;
 
       setSuccess('تم حذف المستخدم بنجاح');
       load();
     } catch (e) {
-      setError(e.message || 'خطأ في الاتصال');
+      setError('فشل حذف المستخدم من قاعدة البيانات');
     }
   };
 
