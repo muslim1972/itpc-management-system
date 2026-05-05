@@ -15,54 +15,29 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      // 1. استخدام نظام Supabase Auth للمصادقة الرسمية (JWT)
-      // ملاحظة: سنستخدم الإيميل (username@itpc.gov.iq) كمعرف فريد لنظام Supabase
-      const email = `${username}@itpc.gov.iq`;
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      // استخدام RPC لتسجيل الدخول بشكل آمن يتوافق مع التشفير و RLS
+      const { data, error } = await supabase.rpc('login_user_v1', {
+        p_username: username,
+        p_password: password
       });
 
-      if (authError) {
-        // إذا فشل النظام الرسمي، نجرب البحث اليدوي في جدول itpc.users (للمرحلة الانتقالية)
-        const { data: user, error: userError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('username', username)
-          .eq('password', password) // سيتم استبداله بمقارنة الهاش لاحقاً
-          .single();
-
-        if (userError || !user) {
-          alert('اسم المستخدم أو كلمة المرور غير صحيحة');
-          setLoading(false);
-          return;
-        }
-
-        // حفظ البيانات محلياً
-        localStorage.setItem('user', JSON.stringify(user));
-        localStorage.setItem('token', 'legacy-session');
-        
-        if (user.role === 'admin') navigate('/admin');
-        else navigate('/main');
+      if (error || !data || !data.user) {
+        console.error('Login error:', error);
+        alert('اسم المستخدم أو كلمة المرور غير صحيحة');
+        setLoading(false);
         return;
       }
 
-      // 2. إذا نجح تسجيل الدخول الرسمي، نجلب بيانات الدور من جدولنا
-      const { data: profile } = await supabase
-        .from('users')
-        .select('*')
-        .eq('username', username)
-        .single();
+      // حفظ البيانات محلياً
+      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('token', data.session_token || 'active');
 
-      localStorage.setItem('user', JSON.stringify(profile));
-      localStorage.setItem('token', authData.session.access_token);
-
-      if (profile?.role === 'admin') navigate('/admin');
+      if (data.user.role === 'admin') navigate('/admin');
       else navigate('/main');
 
     } catch (err) {
-      console.error('Login error:', err);
-      alert('حدث خطأ أثناء محاولة تسجيل الدخول');
+      console.error('Unexpected error:', err);
+      alert('حدث خطأ غير متوقع أثناء الدخول');
     } finally {
       setLoading(false);
     }
