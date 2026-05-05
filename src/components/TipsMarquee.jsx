@@ -8,50 +8,30 @@ const TipsMarquee = ({ appName = 'InfTeleKarbala' }) => {
   useEffect(() => {
     const fetchAndSyncNews = async () => {
       try {
-        // 1. Try to get news from local DB first
-        const localRes = await fetch('/api/news');
-        const localData = await localRes.json();
-        
-        // Check if we need to refresh from Supabase (session based)
-        const isNewSession = !sessionStorage.getItem('news_synced');
-        
-        if (isNewSession || !localData.news) {
-          // 2. Fetch from Supabase
-          const { data, error } = await supabase
-            .from('admin_tips')
-            .select('content')
-            .eq('app_name', appName)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
+        // Fetch from the local app_news table in itpc schema
+        const { data, error } = await supabase
+          .from('app_news')
+          .select('content')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-          if (error) throw error;
+        if (error) {
+          console.warn('Could not fetch tips from itpc.app_news');
+          throw error;
+        }
 
-          if (data?.content) {
-            const newsContent = data.content;
-            
-            // 3. Save to local DB
-            await fetch('/api/news', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ content: newsContent })
-            });
-
-            const tipsArray = newsContent.split('\n').map(t => t.trim()).filter(Boolean);
-            setTips(tipsArray);
-            sessionStorage.setItem('news_synced', 'true');
-          }
-        } else if (localData.news) {
-          const tipsArray = localData.news.split('\n').map(t => t.trim()).filter(Boolean);
+        if (data?.content) {
+          const tipsArray = data.content.split('\n').map(t => t.trim()).filter(Boolean);
           setTips(tipsArray);
         }
       } catch (err) {
-        console.error('Error syncing news:', err);
+        console.error('Error fetching app news:', err);
       }
     };
 
     fetchAndSyncNews();
-  }, [appName]);
+  }, []);
 
   if (tips.length === 0) return null;
 
