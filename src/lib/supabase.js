@@ -24,6 +24,23 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 // دالة لتحديث التوكن بعد تسجيل الدخول دون الحاجة لإعادة تحميل الصفحة
 export const updateSupabaseAuth = (token) => {
-  supabase.realtime.setAuth(token);
-  supabase.rest.headers['Authorization'] = `Bearer ${token}`;
+  if (token && token.includes('.') && token.split('.').length === 3) {
+    supabase.realtime.setAuth(token);
+    supabase.rest.headers['Authorization'] = `Bearer ${token}`;
+  }
+};
+
+// دالة مركزية للتحقق من الاستجابة وتوجيه المستخدم لتسجيل الدخول إذا انتهت الجلسة
+export const handleSupabaseResponse = (result) => {
+  if (result.error && (result.error.code === 'PGRST301' || result.error.message.includes('JWT'))) {
+    console.error('Session expired or invalid');
+    localStorage.clear();
+    window.location.href = '/';
+    return true;
+  }
+  // في حال الـ RLS يرجع مصفوفة فارغة عند انتهاء الجلسة
+  if (Array.isArray(result.data) && result.data.length === 0) {
+    // يمكن إضافة فحص إضافي هنا إذا لزم الأمر
+  }
+  return false;
 };
