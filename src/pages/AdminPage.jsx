@@ -52,16 +52,23 @@ const OrganizationsSection = () => {
     setLoading(true);
     setError('');
     try {
+      console.log('Fetching organizations from itpc schema...');
       const { data, error } = await supabase
         .from('organizations')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
+      console.log('Data received:', data);
       setOrganizations(data || []);
     } catch (e) {
+      console.error('Fetch catch error:', e);
       setOrganizations([]);
-      setError('خطأ في الاتصال بقاعدة البيانات');
+      setError('خطأ في تحميل الجهات من قاعدة البيانات');
     } finally {
       setLoading(false);
     }
