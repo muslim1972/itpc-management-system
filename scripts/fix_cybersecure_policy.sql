@@ -1,113 +1,85 @@
 -- =====================================================================================
--- سكربت الإصلاح الأمني المتوافق مع معايير لجنة الأمن السيبراني (Cybersecurity Compliance)
+-- سكربت الإصلاح الأمني المتوافق مع معايير لجنة الأمن السيبراني (تحديث رقم 2)
 -- =====================================================================================
 
--- 1. إلغاء صلاحيات الوصول العام للدوال (لتجنب الاستغلال العشوائي)
+-- 1. إلغاء صلاحيات الوصول العام للدوال
 ALTER DEFAULT PRIVILEGES IN SCHEMA itpc REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
 
--- 2. إنشاء دالة التحقق من الجلسة بصلاحيات آمنة (SECURITY DEFINER)
--- استخدمنا SET search_path لمنع هجمات Search Path Hijacking
-CREATE OR REPLACE FUNCTION itpc.check_active_session_safe()
-RETURNS boolean
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = itpc, pg_temp
-AS $$
-DECLARE
-    is_active boolean;
-    header_auth text;
-    extracted_token text;
-BEGIN
-    -- استخراج الهيدر بأمان لتجنب الأخطاء إذا كان الهيدر غير موجود
-    BEGIN
-        header_auth := current_setting('request.headers', true)::json ->> 'authorization';
-    EXCEPTION WHEN OTHERS THEN
-        RETURN false;
-    END;
-
-    IF header_auth IS NULL OR header_auth = '' THEN
-        RETURN false;
-    END IF;
-
-    -- تنظيف التوكن
-    extracted_token := replace(header_auth, 'Bearer ', '');
-
-    -- التحقق من قاعدة البيانات بصلاحيات المدير (متخطيين مشكلة permission denied)
-    SELECT EXISTS (
-        SELECT 1 
-        FROM itpc.active_sessions
-        WHERE token::text = extracted_token 
-          AND expires_at > now()
-    ) INTO is_active;
-
-    RETURN coalesce(is_active, false);
-END;
-$$;
-
--- حماية الدالة: منع التنفيذ من العامة، والسماح للمصادق عليهم فقط
-REVOKE ALL ON FUNCTION itpc.check_active_session_safe() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION itpc.check_active_session_safe() TO authenticated, anon;
-
-
--- 3. إنشاء دالة للتحقق من دور المستخدم بأمان وبدون استعلام مباشر مكشوف
-CREATE OR REPLACE FUNCTION itpc.get_user_role_safe(user_email text)
+-- 2. دالة أمنية شاملة تتحقق من التوكن وتجلب دور المستخدم مباشرة
+CREATE OR REPLACE FUNCTION itpc.get_role_from_session()
 RETURNS text
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = itpc, pg_temp
 AS $$
 DECLARE
-    u_role text;
+    header_token text;
+    v_user_id integer;
+    v_role text;
 BEGIN
-    IF user_email IS NULL OR user_email = '' THEN
+    -- قراءة التوكن من الهيدر المخصص الذي أضفناه في React
+    BEGIN
+        header_token := current_setting('request.headers', true)::json ->> 'x-session-token';
+    EXCEPTION WHEN OTHERS THEN
+        header_token := NULL;
+    END;
+
+    -- احتياطياً: إذا لم يكن موجوداً، نقرأ من Authorization
+    IF header_token IS NULL OR header_token = '' THEN
+        BEGIN
+            header_token := replace(current_setting('request.headers', true)::json ->> 'authorization', 'Bearer ', '');
+        EXCEPTION WHEN OTHERS THEN
+            header_token := NULL;
+        END;
+    END IF;
+
+    IF header_token IS NULL OR header_token = '' THEN
         RETURN NULL;
     END IF;
 
-    SELECT role INTO u_role
-    FROM itpc.users
-    WHERE username = user_email
+    -- التحقق من الجلسة في جدول active_sessions بصلاحيات المدير
+    SELECT user_id INTO v_user_id
+    FROM itpc.active_sessions
+    WHERE token::text = header_token AND expires_at > now()
     LIMIT 1;
 
-    RETURN u_role;
+    IF v_user_id IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    -- جلب دور المستخدم المرتبط بالجلسة
+    SELECT role INTO v_role
+    FROM itpc.users
+    WHERE id = v_user_id
+    LIMIT 1;
+
+    RETURN v_role;
 END;
 $$;
 
 -- حماية الدالة
-REVOKE ALL ON FUNCTION itpc.get_user_role_safe(text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION itpc.get_user_role_safe(text) TO authenticated, anon;
+REVOKE ALL ON FUNCTION itpc.get_role_from_session() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION itpc.get_role_from_session() TO authenticated, anon;
 
 
 -- =====================================================================================
--- 4. تحديث سياسات جدول organizations لتعتمد على الدوال الآمنة
+-- 3. تحديث سياسات جدول organizations لتعتمد على الدالة الشاملة
 -- =====================================================================================
 
--- حذف السياسات القديمة غير الآمنة
+-- حذف كافة السياسات القديمة المسببة للتعارض
 DROP POLICY IF EXISTS "CyberSecure_Policy" ON itpc.organizations;
 DROP POLICY IF EXISTS "Employees can manage organizations" ON itpc.organizations;
 DROP POLICY IF EXISTS "Admins full access" ON itpc.organizations;
 
--- إنشاء السياسة الأولى: التحقق الأمني السيبراني
-CREATE POLICY "CyberSecure_Policy" ON itpc.organizations
+-- إنشاء سياسة واحدة موحدة وآمنة
+CREATE POLICY "Secure Organizations Access" ON itpc.organizations
 FOR ALL
 TO public
 USING (
-    itpc.check_active_session_safe()
+    itpc.get_role_from_session() IN ('user', 'admin')
+)
+WITH CHECK (
+    itpc.get_role_from_session() IN ('user', 'admin')
 );
 
--- إنشاء السياسة الثانية: وصول الموظفين
-CREATE POLICY "Employees can manage organizations" ON itpc.organizations
-FOR ALL
-TO authenticated
-USING (
-    itpc.get_user_role_safe(auth.jwt() ->> 'email'::text) = 'user'
-);
-
--- إنشاء السياسة الثالثة: وصول المدراء
-CREATE POLICY "Admins full access" ON itpc.organizations
-FOR ALL
-TO authenticated
-USING (
-    itpc.get_user_role_safe(auth.jwt() ->> 'email'::text) = 'admin'
-);
-
--- ملاحظة أمنية: تأكدنا أن الدوال لا تقبل حقن SQL وتتعامل مع الاستثناءات بشكل صحيح.
+-- ملاحظة أمنية: الدالة الآن تتخطى مشكلة الـ JWT وتقرأ الجلسة من التوكن الفعلي في قاعدة البيانات.

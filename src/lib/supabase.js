@@ -12,11 +12,15 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     headers: {
       get Authorization() {
         const token = localStorage.getItem('token');
-        // إرسال التوكن فقط إذا كان JWT حقيقي (يتكون من 3 أجزاء)
+        // إرسال التوكن كـ JWT فقط إذا كان يتكون من 3 أجزاء (لتجنب رفض PostgREST)
         if (token && token.split('.').length === 3) {
           return `Bearer ${token}`;
         }
         return undefined;
+      },
+      get 'x-session-token'() {
+        // إرسال التوكن المخصص دائماً (سواء كان UUID أو غيره) ليتم فحصه في الـ RLS
+        return localStorage.getItem('token') || '';
       }
     }
   }
