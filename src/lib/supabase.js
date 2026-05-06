@@ -10,8 +10,14 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
   global: {
     headers: {
-      // سحب التوكن من التخزين المحلي وإرساله مع كل طلب لإثبات الهوية للـ RLS
-      Authorization: `Bearer ${localStorage.getItem('token')}`
+      get Authorization() {
+        const token = localStorage.getItem('token');
+        // إرسال التوكن فقط إذا كان JWT حقيقي (يتكون من 3 أجزاء)
+        if (token && token.split('.').length === 3) {
+          return `Bearer ${token}`;
+        }
+        return undefined;
+      }
     }
   }
 });
