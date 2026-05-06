@@ -935,7 +935,7 @@ const PackagesSection = () => {
     try {
       const { data: ranges, error } = await supabase
         .from('service_ranges')
-        .select('*, price_history:service_range_price_history(*)')
+        .select('*')
         .order('range_from', { ascending: true });
 
       if (error) throw error;
@@ -948,9 +948,7 @@ const PackagesSection = () => {
             from: row.range_from,
             to: row.range_to,
             price: row.price,
-            price_history: (row.price_history || []).sort((a, b) => 
-              new Date(b.changed_at) - new Date(a.changed_at)
-            ),
+            price_history: [],
           });
         }
       });
@@ -1064,21 +1062,7 @@ const PackagesSection = () => {
 
       if (updateError) throw updateError;
 
-      // 2. Add History
-      const { error: historyError } = await supabase
-        .from('service_range_price_history')
-        .insert([{
-          service_range_id: impactModal.rangeId,
-          old_price: impactModal.oldPrice,
-          new_price: impactModal.newPrice,
-          official_book_date: impactModal.official_book_date,
-          official_book_description: impactModal.official_book_description,
-          changed_at: new Date().toISOString()
-        }]);
-
-      if (historyError) throw historyError;
-
-      // 3. Update affected service items if any selected
+      // 2. Update affected service items if any selected
       if (impactModal.selectedIds.length > 0) {
         // Logic for updating service_items that fall into this range for selected orgs
         // This is usually handled by the system but we can trigger a refresh or manual update here
