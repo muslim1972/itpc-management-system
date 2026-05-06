@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BrandLogo from '../components/BrandLogo';
 import PageFooter from '../components/PageFooter';
-import { supabase } from '../lib/supabase';
+import { supabase, updateSupabaseAuth } from '../lib/supabase';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
@@ -31,6 +31,11 @@ const LoginPage = () => {
       // حفظ البيانات محلياً
       localStorage.setItem('user', JSON.stringify(data.user));
       localStorage.setItem('token', data.session_token || 'active');
+      
+      // تحديث هوية العميل فوراً لتبدأ الطلبات القادمة باستخدام التوكن الجديد
+      if (data.session_token) {
+        updateSupabaseAuth(data.session_token);
+      }
 
       if (data.user.role === 'admin') navigate('/admin');
       else navigate('/main');
