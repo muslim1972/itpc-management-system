@@ -446,7 +446,8 @@ const CompaniesSection = ({ onDetails }) => {
     phone: '',
     address: '',
     email: '',
-    is_active: true,
+    contact_person: '',
+    is_active: 1, // Using integer as per schema
   });
   const [editForm, setEditForm] = useState({
     name: '',
@@ -464,7 +465,7 @@ const CompaniesSection = ({ onDetails }) => {
       const { data, error } = await supabase
         .from('provider_companies')
         .select('*')
-        .order('name', { ascending: true });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       setCompanies(data || []);
@@ -501,7 +502,8 @@ const CompaniesSection = ({ onDetails }) => {
         phone: '',
         address: '',
         email: '',
-        is_active: true,
+        contact_person: '',
+        is_active: 1,
       });
       setShowAddForm(false);
       load();
@@ -510,15 +512,17 @@ const CompaniesSection = ({ onDetails }) => {
     }
   };
 
-  const startEdit = (company) => {
+  const startEditCompany = (company) => {
     setEditingId(company.id);
     setEditForm({
       name: company.name || '',
       phone: company.phone || '',
       address: company.address || '',
       email: company.email || '',
-      is_active: Boolean(company.is_active),
+      contact_person: company.contact_person || '',
+      is_active: company.is_active,
     });
+    setError('');
   };
 
   const handleSaveCompany = async () => {
@@ -598,6 +602,15 @@ const CompaniesSection = ({ onDetails }) => {
             />
           </div>
           <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">المسؤول</label>
+            <input
+              placeholder="المسؤول"
+              value={addForm.contact_person}
+              onChange={(e) => setAddForm({ ...addForm, contact_person: e.target.value })}
+              className="input-modern flex-1"
+            />
+          </div>
+          <div className="flex items-center gap-3">
             <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">رقم الهاتف</label>
             <input
               placeholder="رقم الهاتف"
@@ -668,6 +681,15 @@ const CompaniesSection = ({ onDetails }) => {
                           onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                           className="input-modern flex-1"
                           placeholder="اسم الشركة"
+                        />
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <label className="text-sm font-medium text-slate-700 w-[110px] shrink-0">المسؤول</label>
+                        <input
+                          value={editForm.contact_person}
+                          onChange={(e) => setEditForm({ ...editForm, contact_person: e.target.value })}
+                          className="input-modern flex-1"
+                          placeholder="المسؤول"
                         />
                       </div>
                       <div className="flex items-center gap-3">
@@ -745,7 +767,7 @@ const CompaniesSection = ({ onDetails }) => {
                           التفاصيل
                         </button>
                         <button
-                          onClick={() => startEdit(company)}
+                          onClick={() => startEditCompany(company)}
                           className="p-2.5 text-blue-600 bg-blue-50 sm:bg-transparent hover:bg-blue-50 rounded-xl transition-colors"
                           title="تعديل"
                         >
@@ -1286,9 +1308,9 @@ const UsersSection = () => {
     setError('');
     try {
       const { data, error } = await supabase
-        .from('users')
-        .select('id, username, role, last_login, created_at')
-        .order('username', { ascending: true });
+          .from('users')
+          .select('id, username, role, last_login, created_at')
+          .order('username', { ascending: true });
 
       if (error) throw error;
       setUsers(data || []);

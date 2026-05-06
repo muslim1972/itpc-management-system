@@ -34,7 +34,7 @@ const AddPage = () => {
       const { data, error } = await supabase
         .from('organizations')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('id', { ascending: false });
 
       if (error) throw error;
 

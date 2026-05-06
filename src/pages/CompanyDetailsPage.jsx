@@ -98,7 +98,7 @@ const CompanyDetailsPage = () => {
         .from('provider_subscriptions')
         .select('*, price_history:provider_subscription_price_history(*)')
         .eq('provider_company_id', id)
-        .order('item_name', { ascending: true });
+        .order('id', { ascending: true });
 
       if (subsError) throw subsError;
 
@@ -209,8 +209,7 @@ const CompanyDetailsPage = () => {
           item_category: form.item_category,
           item_name: form.item_name.trim(),
           price: Number(form.price || 0),
-          unit_label: form.unit_label.trim() || null,
-          created_at: new Date().toISOString()
+          unit_label: form.unit_label.trim() || null
         }]);
 
       if (error) throw error;
@@ -315,8 +314,7 @@ const CompanyDetailsPage = () => {
           item_category: editForm.item_category,
           item_name: editForm.item_name.trim(),
           price: Number(editForm.price || 0),
-          unit_label: editForm.unit_label.trim() || null,
-          updated_at: new Date().toISOString()
+          unit_label: editForm.unit_label.trim() || null
         })
         .eq('id', impactModal.subId);
 
