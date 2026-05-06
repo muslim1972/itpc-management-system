@@ -42,10 +42,6 @@ const UserOrganizationsPage = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      // فحص وصول التوكن إلى قاعدة البيانات
-      const { data: debugData } = await supabase.rpc('debug_session');
-      console.log('🔴 نتيجة فحص التوكن في قاعدة البيانات:', debugData);
-
       if (error) throw error;
       setOrganizations(data || []);
     } catch (err) {
