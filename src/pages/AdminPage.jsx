@@ -58,6 +58,10 @@ const OrganizationsSection = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
+      // فحص وصول التوكن إلى قاعدة البيانات
+      const { data: debugData } = await supabase.rpc('debug_session');
+      console.log('🔴 نتيجة فحص التوكن في قاعدة البيانات (Admin):', debugData);
+
       if (error) {
         console.error('Supabase error:', error);
         throw error;
