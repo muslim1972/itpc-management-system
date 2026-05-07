@@ -2134,150 +2134,152 @@ const DetailPage = () => {
           </div>
         </div>
 
-        {suspendModalService && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm overflow-y-auto">
-            <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
-              <div className="mb-6 flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="text-2xl font-bold text-slate-900">إيقاف الخدمة</h3>
-                  <p className="mt-1 text-sm text-slate-500">
-                    سيتم إسقاط المبالغ غير المدفوعة المتبقية وتسجيل المبلغ الراجع إن وجد.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleCloseSuspendModal}
-                  className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200"
-                >
-                  إغلاق
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <Field label="تاريخ الكتاب الرسمي">
-                  <input
-                    type="date"
-                    value={suspendForms[suspendModalService.id]?.official_book_date || ''}
-                    onChange={(e) =>
-                      setSuspendForms((prev) => ({
-                        ...prev,
-                        [suspendModalService.id]: { ...prev[suspendModalService.id], official_book_date: e.target.value },
-                      }))
-                    }
-                    className={shellInput}
-                  />
-                </Field>
-
-                <Field label="المبلغ الراجع">
-                  <input
-                    type="number"
-                    min="0"
-                    value={suspendForms[suspendModalService.id]?.refund_amount || ''}
-                    onChange={(e) =>
-                      setSuspendForms((prev) => ({
-                        ...prev,
-                        [suspendModalService.id]: { ...prev[suspendModalService.id], refund_amount: e.target.value },
-                      }))
-                    }
-                    className={shellInput}
-                  />
-                </Field>
-              </div>
-
-              <div className="mt-4">
-                <Field label="وصف الكتاب الرسمي">
-                  <input
-                    type="text"
-                    value={suspendForms[suspendModalService.id]?.official_book_description || ''}
-                    onChange={(e) =>
-                      setSuspendForms((prev) => ({
-                        ...prev,
-                        [suspendModalService.id]: { ...prev[suspendModalService.id], official_book_description: e.target.value },
-                      }))
-                    }
-                    className={shellInput}
-                  />
-                </Field>
-              </div>
-
-              <div className="mt-4 rounded-2xl border border-slate-200 p-4">
-                <div className="mb-3 flex items-center justify-between gap-4">
-                  <div>
-                    <div className="font-semibold text-slate-900">إيقاف فوري</div>
-                    <div className="text-sm text-slate-500">عند إطفائه يمكنك اختيار تاريخ إيقاف مستقبلي.</div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSuspendForms((prev) => ({
-                        ...prev,
-                        [suspendModalService.id]: {
-                          ...prev[suspendModalService.id],
-                          is_immediate: !prev[suspendModalService.id]?.is_immediate,
-                        },
-                      }))
-                    }
-                    className={`rounded-full px-4 py-2 text-sm font-bold text-white ${suspendForms[suspendModalService.id]?.is_immediate ? 'bg-green-600' : 'bg-slate-500'}`}
-                  >
-                    {suspendForms[suspendModalService.id]?.is_immediate ? 'ON' : 'OFF'}
-                  </button>
-                </div>
-
-                {!suspendForms[suspendModalService.id]?.is_immediate && (
-                  <Field label="تاريخ الإيقاف">
-                    <input
-                      type="date"
-                      value={suspendForms[suspendModalService.id]?.suspend_date || ''}
-                      onChange={(e) =>
-                        setSuspendForms((prev) => ({
-                          ...prev,
-                          [suspendModalService.id]: { ...prev[suspendModalService.id], suspend_date: e.target.value },
-                        }))
-                      }
-                      className={shellInput}
-                    />
-                  </Field>
-                )}
-              </div>
-
-              <div className="mt-4">
-                <Field label="ملاحظات الإيقاف">
-                  <textarea
-                    value={suspendForms[suspendModalService.id]?.note || ''}
-                    onChange={(e) =>
-                      setSuspendForms((prev) => ({
-                        ...prev,
-                        [suspendModalService.id]: { ...prev[suspendModalService.id], note: e.target.value },
-                      }))
-                    }
-                    rows="3"
-                    className={shellInput}
-                  />
-                </Field>
-              </div>
-
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={handleCloseSuspendModal}
-                  className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700"
-                >
-                  إلغاء
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmSuspend}
-                  disabled={suspending}
-                  className="rounded-xl bg-amber-600 px-5 py-3 text-sm font-semibold text-white hover:bg-amber-700 disabled:bg-slate-400"
-                >
-                  {suspending ? 'جاري الحفظ...' : 'تأكيد الإيقاف'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </main>
       <PageFooter />
+
+      {/* Suspend Modal - طبقة مستقلة فوق كل شيء */}
+      {suspendModalService && (
+        <div className="fixed inset-0 z-[9999] flex items-start justify-center bg-black/50 backdrop-blur-sm overflow-y-auto py-8 px-4">
+          <div className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl my-auto">
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-2xl font-bold text-slate-900">إيقاف الخدمة</h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  سيتم إسقاط المبالغ غير المدفوعة المتبقية وتسجيل المبلغ الراجع إن وجد.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleCloseSuspendModal}
+                className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200"
+              >
+                إغلاق
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <Field label="تاريخ الكتاب الرسمي">
+                <input
+                  type="date"
+                  value={suspendForms[suspendModalService.id]?.official_book_date || ''}
+                  onChange={(e) =>
+                    setSuspendForms((prev) => ({
+                      ...prev,
+                      [suspendModalService.id]: { ...prev[suspendModalService.id], official_book_date: e.target.value },
+                    }))
+                  }
+                  className={shellInput}
+                />
+              </Field>
+
+              <Field label="المبلغ الراجع">
+                <input
+                  type="number"
+                  min="0"
+                  value={suspendForms[suspendModalService.id]?.refund_amount || ''}
+                  onChange={(e) =>
+                    setSuspendForms((prev) => ({
+                      ...prev,
+                      [suspendModalService.id]: { ...prev[suspendModalService.id], refund_amount: e.target.value },
+                    }))
+                  }
+                  className={shellInput}
+                />
+              </Field>
+            </div>
+
+            <div className="mt-4">
+              <Field label="وصف الكتاب الرسمي">
+                <input
+                  type="text"
+                  value={suspendForms[suspendModalService.id]?.official_book_description || ''}
+                  onChange={(e) =>
+                    setSuspendForms((prev) => ({
+                      ...prev,
+                      [suspendModalService.id]: { ...prev[suspendModalService.id], official_book_description: e.target.value },
+                    }))
+                  }
+                  className={shellInput}
+                />
+              </Field>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-slate-200 p-4">
+              <div className="mb-3 flex items-center justify-between gap-4">
+                <div>
+                  <div className="font-semibold text-slate-900">إيقاف فوري</div>
+                  <div className="text-sm text-slate-500">عند إطفائه يمكنك اختيار تاريخ إيقاف مستقبلي.</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSuspendForms((prev) => ({
+                      ...prev,
+                      [suspendModalService.id]: {
+                        ...prev[suspendModalService.id],
+                        is_immediate: !prev[suspendModalService.id]?.is_immediate,
+                      },
+                    }))
+                  }
+                  className={`rounded-full px-4 py-2 text-sm font-bold text-white ${suspendForms[suspendModalService.id]?.is_immediate ? 'bg-green-600' : 'bg-slate-500'}`}
+                >
+                  {suspendForms[suspendModalService.id]?.is_immediate ? 'ON' : 'OFF'}
+                </button>
+              </div>
+
+              {!suspendForms[suspendModalService.id]?.is_immediate && (
+                <Field label="تاريخ الإيقاف">
+                  <input
+                    type="date"
+                    value={suspendForms[suspendModalService.id]?.suspend_date || ''}
+                    onChange={(e) =>
+                      setSuspendForms((prev) => ({
+                        ...prev,
+                        [suspendModalService.id]: { ...prev[suspendModalService.id], suspend_date: e.target.value },
+                      }))
+                    }
+                    className={shellInput}
+                  />
+                </Field>
+              )}
+            </div>
+
+            <div className="mt-4">
+              <Field label="ملاحظات الإيقاف">
+                <textarea
+                  value={suspendForms[suspendModalService.id]?.note || ''}
+                  onChange={(e) =>
+                    setSuspendForms((prev) => ({
+                      ...prev,
+                      [suspendModalService.id]: { ...prev[suspendModalService.id], note: e.target.value },
+                    }))
+                  }
+                  rows="3"
+                  className={shellInput}
+                />
+              </Field>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={handleCloseSuspendModal}
+                className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700"
+              >
+                إلغاء
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmSuspend}
+                disabled={suspending}
+                className="rounded-xl bg-amber-600 px-5 py-3 text-sm font-semibold text-white hover:bg-amber-700 disabled:bg-slate-400"
+              >
+                {suspending ? 'جاري الحفظ...' : 'تأكيد الإيقاف'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
