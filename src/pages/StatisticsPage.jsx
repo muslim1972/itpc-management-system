@@ -1099,22 +1099,22 @@ const StatisticsPage = () => {
 
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
               <h3 className="text-lg font-bold text-slate-900 mb-4">مؤشرات سريعة</h3>
-              <div className="space-y-4 text-sm">
-                <div className="rounded-xl bg-slate-50 p-4 border border-slate-200">
-                  <p className="text-slate-500 mb-1">متوسط الدفعة الواحدة</p>
-                  <p className="text-xl font-bold text-slate-900">
+              <div className="space-y-3 text-sm">
+                <div className="rounded-xl bg-slate-50 p-4 border border-slate-200 flex items-center justify-between">
+                  <span className="text-slate-500">متوسط الدفعة الواحدة</span>
+                  <span className="text-xl font-bold text-slate-900">
                     {summary.total_payments_count ? formatMoney((summary.total_paid_amount || 0) / summary.total_payments_count) : '0.00'}
-                  </p>
+                  </span>
                 </div>
-                <div className="rounded-xl bg-slate-50 p-4 border border-slate-200">
-                  <p className="text-slate-500 mb-1">نسبة التحصيل الحالية</p>
-                  <p className="text-xl font-bold text-slate-900">
+                <div className="rounded-xl bg-slate-50 p-4 border border-slate-200 flex items-center justify-between">
+                  <span className="text-slate-500">نسبة التحصيل الحالية</span>
+                  <span className="text-xl font-bold text-slate-900">
                     {((Number(summary.total_paid_amount || 0) / Math.max(Number(summary.total_paid_amount || 0) + Number(summary.total_due_amount || 0), 1)) * 100).toFixed(1)}%
-                  </p>
+                  </span>
                 </div>
-                <div className="rounded-xl bg-slate-50 p-4 border border-slate-200">
-                  <p className="text-slate-500 mb-1">عدد الكتب الرسمية</p>
-                  <p className="text-xl font-bold text-slate-900">{summary.official_books_count || 0}</p>
+                <div className="rounded-xl bg-slate-50 p-4 border border-slate-200 flex items-center justify-between">
+                  <span className="text-slate-500">عدد الكتب الرسمية</span>
+                  <span className="text-xl font-bold text-slate-900">{summary.official_books_count || 0}</span>
                 </div>
               </div>
             </div>
