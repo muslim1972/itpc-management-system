@@ -25,7 +25,7 @@ const SSOCatcher = () => {
           // 1. جلب بيانات الموظف من السكيما العامة للتحقق من الاستحقاق والاسم
           const { data: profile, error: profileErr } = await publicSupabase
             .from('available_profiles')
-            .select('id, username, dept_text, role, admin_role')
+            .select('id, username, dept_text, role, admin_role, department_id')
             .eq('id', authUser.id)
             .single();
 
@@ -34,9 +34,12 @@ const SSOCatcher = () => {
             return null;
           }
 
-          // 2. فحص الاستحقاق: قسم تجهيز خدمات المعلوماتية أو مطور/عام
+          // الرمز الموحد لقسم تجهيز خدمات المعلوماتية
+          const CAPACITIES_DEPT_ID = '33333333-2222-2222-2222-222222222222';
+
+          // 2. فحص الاستحقاق: مطابقة الرمز الإداري أو امتلاك صلاحية مطور/عام
           const isEligible = 
-            (profile.dept_text && profile.dept_text.includes('قسم تجهيز خدمات المعلوماتية')) || 
+            profile.department_id === CAPACITIES_DEPT_ID || 
             ['developer', 'general'].includes(profile.admin_role);
 
           // 3. جلب أو إنشاء حساب في سكيما itpc (التطبيق الفرعي)
