@@ -6,7 +6,8 @@ import PageFooter from '../components/PageFooter';
 import PriceHistoryDropdown from '../components/PriceHistoryDropdown';
 import { logout } from '../utils/auth';
 
-import { supabase } from '../lib/supabase';
+import { supabase, publicSupabase } from '../lib/supabase';
+import { useEmployeeSearch } from '../hooks/useEmployeeSearch';
 
 const getCurrentUser = () => {
   try {
@@ -1285,12 +1286,16 @@ const PackagesSection = () => {
 
 const UsersSection = () => {
   const [users, setUsers] = useState([]);
-  const [form, setForm] = useState({ username: '', password: '', role: 'user' });
+  const [form, setForm] = useState({ role: 'user' });
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+
+  const { query, setQuery, results, isSearching } = useEmployeeSearch();
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -1316,8 +1321,8 @@ const UsersSection = () => {
   }, []);
 
   const createUser = async () => {
-    if (!form.username.trim() || !form.password.trim()) {
-      setError('اسم المستخدم وكلمة المرور مطلوبان');
+    if (!selectedEmployee) {
+      setError('يرجى اختيار موظف من قائمة البحث');
       setSuccess('');
       return;
     }
@@ -1330,17 +1335,23 @@ const UsersSection = () => {
       const { error } = await supabase
         .from('users')
         .insert([{
-          ...form,
+          user_id: selectedEmployee.user_id,
+          username: selectedEmployee.username || selectedEmployee.full_name,
+          role: form.role,
           created_at: new Date().toISOString()
         }]);
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23505') throw new Error('هذا الموظف مضاف مسبقاً');
+        throw error;
+      }
 
-      setForm({ username: '', password: '', role: 'user' });
+      setForm({ role: 'user' });
+      setSelectedEmployee(null);
       setSuccess('تمت إضافة المستخدم بنجاح');
       load();
     } catch (e) {
-      setError('فشل إضافة المستخدم في قاعدة البيانات');
+      setError(e.message || 'فشل إضافة المستخدم في قاعدة البيانات');
     } finally {
       setSaving(false);
     }
@@ -1403,43 +1414,87 @@ const UsersSection = () => {
       {success && <p className="text-emerald-600 text-sm mb-3 bg-emerald-50 p-3 rounded-xl border border-emerald-100 font-bold">{success}</p>}
 
       {showAddForm && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5 bg-slate-50/80 rounded-[22px] border border-slate-200 mb-6 animate-in slide-in-from-top-2 duration-300">
-          <div className="space-y-1">
-            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-2">اسم المستخدم</label>
-            <input
-              placeholder="مثلاً: ahmad_2024"
-              value={form.username}
-              onChange={(e) => setForm({ ...form, username: e.target.value })}
-              className="input-modern w-full"
-            />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-slate-50/80 rounded-[22px] border border-slate-200 mb-6 animate-in slide-in-from-top-2 duration-300">
+          <div className="space-y-2 relative">
+            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-2">البحث عن موظف (بالاسم أو الرقم الوظيفي)</label>
+            <div className="relative">
+              <input
+                placeholder="ابدأ الكتابة للبحث..."
+                value={selectedEmployee ? selectedEmployee.full_name : query}
+                onChange={(e) => {
+                  if (selectedEmployee) setSelectedEmployee(null);
+                  setQuery(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                className={`input-modern w-full pr-10 ${selectedEmployee ? 'border-emerald-500 bg-emerald-50' : ''}`}
+              />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                {isSearching ? (
+                  <div className="w-4 h-4 border-2 border-slate-300 border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                )}
+              </div>
+            </div>
+
+            {/* Suggestions */}
+            {showSuggestions && query.trim() && !selectedEmployee && (
+              <div className="absolute z-[100] top-full mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+                {results.length > 0 ? (
+                  results.map((emp) => (
+                    <button
+                      key={emp.user_id}
+                      onClick={() => {
+                        setSelectedEmployee(emp);
+                        setShowSuggestions(false);
+                      }}
+                      className="w-full text-right px-4 py-3 hover:bg-emerald-50 flex items-center justify-between border-b border-slate-50 last:border-0 transition-colors"
+                    >
+                      <div>
+                        <div className="font-bold text-slate-900 text-sm">{emp.full_name}</div>
+                        <div className="text-[10px] text-slate-500">{emp.job_number}</div>
+                      </div>
+                      <div className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-bold">
+                        {emp.username}
+                      </div>
+                    </button>
+                  ))
+                ) : !isSearching && (
+                  <div className="p-4 text-center text-slate-400 text-sm">لا توجد نتائج</div>
+                )}
+              </div>
+            )}
+            
+            {selectedEmployee && (
+              <button 
+                onClick={() => setSelectedEmployee(null)}
+                className="text-[10px] text-rose-500 font-bold mt-1 mr-2 hover:underline"
+              >
+                إلغاء الاختيار وتغيير الموظف
+              </button>
+            )}
           </div>
-          <div className="space-y-1">
-            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-2">كلمة المرور</label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="input-modern w-full"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-2">الصلاحية</label>
-            <div className="flex gap-2">
+
+          <div className="space-y-2">
+            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-2">الصلاحية في هذا القسم</label>
+            <div className="flex gap-3">
               <select
                 value={form.role}
                 onChange={(e) => setForm({ ...form, role: e.target.value })}
                 className="select-modern flex-1 bg-white"
               >
-                <option value="user">User (مستخدم)</option>
+                <option value="user">User (مستخدم عادي)</option>
                 <option value="admin">Admin (مدير نظام)</option>
               </select>
               <button
                 onClick={createUser}
-                disabled={saving}
-                className="btn-primary px-6 transition-all shadow-md active:scale-95"
+                disabled={saving || !selectedEmployee}
+                className="btn-primary px-8 transition-all shadow-lg shadow-emerald-500/20 active:scale-95 disabled:opacity-50"
               >
-                {saving ? '...' : 'حفظ'}
+                {saving ? 'جاري الحفظ...' : 'حفظ المستخدم'}
               </button>
             </div>
           </div>

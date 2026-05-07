@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { supabase } from './lib/supabase';
+import { supabase, publicSupabase } from './lib/supabase';
 
 import MainPage from './pages/MainPage';
 import AdminPage from './pages/AdminPage';
@@ -21,6 +21,60 @@ const SSOCatcher = () => {
   useEffect(() => {
     const handleSSO = async () => {
       try {
+        const syncAndGetUser = async (authUser) => {
+          // 1. جلب بيانات الموظف من السكيما العامة للتحقق من الاستحقاق والاسم
+          const { data: profile } = await publicSupabase
+            .from('available_profiles')
+            .select('user_id, username, work_location, admin_role')
+            .eq('user_id', authUser.id)
+            .single();
+
+          if (!profile) return null;
+
+          // 2. فحص الاستحقاق: قسم تجهيز خدمات المعلوماتية أو مطور/عام
+          const isEligible = 
+            profile.work_location === 'قسم تجهيز خدمات المعلوماتية' || 
+            ['developer', 'general'].includes(profile.admin_role);
+
+          // 3. جلب أو إنشاء حساب في سكيما itpc (التطبيق الفرعي)
+          const { data: itpcUser, error: userError } = await supabase
+            .from('users')
+            .select('id, role, username')
+            .eq('user_id', authUser.id)
+            .single();
+
+          let finalRole = itpcUser?.role;
+
+          if (userError || !itpcUser) {
+            if (isEligible) {
+              const { data: newUser, error: insertError } = await supabase
+                .from('users')
+                .insert([{
+                  user_id: authUser.id,
+                  username: profile.username,
+                  role: 'user',
+                  created_at: new Date().toISOString()
+                }])
+                .select()
+                .single();
+              
+              if (insertError) throw insertError;
+              finalRole = 'user';
+            } else {
+              return null;
+            }
+          } else {
+            // تحديث الاسم إذا تغير في التطبيق العام
+            if (itpcUser.username !== profile.username) {
+              await supabase
+                .from('users')
+                .update({ username: profile.username })
+                .eq('user_id', authUser.id);
+            }
+          }
+          return { ...authUser, role: finalRole };
+        };
+
         // فحص إذا كان الرابط يحتوي على access_token و refresh_token (من التطبيق العام)
         const hash = location.hash;
         if (hash && hash.includes('access_token')) {
@@ -29,40 +83,23 @@ const SSOCatcher = () => {
           const refreshToken = params.get('refresh_token');
 
           if (accessToken && refreshToken) {
-            // تفعيل الجلسة محلياً في Supabase Auth
             const { data: authData, error: authError } = await supabase.auth.setSession({
               access_token: accessToken,
               refresh_token: refreshToken
             });
 
             if (authError) throw authError;
-
-            // تنظيف الرابط من التوكنات لأسباب أمنية (لكيلا تبقى في الـ History)
             window.history.replaceState({}, document.title, location.pathname);
 
-            // جلب دور المستخدم في سكيما itpc (التطبيق الفرعي)
-            const { data: userData, error: userError } = await supabase
-              .from('users')
-              .select('role')
-              .eq('user_id', authData.user.id)
-              .single();
-
-            if (userError || !userData) {
-              // لا يملك صلاحية في التطبيق الفرعي رغم دخوله للتطبيق العام
+            const finalUser = await syncAndGetUser(authData.user);
+            if (!finalUser) {
               localStorage.clear();
               window.location.href = 'https://itpc-hr.vercel.app/';
+              return;
             }
 
-            // حفظ بيانات المستخدم محلياً
-            const finalUser = { ...authData.user, role: userData.role };
             localStorage.setItem('user', JSON.stringify(finalUser));
-
-            // توجيه المستخدم حسب الصلاحية في التطبيق الفرعي
-            if (userData.role === 'admin') {
-              navigate('/admin', { replace: true });
-            } else {
-              navigate('/main', { replace: true });
-            }
+            navigate(finalUser.role === 'admin' ? '/admin' : '/main', { replace: true });
             return;
           }
         }
@@ -73,29 +110,17 @@ const SSOCatcher = () => {
         if (session) {
           const storedUser = JSON.parse(localStorage.getItem('user'));
           if (storedUser && storedUser.role) {
-            if (storedUser.role === 'admin') {
-              navigate('/admin', { replace: true });
-            } else {
-              navigate('/main', { replace: true });
-            }
+            navigate(storedUser.role === 'admin' ? '/admin' : '/main', { replace: true });
           } else {
-            // إعادة جلب الصلاحية إذا لم تكن مخزنة
-            const { data: userData } = await supabase
-              .from('users')
-              .select('role')
-              .eq('user_id', session.user.id)
-              .single();
-              
-            if (userData) {
-              localStorage.setItem('user', JSON.stringify({ ...session.user, role: userData.role }));
-              if (userData.role === 'admin') navigate('/admin', { replace: true });
-              else navigate('/main', { replace: true });
+            const finalUser = await syncAndGetUser(session.user);
+            if (finalUser) {
+              localStorage.setItem('user', JSON.stringify(finalUser));
+              navigate(finalUser.role === 'admin' ? '/admin' : '/main', { replace: true });
             } else {
-               window.location.href = 'https://itpc-hr.vercel.app/';
+              window.location.href = 'https://itpc-hr.vercel.app/';
             }
           }
         } else {
-          // لم يتم العثور على جلسة، يجب إعادته للتطبيق العام
           window.location.href = 'https://itpc-hr.vercel.app/';
         }
       } catch (err) {

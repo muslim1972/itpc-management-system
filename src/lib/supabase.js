@@ -3,10 +3,17 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// إنشاء العميل القياسي
+// إنشاء العميل القياسي (سكيما itpc)
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   db: {
     schema: 'itpc'
+  }
+});
+
+// عميل للوصول للسكيما العامة (profiles, departments, etc)
+export const publicSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+  db: {
+    schema: 'public'
   }
 });
 
