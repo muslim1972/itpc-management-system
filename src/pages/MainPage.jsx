@@ -18,6 +18,8 @@ const getStatusLabel = (status) => {
   return status || 'غير معروف';
 };
 
+import { supabase } from '../lib/supabase';
+
 const MainPage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -36,16 +38,17 @@ const MainPage = () => {
         setLoading(true);
         setError('');
 
-        const response = await fetch('/api/organizations');
-        const data = await response.json();
+        const { data, error: fetchError } = await supabase
+          .from('organizations')
+          .select('*')
+          .order('name', { ascending: true });
 
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to load organizations');
-        }
+        if (fetchError) throw fetchError;
 
-        setOrganizations(data.organizations || []);
+        setOrganizations(data || []);
       } catch (err) {
-        setError(err.message || 'Something went wrong');
+        console.error('Fetch error:', err);
+        setError('فشل في تحميل الجهات من قاعدة البيانات');
       } finally {
         setLoading(false);
       }

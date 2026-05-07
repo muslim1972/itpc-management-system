@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import SlideMenu from '../components/SlideMenu';
 import PageFooter from '../components/PageFooter';
 import { supabase } from '../lib/supabase';
+import { getUser } from '../utils/auth';
 
 const emptyForm = {
   name: '',
