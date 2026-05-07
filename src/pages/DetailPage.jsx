@@ -1030,27 +1030,35 @@ const DetailPage = () => {
       setSuspending(true);
       const { data: userResponse } = await supabase.auth.getUser();
       const currentUserId = userResponse?.user?.id || null;
+      const effectiveDate = form.is_immediate ? new Date().toISOString().split('T')[0] : form.suspend_date;
 
-      // 1. Update service status
+      // 1. تحديث حالة الخدمة (فقط الأعمدة الموجودة في الجدول)
+      const serviceUpdate = {
+        service_status: form.is_immediate ? 'suspended' : 'scheduled_suspend',
+      };
+      if (form.is_immediate) {
+        serviceUpdate.is_active = 0;
+        serviceUpdate.due_amount = 0;
+      }
+
       const { error: svcError } = await supabase
         .from('organization_services')
-        .update({
-          service_status: form.is_immediate ? 'suspended' : 'scheduled_suspend',
-          scheduled_suspend_at: form.is_immediate ? null : form.suspend_date,
-          suspension_refund_amount: refundAmount,
-          suspension_note: form.note || ''
-        })
+        .update(serviceUpdate)
         .eq('id', service.id);
 
       if (svcError) throw new Error(svcError.message || 'فشل تحديث حالة الخدمة');
 
-      // 2. Insert suspension log
+      // 2. إنشاء سجل الإيقاف في جدول service_suspensions
       const { error: suspError } = await supabase
         .from('service_suspensions')
         .insert({
           service_id: service.id,
-          effective_date: form.is_immediate ? new Date().toISOString().split('T')[0] : form.suspend_date,
-          status: form.is_immediate ? 'active' : 'scheduled',
+          organization_id: organization?.id || null,
+          contract_period_id: service.active_contract_period?.id || null,
+          effective_date: effectiveDate,
+          is_immediate: !!form.is_immediate,
+          status: form.is_immediate ? 'executed' : 'scheduled',
+          executed_at: form.is_immediate ? new Date().toISOString() : null,
           official_book_date: form.official_book_date,
           official_book_description: String(form.official_book_description || '').trim(),
           refund_amount: refundAmount,
@@ -1060,21 +1068,23 @@ const DetailPage = () => {
         
       if (suspError) throw new Error(suspError.message || 'فشل إنشاء سجل الإيقاف');
 
-      // 3. Close active period if immediate
+      // 3. إغلاق فترة العقد النشطة في حالة الإيقاف الفوري
       if (form.is_immediate && service.active_contract_period) {
+        const droppedDue = Number(service.active_contract_period.due_amount || 0);
         await supabase
           .from('service_contract_periods')
           .update({
             status: 'closed',
-            closed_reason: 'suspension',
-            end_date: new Date().toISOString().split('T')[0]
+            closed_reason: 'suspended',
+            due_amount: 0,
+            end_date: effectiveDate
           })
           .eq('id', service.active_contract_period.id);
       }
 
       await loadDetails();
       setSuspendModalService(null);
-      alert(form.is_immediate ? 'تم إيقاف الخدمة' : 'تمت جدولة إيقاف الخدمة');
+      alert(form.is_immediate ? 'تم إيقاف الخدمة بنجاح' : 'تمت جدولة إيقاف الخدمة بنجاح');
     } catch (err) {
       console.error(err);
       alert(err.message || 'حدث خطأ أثناء إيقاف الخدمة');
@@ -1894,7 +1904,7 @@ const DetailPage = () => {
 
       <main className="page-container space-y-6">
         {/* Floating Back Button - Left Side */}
-        <div className="fixed top-[64px] left-6 z-40">
+        <div className="fixed top-[120px] left-6 z-50">
           <button
             onClick={() => navigate(-1)}
             className="group flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-xl border border-slate-200 transition-all hover:bg-slate-50 hover:border-slate-300 hover:scale-105 active:scale-95"
@@ -2125,8 +2135,8 @@ const DetailPage = () => {
         </div>
 
         {suspendModalService && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm overflow-y-auto">
+            <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
               <div className="mb-6 flex items-start justify-between gap-4">
                 <div>
                   <h3 className="text-2xl font-bold text-slate-900">إيقاف الخدمة</h3>
