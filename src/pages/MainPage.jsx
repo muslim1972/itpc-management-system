@@ -211,7 +211,19 @@ const MainPage = () => {
                       </div>
 
                       {isExpanded && (
-                        <div className="px-5 pb-5 pt-2 border-t border-slate-100 bg-slate-50/30 animate-in slide-in-from-top-2 duration-300">
+                        <div className="px-5 pb-5 pt-4 border-t border-slate-100 bg-slate-50/30 animate-in slide-in-from-top-2 duration-300">
+                          <div className="flex justify-end mb-4">
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/detail/${org.id}`);
+                              }} 
+                              className="btn-secondary w-full sm:w-auto px-8 py-3 text-sm font-bold shadow-sm bg-white border-slate-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200"
+                            >
+                              عرض التفاصيل والخدمات
+                            </button>
+                          </div>
+                          
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-1">
                               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">رقم الهاتف</span>
@@ -230,17 +242,6 @@ const MainPage = () => {
                             <div className="space-y-1">
                               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">العنوان</span>
                               <p className="text-sm text-slate-700 font-medium">{org.address || '—'}</p>
-                            </div>
-                            <div className="sm:col-span-2 space-y-2 pt-2 flex justify-end">
-                              <button 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(`/detail/${org.id}`);
-                                }} 
-                                className="btn-secondary px-6 py-2 text-sm font-bold shadow-sm"
-                              >
-                                عرض التفاصيل والخدمات
-                              </button>
                             </div>
                           </div>
                         </div>
