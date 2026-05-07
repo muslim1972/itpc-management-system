@@ -2,12 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Navbar from '../components/Navbar';
 import SlideMenu from '../components/SlideMenu';
 import PageFooter from '../components/PageFooter';
-
-const API_BASE = '/api';
+import { supabase } from '../lib/supabase';
 
 const TABS = [
-  { key: 'providers', label: 'إحصائيات الجهات المزودة' },
-  { key: 'general', label: 'الإحصائيات العامة' },
+  { key: 'providers', label: 'إحصاءات الجهات المزودة' },
+  { key: 'general', label: 'الإحصاءات العامة' },
   { key: 'payments', label: 'تقرير الدفعات' },
   { key: 'books', label: 'تقرير الكتب الرسمية' },
 ];
@@ -99,10 +98,65 @@ const StatisticsPage = () => {
     try {
       setProvidersLoading(true);
       setProvidersError('');
-      const res = await fetch(`${API_BASE}/statistics/providers`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'فشل تحميل الجهات المزودة');
-      const rows = data.providers || [];
+
+      const [pcRes, siRes, osRes] = await Promise.all([
+        supabase.from('provider_companies').select('*').order('name'),
+        supabase.from('service_items').select('*'),
+        supabase.from('organization_services').select('*')
+      ]);
+
+      if (pcRes.error) throw pcRes.error;
+      const items = siRes.data || [];
+      const services = osRes.data || [];
+      const providersList = pcRes.data || [];
+
+      const calculateItemTotal = (item, service) => {
+        const qty = Number(item.quantity || 0);
+        const price = Number(item.unit_price || 0);
+        const baseMonthly = qty * price;
+        const duration = Number(service?.contract_duration_value || 1) || 1;
+        const unit = service?.contract_duration_unit || 'شهري';
+        if (unit === 'يومي') return (baseMonthly / 30) * duration;
+        if (unit === 'سنوي') return baseMonthly * 12 * duration;
+        return baseMonthly * duration;
+      };
+
+      const rows = providersList.map(pc => {
+        const providerItems = items.filter(si => si.provider_company_id === pc.id);
+        const providerServiceIds = [...new Set(providerItems.map(si => si.service_id))];
+        const providerServices = services.filter(os => providerServiceIds.includes(os.id));
+        const orgIds = [...new Set(providerServices.map(os => os.organization_id))];
+
+        let totalContractValue = 0;
+        let estimatedReceived = 0;
+        let estimatedDue = 0;
+
+        providerItems.forEach(item => {
+          const service = services.find(os => os.id === item.service_id);
+          if (!service) return;
+          const itemTotal = calculateItemTotal(item, service);
+          totalContractValue += itemTotal;
+          const serviceAnnual = Number(service.annual_amount || 0);
+          if (serviceAnnual > 0) {
+            const ratio = itemTotal / serviceAnnual;
+            estimatedReceived += ratio * Number(service.paid_amount || 0);
+            estimatedDue += ratio * Number(service.due_amount || 0);
+          }
+        });
+
+        return {
+          id: pc.id,
+          name: pc.name,
+          is_active: pc.is_active,
+          organizations_count: orgIds.length,
+          services_count: providerServiceIds.length,
+          items_count: providerItems.length,
+          total_contract_value: totalContractValue,
+          estimated_received_amount: estimatedReceived,
+          estimated_due_amount: estimatedDue
+        };
+      });
+
       setProviders(rows);
       setSelectedProviderId((current) => current || (rows[0]?.id ? String(rows[0].id) : ''));
     } catch (err) {
@@ -116,12 +170,97 @@ const StatisticsPage = () => {
     try {
       setGeneralLoading(true);
       setGeneralError('');
-      const res = await fetch(`${API_BASE}/statistics/general`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'فشل تحميل الإحصائيات العامة');
+      const [orgsRes, pcRes, osRes, siRes, paysRes, booksRes] = await Promise.all([
+        supabase.from('organizations').select('id, status'),
+        supabase.from('provider_companies').select('id, name, is_active'),
+        supabase.from('organization_services').select('*'),
+        supabase.from('service_items').select('*'),
+        supabase.from('payments').select('amount, payment_date'),
+        supabase.from('official_book_records').select('id')
+      ]);
+
+      const orgs = orgsRes.data || [];
+      const pcs = pcRes.data || [];
+      const svcs = osRes.data || [];
+      const items = siRes.data || [];
+      const pays = paysRes.data || [];
+
+      // Service Type Stats
+      const typeMap = {};
+      svcs.forEach(s => {
+        const t = s.service_type || 'أخرى';
+        if (!typeMap[t]) typeMap[t] = { service_type: t, services_count: 0, total_paid_amount: 0, total_due_amount: 0 };
+        typeMap[t].services_count++;
+        typeMap[t].total_paid_amount += Number(s.paid_amount || 0);
+        typeMap[t].total_due_amount += Number(s.due_amount || 0);
+      });
+
+      const calculateItemTotal = (item, service) => {
+        const qty = Number(item.quantity || 0);
+        const price = Number(item.unit_price || 0);
+        const baseMonthly = qty * price;
+        const duration = Number(service?.contract_duration_value || 1) || 1;
+        const unit = service?.contract_duration_unit || 'شهري';
+        if (unit === 'يومي') return (baseMonthly / 30) * duration;
+        if (unit === 'سنوي') return baseMonthly * 12 * duration;
+        return baseMonthly * duration;
+      };
+
+      // Provider Overview
+      const providerOverview = pcs.map(pc => {
+        const pItems = items.filter(si => si.provider_company_id === pc.id);
+        const pServiceIds = [...new Set(pItems.map(si => si.service_id))];
+        const pServices = svcs.filter(s => pServiceIds.includes(s.id));
+        const pOrgIds = [...new Set(pServices.map(s => s.organization_id))];
+        
+        let recv = 0, due = 0;
+        pItems.forEach(item => {
+          const s = svcs.find(srv => srv.id === item.service_id);
+          if (!s || !Number(s.annual_amount)) return;
+          const ratio = calculateItemTotal(item, s) / Number(s.annual_amount);
+          recv += ratio * Number(s.paid_amount || 0);
+          due += ratio * Number(s.due_amount || 0);
+        });
+
+        return {
+          name: pc.name,
+          organizations_count: pOrgIds.length,
+          estimated_received_amount: recv,
+          estimated_due_amount: due
+        };
+      }).sort((a, b) => b.estimated_received_amount - a.estimated_received_amount);
+
+      // Monthly Payments
+      const monthMap = {};
+      pays.forEach(p => {
+        const m = p.payment_date?.slice(0, 7); // YYYY-MM
+        if (!m) return;
+        if (!monthMap[m]) monthMap[m] = { month: m, payments_count: 0, total_amount: 0 };
+        monthMap[m].payments_count++;
+        monthMap[m].total_amount += Number(p.amount || 0);
+      });
+
+      const data = {
+        summary: {
+          total_organizations: orgs.length,
+          active_organizations: orgs.filter(o => o.status === 'active').length,
+          total_provider_companies: pcs.length,
+          active_provider_companies: pcs.filter(p => p.is_active).length,
+          total_services: svcs.length,
+          active_services: svcs.filter(s => s.is_active).length,
+          total_payments_count: pays.length,
+          total_paid_amount: pays.reduce((sum, p) => sum + Number(p.amount || 0), 0),
+          total_due_amount: svcs.reduce((sum, s) => sum + Number(s.due_amount || 0), 0),
+          official_books_count: booksRes.data?.length || 0,
+        },
+        service_type_stats: Object.values(typeMap),
+        provider_overview: providerOverview.slice(0, 10),
+        monthly_payments: Object.values(monthMap).sort((a, b) => b.month.localeCompare(a.month)).slice(0, 12)
+      };
+
       setGeneralStats(data);
     } catch (err) {
-      setGeneralError(err.message || 'حدث خطأ أثناء تحميل الإحصائيات العامة');
+      setGeneralError(err.message || 'حدث خطأ أثناء تحميل الإحصاءات العامة');
     } finally {
       setGeneralLoading(false);
     }
@@ -136,10 +275,99 @@ const StatisticsPage = () => {
     try {
       setProviderDetailsLoading(true);
       setProviderDetailsError('');
-      const params = new URLSearchParams(filters);
-      const res = await fetch(`${API_BASE}/statistics/providers/${providerId}?${params.toString()}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'فشل تحميل تفاصيل الجهة المزودة');
+
+      const [pcRes, siRes, osRes, orgsRes, paysRes] = await Promise.all([
+        supabase.from('provider_companies').select('*').eq('id', providerId).single(),
+        supabase.from('service_items').select('*').eq('provider_company_id', providerId),
+        supabase.from('organization_services').select('*'),
+        supabase.from('organizations').select('*'),
+        supabase.from('payments').select('*, organization_services!inner(*)')
+      ]);
+
+      if (pcRes.error) throw pcRes.error;
+      const provider = pcRes.data;
+      const items = siRes.data || [];
+      const services = osRes.data || [];
+      const orgs = orgsRes.data || [];
+      
+      const providerServiceIds = [...new Set(items.map(si => si.service_id))];
+      const providerServices = services.filter(s => providerServiceIds.includes(s.id));
+      
+      const calculateItemTotal = (item, service) => {
+        const qty = Number(item.quantity || 0);
+        const price = Number(item.unit_price || 0);
+        const baseMonthly = qty * price;
+        const duration = Number(service?.contract_duration_value || 1) || 1;
+        const unit = service?.contract_duration_unit || 'شهري';
+        if (unit === 'يومي') return (baseMonthly / 30) * duration;
+        if (unit === 'سنوي') return baseMonthly * 12 * duration;
+        return baseMonthly * duration;
+      };
+
+      const orgStats = orgs.filter(o => providerServices.some(s => s.organization_id === o.id)).map(o => {
+        const oServices = providerServices.filter(s => s.organization_id === o.id);
+        const oItems = items.filter(si => oServices.some(s => s.id === si.service_id));
+        
+        let val = 0, recv = 0, due = 0;
+        oItems.forEach(item => {
+          const s = oServices.find(srv => srv.id === item.service_id);
+          if (!s) return;
+          const total = calculateItemTotal(item, s);
+          val += total;
+          if (Number(s.annual_amount) > 0) {
+            const ratio = total / Number(s.annual_amount);
+            recv += ratio * Number(s.paid_amount || 0);
+            due += ratio * Number(s.due_amount || 0);
+          }
+        });
+
+        return {
+          organization_id: o.id,
+          organization_name: o.name,
+          organization_status: o.status,
+          services_count: oServices.length,
+          items_count: oItems.length,
+          total_contract_value: val,
+          estimated_received_amount: recv,
+          estimated_due_amount: due
+        };
+      });
+
+      const filteredPayments = (paysRes.data || []).filter(p => {
+        const isOurProvider = items.some(si => si.service_id === p.service_id);
+        if (!isOurProvider) return false;
+        if (filters.from_date && p.payment_date < filters.from_date) return false;
+        if (filters.to_date && p.payment_date > filters.to_date) return false;
+        return true;
+      }).map(p => ({
+        id: p.id,
+        amount: p.amount,
+        payment_date: p.payment_date,
+        note: p.note,
+        service_type: p.organization_services?.service_type,
+        organization_name: orgs.find(o => o.id === p.organization_services?.organization_id)?.name
+      }));
+
+      const data = {
+        provider,
+        summary: {
+          organizations_count: orgStats.length,
+          services_count: providerServiceIds.length,
+          items_count: items.length,
+          total_contract_value: orgStats.reduce((s, o) => s + o.total_contract_value, 0),
+          estimated_received_amount: orgStats.reduce((s, o) => s + o.estimated_received_amount, 0),
+          estimated_due_amount: orgStats.reduce((s, o) => s + o.estimated_due_amount, 0),
+        },
+        organizations: orgStats,
+        service_types: [],
+        recent_payments: filteredPayments.slice(0, 20),
+        filtered_payments: filteredPayments,
+        payments_summary: {
+          payments_count: filteredPayments.length,
+          total_amount: filteredPayments.reduce((s, p) => s + Number(p.amount || 0), 0),
+        }
+      };
+
       setProviderDetails(data);
     } catch (err) {
       setProviderDetailsError(err.message || 'حدث خطأ أثناء تحميل تفاصيل الجهة المزودة');
@@ -153,11 +381,26 @@ const StatisticsPage = () => {
     try {
       setPaymentsLoading(true);
       setPaymentsError('');
-      const params = new URLSearchParams(filters);
-      const res = await fetch(`${API_BASE}/reports/payments?${params.toString()}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'فشل تحميل تقرير الدفعات');
-      setPaymentReport(data);
+      let query = supabase.from('payments').select('*, organization_services!inner(*, organizations!inner(name))').order('payment_date', { ascending: false });
+      if (filters.from_date) query = query.gte('payment_date', filters.from_date);
+      if (filters.to_date) query = query.lte('payment_date', filters.to_date);
+      const { data, error } = await query;
+      if (error) throw error;
+      const mapped = (data || []).map(p => ({
+        id: p.id,
+        amount: p.amount,
+        payment_date: p.payment_date,
+        note: p.note,
+        service_type: p.organization_services?.service_type,
+        organization_name: p.organization_services?.organizations?.name
+      }));
+      setPaymentReport({
+        payments: mapped,
+        summary: {
+          payments_count: mapped.length,
+          total_amount: mapped.reduce((s, p) => s + Number(p.amount || 0), 0)
+        }
+      });
     } catch (err) {
       setPaymentsError(err.message || 'حدث خطأ أثناء تحميل تقرير الدفعات');
       setPaymentReport(null);
@@ -170,11 +413,21 @@ const StatisticsPage = () => {
     try {
       setBooksLoading(true);
       setBooksError('');
-      const params = new URLSearchParams(filters);
-      const res = await fetch(`${API_BASE}/reports/official-books?${params.toString()}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'فشل تحميل تقرير الكتب الرسمية');
-      setBookReport(data);
+      let query = supabase.from('official_book_records').select('*, organizations(name)').order('official_book_date', { ascending: false });
+      if (filters.from_date) query = query.gte('official_book_date', filters.from_date);
+      if (filters.to_date) query = query.lte('official_book_date', filters.to_date);
+      const { data, error } = await query;
+      if (error) throw error;
+      const mapped = (data || []).map(b => ({
+        ...b,
+        organization_name: b.organizations?.name
+      }));
+      setBookReport({
+        books: mapped,
+        summary: {
+          books_count: mapped.length
+        }
+      });
     } catch (err) {
       setBooksError(err.message || 'حدث خطأ أثناء تحميل تقرير الكتب الرسمية');
       setBookReport(null);
@@ -207,56 +460,90 @@ const StatisticsPage = () => {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
-  const getExcelExportConfig = () => {
-    if (activeTab === 'providers') {
-      if (!selectedProviderId) throw new Error('اختر جهة مزودة أولاً');
-      return {
-        url: `${API_BASE}/statistics/providers/${selectedProviderId}/export?${new URLSearchParams(providerFilters).toString()}`,
-        filename: `provider_statistics_${selectedProviderId}_${providerFilters.from_date}_${providerFilters.to_date}.xls`,
-      };
-    }
-    if (activeTab === 'general') {
-      return {
-        url: `${API_BASE}/statistics/general/export`,
-        filename: 'statistics_general_report.xls',
-      };
-    }
-    if (activeTab === 'payments') {
-      const params = new URLSearchParams(paymentFilters);
-      return {
-        url: `${API_BASE}/reports/payments/export?${params.toString()}`,
-        filename: `payments_report_${paymentFilters.from_date}_${paymentFilters.to_date}.xls`,
-      };
-    }
-    const params = new URLSearchParams(bookFilters);
-    return {
-      url: `${API_BASE}/reports/official-books/export?${params.toString()}`,
-      filename: `official_books_report_${bookFilters.from_date}_${bookFilters.to_date}.xls`,
-    };
-  };
-
   const handleExportExcel = async () => {
     try {
       setExportingExcel(true);
-      const config = getExcelExportConfig();
-      const res = await fetch(config.url);
-      if (!res.ok) {
-        let message = 'فشل تصدير التقرير';
-        try {
-          const data = await res.json();
-          message = data.error || message;
-        } catch (_) {}
-        throw new Error(message);
+      let doc;
+      if (activeTab === 'providers') {
+        if (!providerDetails) throw new Error('لا توجد بيانات لتصديرها');
+        doc = {
+          filename: `provider_statistics_${selectedProviderId}.xls`,
+          title: `إحصاءات الجهة المزودة - ${providerDetails.provider?.name || ''}`,
+          sections: [
+            {
+              title: 'الجهات المرتبطة',
+              headers: ['الجهة', 'الخدمات', 'العناصر', 'المستلم التقديري', 'المتبقي التقديري'],
+              rows: (providerDetails.organizations || []).map(o => [o.organization_name, o.services_count, o.items_count, formatMoney(o.estimated_received_amount), formatMoney(o.estimated_due_amount)])
+            },
+            {
+              title: 'الدفعات',
+              headers: ['التاريخ', 'الجهة', 'نوع الخدمة', 'المبلغ', 'الملاحظة'],
+              rows: (providerDetails.filtered_payments || []).map(p => [p.payment_date, p.organization_name, p.service_type, formatMoney(p.amount), p.note || '-'])
+            }
+          ]
+        };
+      } else if (activeTab === 'general') {
+        if (!generalStats) throw new Error('لا توجد بيانات لتصديرها');
+        doc = {
+          filename: 'general_statistics.xls',
+          title: 'الإحصاءات العامة',
+          sections: [
+            {
+              title: 'الملخص',
+              headers: ['المؤشر', 'القيمة'],
+              rows: [
+                ['إجمالي الجهات', generalStats.summary.total_organizations],
+                ['إجمالي الخدمات', generalStats.summary.total_services],
+                ['إجمالي المبالغ المستلمة', formatMoney(generalStats.summary.total_paid_amount)],
+                ['إجمالي المبالغ المتبقية', formatMoney(generalStats.summary.total_due_amount)]
+              ]
+            }
+          ]
+        };
+      } else if (activeTab === 'payments') {
+        if (!paymentReport) throw new Error('لا توجد بيانات لتصديرها');
+        doc = {
+          filename: `payments_report_${paymentFilters.from_date}_${paymentFilters.to_date}.xls`,
+          title: 'تقرير الدفعات',
+          sections: [{
+            headers: ['التاريخ', 'الجهة', 'نوع الخدمة', 'المبلغ', 'الملاحظة'],
+            rows: (paymentReport.payments || []).map(p => [p.payment_date, p.organization_name, p.service_type, formatMoney(p.amount), p.note || '-'])
+          }]
+        };
+      } else {
+        if (!bookReport) throw new Error('لا توجد بيانات لتصديرها');
+        doc = {
+          filename: `books_report_${bookFilters.from_date}_${bookFilters.to_date}.xls`,
+          title: 'تقرير الكتب الرسمية',
+          sections: [{
+            headers: ['التاريخ', 'الجهة', 'البيان'],
+            rows: (bookReport.books || []).map(b => [b.official_book_date, b.organization_name, b.official_book_description])
+          }]
+        };
       }
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
+
+      const html = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+          <head><meta charset="UTF-8" /><style>table{direction:rtl;border-collapse:collapse;} th,td{border:1px solid #000;padding:5px;text-align:center;}</style></head>
+          <body>
+            <h2>${escapeHtml(doc.title)}</h2>
+            ${doc.sections.map(s => `
+              <h3>${escapeHtml(s.title || '')}</h3>
+              <table>
+                <thead><tr>${s.headers.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead>
+                <tbody>${s.rows.map(r => `<tr>${r.map(c => `<td>${escapeHtml(String(c))}</td>`).join('')}</tr>`).join('')}</tbody>
+              </table>
+            `).join('<br/>')}
+          </body>
+        </html>
+      `;
+      const blob = new Blob(['\ufeff', html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = config.filename;
-      document.body.appendChild(link);
+      link.download = doc.filename;
       link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      URL.revokeObjectURL(url);
     } catch (err) {
       console.error(err);
       alert(err.message || 'حدث خطأ أثناء تصدير Excel');
@@ -269,7 +556,7 @@ const StatisticsPage = () => {
     if (activeTab === 'providers') {
       if (!providerDetails) throw new Error('لا توجد بيانات لطباعتها');
       return {
-        title: `إحصائيات الجهة المزودة - ${providerDetails.provider?.name || ''}`,
+        title: `إحصاءات الجهة المزودة - ${providerDetails.provider?.name || ''}`,
         sections: [
           {
             title: 'الملخص',
@@ -332,7 +619,7 @@ const StatisticsPage = () => {
     if (activeTab === 'general') {
       if (!generalStats) throw new Error('لا توجد بيانات لطباعتها');
       return {
-        title: 'الإحصائيات العامة',
+        title: 'الإحصاءات العامة',
         sections: [
           {
             title: 'الملخص العام',
@@ -347,7 +634,7 @@ const StatisticsPage = () => {
             ],
           },
           {
-            title: 'إحصائيات حسب نوع الخدمة',
+            title: 'إحصاءات حسب نوع الخدمة',
             headers: ['نوع الخدمة', 'عدد الخدمات', 'المستلم', 'المتبقي'],
             rows: (generalStats.service_type_stats || []).map((row) => [
               row.service_type,
@@ -520,7 +807,7 @@ const StatisticsPage = () => {
       <div className="filter-panel space-y-5">
         <div className="flex flex-col lg:flex-row gap-3 lg:items-end lg:justify-between">
           <div>
-            <h2 className="section-title !text-xl mb-0.5">إحصائيات الجهات المزودة</h2>
+            <h2 className="section-title !text-xl mb-0.5">إحصاءات الجهات المزودة</h2>
             <p className="section-subtitle">اختر جهة مزودة، ثم حدد فترة لمعرفة الدفعات المسددة لها.</p>
           </div>
           <div className="w-full lg:w-96">
@@ -566,7 +853,7 @@ const StatisticsPage = () => {
               عرض دفعات الفترة
             </button>
             <div className="soft-panel flex-1 text-sm text-slate-600">
-              سيتم تطبيق هذه الفترة أيضاً داخل ملف الـ PDF و Excel الخاص بإحصائيات الجهة المزودة.
+              سيتم تطبيق هذه الفترة أيضاً داخل ملف الـ PDF و Excel الخاص بإحصاءات الجهة المزودة.
             </div>
           </div>
         </div>
@@ -689,7 +976,7 @@ const StatisticsPage = () => {
           </TableCard>
         </>
       ) : (
-        <EmptyState text="لا توجد جهات مزودة لعرض الإحصائيات." />
+        <EmptyState text="لا توجد جهات مزودة لعرض الإحصاءات." />
       )}
     </div>
   );
@@ -697,13 +984,13 @@ const StatisticsPage = () => {
   const renderGeneralTab = () => (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5">
-        <h2 className="section-title !text-xl mb-0.5">الإحصائيات العامة</h2>
+        <h2 className="section-title !text-xl mb-0.5">الإحصاءات العامة</h2>
         <p className="section-subtitle">عرض شامل لكل النظام: الجهات، الخدمات، الدفعات، والكتب الرسمية.</p>
       </div>
 
       {generalError ? <EmptyState text={generalError} /> : null}
       {generalLoading ? (
-        <EmptyState text="جاري تحميل الإحصائيات العامة..." />
+        <EmptyState text="جاري تحميل الإحصاءات العامة..." />
       ) : generalStats ? (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
@@ -715,7 +1002,7 @@ const StatisticsPage = () => {
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <TableCard title="إحصائيات حسب نوع الخدمة">
+            <TableCard title="إحصاءات حسب نوع الخدمة">
               <table className="min-w-full text-sm">
                 <thead className="bg-slate-50 text-slate-600">
                   <tr>
@@ -1010,16 +1297,13 @@ const StatisticsPage = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         <div className="bg-gradient-to-r from-slate-900 via-blue-900 to-cyan-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl">
           <p className="text-sm text-blue-100 mb-2">Statistics Center</p>
-          <h1 className="text-3xl sm:text-4xl font-bold mb-3">مركز الإحصائيات والتقارير</h1>
-          <p className="text-blue-100 max-w-3xl leading-7">
-            تم إعادة تنظيم صفحة الإحصائيات إلى أقسام واضحة: إحصائيات الجهات المزودة، الإحصائيات العامة، تقرير الدفعات، وتقرير الكتب الرسمية.
-          </p>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-3">مركز الإحصاءات والتقارير</h1>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-lg font-bold text-slate-900">تصدير الإحصائيات</h2>
+              <h2 className="text-lg font-bold text-slate-900">تصدير الإحصاءات</h2>
               <p className="text-sm text-slate-500">يمكنك تصدير القسم الحالي كملف Excel أو فتح نسخة جاهزة للحفظ بصيغة PDF.</p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
