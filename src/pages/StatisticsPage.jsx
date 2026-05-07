@@ -38,12 +38,20 @@ const MetricCard = ({ title, value, subValue, tone = 'blue' }) => {
   };
 
   return (
-    <div className="surface-card overflow-hidden">
+    <div className="surface-card overflow-hidden transition-all duration-300 hover:shadow-lg">
       <div className={`h-1 bg-gradient-to-r ${toneClasses[tone] || toneClasses.blue}`} />
-      <div className="p-3 sm:p-5">
-        <p className="text-[10px] sm:text-sm text-slate-500 mb-1 uppercase tracking-wider">{title}</p>
-        <p className="text-lg sm:text-2xl font-bold text-slate-900">{value}</p>
-        {subValue ? <p className="text-[10px] sm:text-xs text-slate-500 mt-1">{subValue}</p> : null}
+      <div className="p-5 sm:p-6">
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-base sm:text-xl font-bold text-slate-700 leading-tight">{title}</p>
+          <div className="text-left shrink-0">
+            <p className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{value}</p>
+          </div>
+        </div>
+        {subValue ? (
+          <div className="mt-3 pt-3 border-t border-slate-100">
+            <p className="text-[10px] sm:text-xs text-slate-500 font-medium">{subValue}</p>
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -1294,7 +1302,7 @@ const StatisticsPage = () => {
       <Navbar onMenuClick={() => setIsMenuOpen(true)} />
       <SlideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 space-y-6">
         <div className="bg-gradient-to-r from-slate-900 via-blue-900 to-cyan-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl">
           <p className="text-sm text-blue-100 mb-2">Statistics Center</p>
           <h1 className="text-3xl sm:text-4xl font-bold mb-3">مركز الإحصاءات والتقارير</h1>
