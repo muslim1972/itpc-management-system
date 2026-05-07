@@ -860,9 +860,6 @@ const StatisticsPage = () => {
             >
               عرض دفعات الفترة
             </button>
-            <div className="soft-panel flex-1 text-sm text-slate-600">
-              سيتم تطبيق هذه الفترة أيضاً داخل ملف الـ PDF و Excel الخاص بإحصاءات الجهة المزودة.
-            </div>
           </div>
         </div>
       </div>
