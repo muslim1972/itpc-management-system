@@ -1310,27 +1310,27 @@ const StatisticsPage = () => {
             <div>
               <h2 className="text-lg font-bold text-slate-900">تصدير الإحصاءات</h2>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-row gap-3">
               <button
                 onClick={handleExportExcel}
                 disabled={exportingExcel}
-                className={`rounded-xl px-5 py-3 text-sm font-semibold text-white ${exportingExcel ? 'cursor-not-allowed bg-emerald-300' : 'bg-emerald-600 hover:bg-emerald-700'}`}
+                className={`flex-1 rounded-xl px-5 py-3 text-sm font-semibold text-white ${exportingExcel ? 'cursor-not-allowed bg-emerald-300' : 'bg-emerald-600 hover:bg-emerald-700'}`}
               >
-                {exportingExcel ? 'جاري التصدير...' : 'تصدير Excel'}
+                {exportingExcel ? 'جاري...' : 'تصدير Excel'}
               </button>
               <button
                 onClick={handleExportPdf}
                 disabled={exportingPdf}
-                className={`rounded-xl px-5 py-3 text-sm font-semibold text-white ${exportingPdf ? 'cursor-not-allowed bg-rose-300' : 'bg-rose-600 hover:bg-rose-700'}`}
+                className={`flex-1 rounded-xl px-5 py-3 text-sm font-semibold text-white ${exportingPdf ? 'cursor-not-allowed bg-rose-300' : 'bg-rose-600 hover:bg-rose-700'}`}
               >
-                {exportingPdf ? 'جاري التجهيز...' : 'تصدير PDF'}
+                {exportingPdf ? 'جاري...' : 'تصدير PDF'}
               </button>
             </div>
           </div>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
             {TABS.map((tab) => (
               <button
                 key={tab.key}
