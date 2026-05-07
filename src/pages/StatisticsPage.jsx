@@ -299,7 +299,17 @@ const StatisticsPage = () => {
       const orgs = orgsRes.data || [];
       
       const providerServiceIds = [...new Set(items.map(si => si.service_id))];
-      const providerServices = services.filter(s => providerServiceIds.includes(s.id));
+      const providerServices = services.filter(s => {
+        const isOurProvider = providerServiceIds.includes(s.id);
+        if (!isOurProvider) return false;
+        
+        // تصفية حسب التاريخ: استبعاد العقود التي بدأت بعد نهاية الفترة المختارة
+        if (filters.to_date && s.contract_created_at && s.contract_created_at > filters.to_date) {
+          return false;
+        }
+        
+        return true;
+      });
       
       const calculateItemTotal = (item, service) => {
         const qty = Number(item.quantity || 0);
@@ -358,10 +368,11 @@ const StatisticsPage = () => {
 
       const data = {
         provider,
+        filters, // إضافة الفلتر هنا ليظهر في الواجهة
         summary: {
           organizations_count: orgStats.length,
-          services_count: providerServiceIds.length,
-          items_count: items.length,
+          services_count: providerServices.length, // استخدام الخدمات المفلترة
+          items_count: items.filter(si => providerServices.some(ps => ps.id === si.service_id)).length,
           total_contract_value: orgStats.reduce((s, o) => s + o.total_contract_value, 0),
           estimated_received_amount: orgStats.reduce((s, o) => s + o.estimated_received_amount, 0),
           estimated_due_amount: orgStats.reduce((s, o) => s + o.estimated_due_amount, 0),
@@ -373,6 +384,7 @@ const StatisticsPage = () => {
         payments_summary: {
           payments_count: filteredPayments.length,
           total_amount: filteredPayments.reduce((s, p) => s + Number(p.amount || 0), 0),
+          organizations_count: [...new Set(filteredPayments.map(p => p.organization_name))].filter(Boolean).length
         }
       };
 
