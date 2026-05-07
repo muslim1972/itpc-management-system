@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, publicSupabase } from '../lib/supabase';
 
 export function useEmployeeSearch(options = {}) {
     const {
-        selectFields = 'user_id, full_name, job_number, department_id, username',
+        selectFields = 'id, full_name, job_number, username, admin_role',
         limit = 50,
         debounceMs = 300,
         enabled = true,
@@ -45,7 +45,7 @@ export function useEmployeeSearch(options = {}) {
                 // In Int-Karbala, it seems it's configured for 'itpc'.
                 // So we use .from('public.available_profiles')
                 
-                let queryBuilder = supabase
+                let queryBuilder = publicSupabase
                     .from(usePublicView ? 'available_profiles' : 'profiles')
                     .select(selectFields)
                     .or(orClause)

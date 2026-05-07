@@ -23,17 +23,20 @@ const SSOCatcher = () => {
       try {
         const syncAndGetUser = async (authUser) => {
           // 1. جلب بيانات الموظف من السكيما العامة للتحقق من الاستحقاق والاسم
-          const { data: profile } = await publicSupabase
+          const { data: profile, error: profileErr } = await publicSupabase
             .from('available_profiles')
-            .select('user_id, username, work_location, admin_role')
-            .eq('user_id', authUser.id)
+            .select('id, username, dept_text, role, admin_role')
+            .eq('id', authUser.id)
             .single();
 
-          if (!profile) return null;
+          if (profileErr || !profile) {
+            console.error('Profile sync error:', profileErr);
+            return null;
+          }
 
           // 2. فحص الاستحقاق: قسم تجهيز خدمات المعلوماتية أو مطور/عام
           const isEligible = 
-            profile.work_location === 'قسم تجهيز خدمات المعلوماتية' || 
+            (profile.dept_text && profile.dept_text.includes('قسم تجهيز خدمات المعلوماتية')) || 
             ['developer', 'general'].includes(profile.admin_role);
 
           // 3. جلب أو إنشاء حساب في سكيما itpc (التطبيق الفرعي)
@@ -64,13 +67,14 @@ const SSOCatcher = () => {
               return null;
             }
           } else {
-            // تحديث الاسم إذا تغير في التطبيق العام
-            if (itpcUser.username !== profile.username) {
-              await supabase
-                .from('users')
-                .update({ username: profile.username })
-                .eq('user_id', authUser.id);
-            }
+            // تحديث الاسم وآخر ظهور
+            await supabase
+              .from('users')
+              .update({ 
+                username: profile.username,
+                last_login: new Date().toISOString()
+              })
+              .eq('user_id', authUser.id);
           }
           return { ...authUser, role: finalRole };
         };
@@ -94,7 +98,7 @@ const SSOCatcher = () => {
             const finalUser = await syncAndGetUser(authData.user);
             if (!finalUser) {
               localStorage.clear();
-              window.location.href = 'https://itpc-hr.vercel.app/';
+              window.location.href = 'https://inf-tele-karbala.vercel.app/';
               return;
             }
 
@@ -117,15 +121,15 @@ const SSOCatcher = () => {
               localStorage.setItem('user', JSON.stringify(finalUser));
               navigate(finalUser.role === 'admin' ? '/admin' : '/main', { replace: true });
             } else {
-              window.location.href = 'https://itpc-hr.vercel.app/';
+              window.location.href = 'https://inf-tele-karbala.vercel.app/';
             }
           }
         } else {
-          window.location.href = 'https://itpc-hr.vercel.app/';
+          window.location.href = 'https://inf-tele-karbala.vercel.app/';
         }
       } catch (err) {
         console.error('SSO Error:', err);
-        window.location.href = 'https://itpc-hr.vercel.app/';
+        window.location.href = 'https://inf-tele-karbala.vercel.app/';
       } finally {
         setLoading(false);
       }
@@ -159,7 +163,7 @@ const getStoredUser = () => {
 const RequireAuth = ({ children }) => {
   const user = getStoredUser();
   if (!user) {
-    window.location.href = 'https://itpc-hr.vercel.app/';
+    window.location.href = 'https://inf-tele-karbala.vercel.app/';
     return null;
   }
   return children;
@@ -168,7 +172,7 @@ const RequireAuth = ({ children }) => {
 const RequireAdmin = ({ children }) => {
   const user = getStoredUser();
   if (!user) {
-    window.location.href = 'https://itpc-hr.vercel.app/';
+    window.location.href = 'https://inf-tele-karbala.vercel.app/';
     return null;
   }
   if (user.role !== 'admin') return <Navigate to="/main" replace />;
@@ -178,7 +182,7 @@ const RequireAdmin = ({ children }) => {
 const RequireUser = ({ children }) => {
   const user = getStoredUser();
   if (!user) {
-    window.location.href = 'https://itpc-hr.vercel.app/';
+    window.location.href = 'https://inf-tele-karbala.vercel.app/';
     return null;
   }
   if (user.role !== 'user') return <Navigate to="/admin" replace />;

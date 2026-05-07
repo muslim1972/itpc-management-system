@@ -15,15 +15,18 @@ const env = Object.fromEntries(
         })
 );
 
-// Use itpc schema client
-const supabase = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY, { db: { schema: 'itpc' } });
+const supabase = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
 
 async function run() {
-    const { data, error } = await supabase.from('users').select('*').limit(1);
+    const { data, error } = await supabase
+        .from('departments')
+        .select('name')
+        .eq('id', '33333333-2222-2222-2222-222222222222')
+        .single();
     if (error) {
         console.log('Error:', error.message);
     } else {
-        console.log('Columns:', Object.keys(data[0] || {}));
+        console.log('Dept Name:', data.name);
     }
 }
 run();

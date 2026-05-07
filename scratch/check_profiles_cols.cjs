@@ -15,11 +15,10 @@ const env = Object.fromEntries(
         })
 );
 
-// Use itpc schema client
-const supabase = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY, { db: { schema: 'itpc' } });
+const supabase = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
 
 async function run() {
-    const { data, error } = await supabase.from('users').select('*').limit(1);
+    const { data, error } = await supabase.from('available_profiles').select('*').limit(1);
     if (error) {
         console.log('Error:', error.message);
     } else {

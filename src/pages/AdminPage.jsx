@@ -1335,7 +1335,7 @@ const UsersSection = () => {
       const { error } = await supabase
         .from('users')
         .insert([{
-          user_id: selectedEmployee.user_id,
+          user_id: selectedEmployee.id,
           username: selectedEmployee.username || selectedEmployee.full_name,
           role: form.role,
           created_at: new Date().toISOString()
@@ -1446,7 +1446,7 @@ const UsersSection = () => {
                 {results.length > 0 ? (
                   results.map((emp) => (
                     <button
-                      key={emp.user_id}
+                      key={emp.id}
                       onClick={() => {
                         setSelectedEmployee(emp);
                         setShowSuggestions(false);
