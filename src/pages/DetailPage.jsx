@@ -275,19 +275,6 @@ const DetailPage = () => {
         }));
       }
 
-      console.log('Data processed successfully');
-      console.log('Raw orgData.services:', JSON.stringify(orgData.services?.map(s => ({
-        id: s.id,
-        service_type: s.service_type,
-        annual_amount: s.annual_amount,
-        paid_amount: s.paid_amount,
-        due_amount: s.due_amount,
-        payments_count: s.payments?.length,
-        contract_periods_count: s.service_contract_periods?.length,
-        suspensions_count: s.service_suspensions?.length,
-        active_period: s.service_contract_periods?.find(p => p.status === 'active'),
-      })), null, 2));
-
       // Format data to match exactly what the UI expects
       const org = { ...orgData };
       if (org.services) {
@@ -1898,7 +1885,7 @@ const DetailPage = () => {
 
   return (
     <div dir="rtl" className="app-shell min-h-screen bg-slate-50 text-right">
-      <div className="bg-red-600 text-white text-[10px] text-center py-1 font-bold">نسخة تصحيح المسار v1.1 - جاري فحص البيانات</div>
+
       <Navbar onMenuClick={() => setIsMenuOpen(true)} />
       <SlideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
