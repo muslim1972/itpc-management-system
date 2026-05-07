@@ -1891,10 +1891,10 @@ const DetailPage = () => {
 
       <main className="page-container space-y-6">
         {/* Floating Back Button - Left Side */}
-        <div className="fixed top-[120px] left-6 z-50">
+        <div className="fixed top-[88px] left-8 z-[60]">
           <button
             onClick={() => navigate(-1)}
-            className="group flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-xl border border-slate-200 transition-all hover:bg-slate-50 hover:border-slate-300 hover:scale-105 active:scale-95"
+            className="group flex items-center gap-2 rounded-2xl bg-white/90 backdrop-blur-md px-4 py-2.5 text-[13px] font-bold text-slate-700 shadow-xl border border-slate-200 transition-all hover:bg-white hover:border-slate-300 hover:scale-105 active:scale-95"
           >
             رجوع للخلف
             <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
