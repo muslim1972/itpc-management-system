@@ -5,7 +5,7 @@ import PageFooter from '../components/PageFooter';
 import { supabase } from '../lib/supabase';
 
 const TABS = [
-  { key: 'providers', label: 'إحصاءات الجهات المزودة' },
+  { key: 'providers', label: 'احصاءات الجهات حسب الشركة' },
   { key: 'general', label: 'الإحصاءات العامة' },
   { key: 'payments', label: 'تقرير الدفعات' },
   { key: 'books', label: 'تقرير الكتب الرسمية' },
@@ -815,7 +815,7 @@ const StatisticsPage = () => {
       <div className="filter-panel space-y-5">
         <div className="flex flex-col lg:flex-row gap-3 lg:items-end lg:justify-between">
           <div>
-            <h2 className="section-title !text-xl mb-0.5">إحصاءات الجهات المزودة</h2>
+            <h2 className="section-title !text-lg mb-0.5">احصاءات الجهات حسب الشركة المزودة</h2>
             <p className="section-subtitle">اختر جهة مزودة، ثم حدد فترة لمعرفة الدفعات المسددة لها.</p>
           </div>
           <div className="w-full lg:w-96">
@@ -834,24 +834,26 @@ const StatisticsPage = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">من تاريخ</label>
-            <input
-              type="date"
-              value={providerFilters.from_date}
-              onChange={(e) => setProviderFilters((prev) => ({ ...prev, from_date: e.target.value }))}
-              className="input-modern"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">إلى تاريخ</label>
-            <input
-              type="date"
-              value={providerFilters.to_date}
-              onChange={(e) => setProviderFilters((prev) => ({ ...prev, to_date: e.target.value }))}
-              className="input-modern"
-            />
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 gap-3 md:col-span-2 xl:col-span-2">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">من تاريخ</label>
+              <input
+                type="date"
+                value={providerFilters.from_date}
+                onChange={(e) => setProviderFilters((prev) => ({ ...prev, from_date: e.target.value }))}
+                className="input-modern"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">إلى تاريخ</label>
+              <input
+                type="date"
+                value={providerFilters.to_date}
+                onChange={(e) => setProviderFilters((prev) => ({ ...prev, to_date: e.target.value }))}
+                className="input-modern"
+              />
+            </div>
           </div>
           <div className="xl:col-span-2 flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
             <button
