@@ -1309,7 +1309,6 @@ const StatisticsPage = () => {
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
             <div>
               <h2 className="text-lg font-bold text-slate-900">تصدير الإحصاءات</h2>
-              <p className="text-sm text-slate-500">يمكنك تصدير القسم الحالي كملف Excel أو فتح نسخة جاهزة للحفظ بصيغة PDF.</p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
               <button
