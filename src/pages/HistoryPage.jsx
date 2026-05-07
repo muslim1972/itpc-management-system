@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import SlideMenu from '../components/SlideMenu';
 import PageFooter from '../components/PageFooter';
+import { supabase } from '../lib/supabase';
 
 const API_BASE = '/api';
 
@@ -50,14 +51,58 @@ const HistoryPage = () => {
       setLoading(true);
       setError('');
 
-      const response = await fetch(`${API_BASE}/history/all?limit=${limit}`);
-      const data = await response.json();
+      // Fetch from existing tables in itpc schema
+      const [paymentsRes, suspensionsRes, servicesRes] = await Promise.all([
+        supabase.from('payments').select('*, organization_services(service_type, organizations(id, name))').order('created_at', { ascending: false }).limit(limit),
+        supabase.from('service_suspensions').select('*, organization_services(service_type, organizations(id, name))').order('created_at', { ascending: false }).limit(limit),
+        supabase.from('organization_services').select('*, organizations(id, name)').order('created_at', { ascending: false }).limit(limit)
+      ]);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to load history');
-      }
+      if (paymentsRes.error) throw paymentsRes.error;
+      if (suspensionsRes.error) throw suspensionsRes.error;
+      if (servicesRes.error) throw servicesRes.error;
 
-      setTimeline(Array.isArray(data.history) ? data.history : []);
+      // Map data to the unified history format
+      const payments = (paymentsRes.data || []).map(p => ({
+        ...p,
+        kind: 'payment',
+        action: 'إضافة',
+        organization_id: p.organization_services?.organizations?.id,
+        organization_name: p.organization_services?.organizations?.name,
+        service_type: p.organization_services?.service_type,
+        payment_amount: p.amount,
+        details: p.note
+      }));
+
+      const suspensions = (suspensionsRes.data || []).map(s => ({
+        ...s,
+        kind: 'service_suspension',
+        action: 'إيقاف',
+        organization_id: s.organization_services?.organizations?.id,
+        organization_name: s.organization_services?.organizations?.name,
+        service_type: s.organization_services?.service_type,
+        refund_amount: s.refund_amount,
+        details: s.reason || s.notes || 'إيقاف خدمة'
+      }));
+
+      const services = (servicesRes.data || []).map(s => ({
+        ...s,
+        kind: 'activity',
+        action: 'إنشاء عقد',
+        entity_id: s.id,
+        entity_type: 'organization_service',
+        organization_id: s.organization_id,
+        organization_name: s.organizations?.name,
+        service_type: s.service_type,
+        details: `تم إنشاء عقد خدمة جديد: ${s.service_type}`
+      }));
+
+      // Combine and sort by created_at descending
+      const combined = [...payments, ...suspensions, ...services]
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .slice(0, limit);
+
+      setTimeline(combined);
     } catch (err) {
       console.error(err);
       setError(err.message || 'حدث خطأ أثناء تحميل السجل');

@@ -8,7 +8,6 @@ const TABS = [
   { key: 'providers', label: 'احصاءات الجهات حسب الشركة' },
   { key: 'general', label: 'الإحصاءات العامة' },
   { key: 'payments', label: 'تقرير الدفعات' },
-  { key: 'books', label: 'تقرير الكتب الرسمية' },
 ];
 
 const getToday = () => new Date().toISOString().slice(0, 10);
@@ -431,33 +430,8 @@ const StatisticsPage = () => {
     }
   };
 
-  const fetchBooksReport = async (filters = bookFilters) => {
-    try {
-      setBooksLoading(true);
-      setBooksError('');
-      let query = supabase.from('official_book_records').select('*, organizations(name)').order('official_book_date', { ascending: false });
-      if (filters.from_date) query = query.gte('official_book_date', filters.from_date);
-      if (filters.to_date) query = query.lte('official_book_date', filters.to_date);
-      const { data, error } = await query;
-      if (error) throw error;
-      const mapped = (data || []).map(b => ({
-        ...b,
-        organization_name: b.organizations?.name
-      }));
-      setBookReport({
-        books: mapped,
-        from_date: filters.from_date,
-        to_date: filters.to_date,
-        summary: {
-          books_count: mapped.length
-        }
-      });
-    } catch (err) {
-      setBooksError(err.message || 'حدث خطأ أثناء تحميل تقرير الكتب الرسمية');
-      setBookReport(null);
-    } finally {
-      setBooksLoading(false);
-    }
+  const fetchBooksReport = async () => {
+    // Disabled as the table official_book_records does not exist in the current schema
   };
 
   useEffect(() => {
@@ -1224,95 +1198,7 @@ const StatisticsPage = () => {
     </div>
   );
 
-  const renderBooksTab = () => (
-    <div className="space-y-6">
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-        <div className="flex flex-col xl:flex-row gap-4 xl:items-end xl:justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-1">تقرير الكتب الرسمية</h2>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
-            <div className="grid grid-cols-2 gap-3 flex-1">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">من تاريخ</label>
-                <input type="date" value={bookFilters.from_date} onChange={(e) => setBookFilters((prev) => ({ ...prev, from_date: e.target.value }))} className="input-modern" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">إلى تاريخ</label>
-                <input type="date" value={bookFilters.to_date} onChange={(e) => setBookFilters((prev) => ({ ...prev, to_date: e.target.value }))} className="input-modern" />
-              </div>
-            </div>
-            <button onClick={() => fetchBooksReport()} className="btn-primary sm:w-auto mt-7 sm:mt-0">عرض التقرير</button>
-          </div>
-        </div>
-      </div>
-
-      {booksError ? <EmptyState text={booksError} /> : null}
-      {booksLoading ? <EmptyState text="جاري تحميل تقرير الكتب الرسمية..." /> : null}
-
-      {bookReport ? (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <MetricCard title="عدد الكتب" value={bookReport.summary?.books_count || 0} tone="blue" />
-            <MetricCard title="عدد أنواع العمليات" value={bookReport.by_operation?.length || 0} tone="amber" />
-            <MetricCard title="الفترة" value={`${bookReport.from_date} → ${bookReport.to_date}`} tone="indigo" />
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div className="xl:col-span-2">
-              <TableCard title="الكتب الرسمية ضمن الفترة المحددة">
-                <table className="min-w-full text-sm">
-                  <thead className="bg-slate-50 text-slate-600">
-                    <tr>
-                      <th className="px-4 py-3 text-left">تاريخ الكتاب</th>
-                      <th className="px-4 py-3 text-left">نوع العملية</th>
-                      <th className="px-4 py-3 text-left">الجهة</th>
-                      <th className="px-4 py-3 text-left">الخدمة</th>
-                      <th className="px-4 py-3 text-left">الوصف</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {bookReport.books?.length ? bookReport.books.map((row) => (
-                      <tr key={row.id} className="border-t border-slate-100 hover:bg-slate-50/70">
-                        <td className="px-4 py-3">{formatDate(row.official_book_date)}</td>
-                        <td className="px-4 py-3 font-medium text-slate-800">{row.operation_type}</td>
-                        <td className="px-4 py-3">{row.organization_name || '-'}</td>
-                        <td className="px-4 py-3">{row.service_type || '-'}</td>
-                        <td className="px-4 py-3 text-slate-500">{row.official_book_description || '-'}</td>
-                      </tr>
-                    )) : (
-                      <tr><td colSpan="5" className="px-4 py-8 text-center text-slate-500">لا توجد كتب رسمية في هذه الفترة.</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </TableCard>
-            </div>
-
-            <TableCard title="تجميع حسب نوع العملية">
-              <table className="min-w-full text-sm">
-                <thead className="bg-slate-50 text-slate-600">
-                  <tr>
-                    <th className="px-4 py-3 text-left">نوع العملية</th>
-                    <th className="px-4 py-3 text-left">عدد الكتب</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {bookReport.by_operation?.length ? bookReport.by_operation.map((row) => (
-                    <tr key={row.operation_type} className="border-t border-slate-100">
-                      <td className="px-4 py-3 font-medium text-slate-800">{row.operation_type}</td>
-                      <td className="px-4 py-3">{row.books_count}</td>
-                    </tr>
-                  )) : (
-                    <tr><td colSpan="2" className="px-4 py-8 text-center text-slate-500">لا توجد بيانات.</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </TableCard>
-          </div>
-        </>
-      ) : null}
-    </div>
-  );
+  const renderBooksTab = () => null;
 
   return (
     <div className="min-h-screen bg-slate-50" dir="rtl">
@@ -1370,7 +1256,6 @@ const StatisticsPage = () => {
         {activeTab === 'providers' && renderProvidersTab()}
         {activeTab === 'general' && renderGeneralTab()}
         {activeTab === 'payments' && renderPaymentsTab()}
-        {activeTab === 'books' && renderBooksTab()}
       </main>
       <PageFooter />
     </div>
