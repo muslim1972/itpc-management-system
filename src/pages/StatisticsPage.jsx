@@ -416,6 +416,8 @@ const StatisticsPage = () => {
       }));
       setPaymentReport({
         payments: mapped,
+        from_date: filters.from_date,
+        to_date: filters.to_date,
         summary: {
           payments_count: mapped.length,
           total_amount: mapped.reduce((s, p) => s + Number(p.amount || 0), 0)
@@ -444,6 +446,8 @@ const StatisticsPage = () => {
       }));
       setBookReport({
         books: mapped,
+        from_date: filters.from_date,
+        to_date: filters.to_date,
         summary: {
           books_count: mapped.length
         }
@@ -1131,19 +1135,20 @@ const StatisticsPage = () => {
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
         <div className="flex flex-col xl:flex-row gap-4 xl:items-end xl:justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-1">تقرير الدفعات من تاريخ إلى تاريخ</h2>
-            <p className="text-slate-500">يعرض كل الدفعات ضمن المدة التي يحددها المستخدم مع الإجمالي وتوزيع الدفعات على الجهات.</p>
+            <h2 className="text-2xl font-bold text-slate-900 mb-1">تقرير الدفعات</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full xl:w-auto">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">من تاريخ</label>
-              <input type="date" value={paymentFilters.from_date} onChange={(e) => setPaymentFilters((prev) => ({ ...prev, from_date: e.target.value }))} className="input-modern" />
+          <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
+            <div className="grid grid-cols-2 gap-3 flex-1">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">من تاريخ</label>
+                <input type="date" value={paymentFilters.from_date} onChange={(e) => setPaymentFilters((prev) => ({ ...prev, from_date: e.target.value }))} className="input-modern" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">إلى تاريخ</label>
+                <input type="date" value={paymentFilters.to_date} onChange={(e) => setPaymentFilters((prev) => ({ ...prev, to_date: e.target.value }))} className="input-modern" />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">إلى تاريخ</label>
-              <input type="date" value={paymentFilters.to_date} onChange={(e) => setPaymentFilters((prev) => ({ ...prev, to_date: e.target.value }))} className="input-modern" />
-            </div>
-            <button onClick={() => fetchPaymentsReport()} className="btn-primary">عرض التقرير</button>
+            <button onClick={() => fetchPaymentsReport()} className="btn-primary sm:w-auto mt-7 sm:mt-0">عرض التقرير</button>
           </div>
         </div>
       </div>
@@ -1224,19 +1229,20 @@ const StatisticsPage = () => {
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
         <div className="flex flex-col xl:flex-row gap-4 xl:items-end xl:justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-1">تقرير الكتب الرسمية من تاريخ إلى تاريخ</h2>
-            <p className="text-slate-500">استعراض الكتب الرسمية المخزنة في النظام مع نوع العملية والجهة المرتبطة بها.</p>
+            <h2 className="text-2xl font-bold text-slate-900 mb-1">تقرير الكتب الرسمية</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full xl:w-auto">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">من تاريخ</label>
-              <input type="date" value={bookFilters.from_date} onChange={(e) => setBookFilters((prev) => ({ ...prev, from_date: e.target.value }))} className="input-modern" />
+          <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
+            <div className="grid grid-cols-2 gap-3 flex-1">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">من تاريخ</label>
+                <input type="date" value={bookFilters.from_date} onChange={(e) => setBookFilters((prev) => ({ ...prev, from_date: e.target.value }))} className="input-modern" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">إلى تاريخ</label>
+                <input type="date" value={bookFilters.to_date} onChange={(e) => setBookFilters((prev) => ({ ...prev, to_date: e.target.value }))} className="input-modern" />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">إلى تاريخ</label>
-              <input type="date" value={bookFilters.to_date} onChange={(e) => setBookFilters((prev) => ({ ...prev, to_date: e.target.value }))} className="input-modern" />
-            </div>
-            <button onClick={() => fetchBooksReport()} className="btn-primary">عرض التقرير</button>
+            <button onClick={() => fetchBooksReport()} className="btn-primary sm:w-auto mt-7 sm:mt-0">عرض التقرير</button>
           </div>
         </div>
       </div>
