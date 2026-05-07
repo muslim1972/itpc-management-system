@@ -276,6 +276,17 @@ const DetailPage = () => {
       }
 
       console.log('Data processed successfully');
+      console.log('Raw orgData.services:', JSON.stringify(orgData.services?.map(s => ({
+        id: s.id,
+        service_type: s.service_type,
+        annual_amount: s.annual_amount,
+        paid_amount: s.paid_amount,
+        due_amount: s.due_amount,
+        payments_count: s.payments?.length,
+        contract_periods_count: s.service_contract_periods?.length,
+        suspensions_count: s.service_suspensions?.length,
+        active_period: s.service_contract_periods?.find(p => p.status === 'active'),
+      })), null, 2));
 
       // Format data to match exactly what the UI expects
       const org = { ...orgData };
