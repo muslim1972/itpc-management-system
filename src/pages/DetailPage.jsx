@@ -6,7 +6,7 @@ import PageFooter from '../components/PageFooter';
 
 import { ChevronDown, ChevronUp, FileText, Download, Edit, Printer, ArrowRight } from 'lucide-react';
 
-const API = '/api';
+import { supabase } from '../lib/supabase';
 
 const PAYMENT_METHODS = ['يومي', 'شهري', 'كل 3 أشهر', 'سنوي'];
 const CONTRACT_DURATION_UNITS = ['يومي', 'شهري', 'سنوي'];
@@ -236,14 +236,49 @@ const DetailPage = () => {
       setLoading(true);
       setError('');
 
-      const res = await fetch(`${API}/organizations/${id}`);
-      const data = await res.json();
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .select(`
+          *,
+          services:organization_services(
+            *,
+            service_contract_periods(*),
+            service_items(*, provider_companies(name)),
+            payments(*),
+            service_suspensions(*)
+          )
+        `)
+        .eq('id', id)
+        .single();
 
-      if (!res.ok) {
-        throw new Error(data.error || 'فشل تحميل تفاصيل الجهة');
+      if (orgError) {
+        throw new Error(orgError.message || 'فشل تحميل تفاصيل الجهة');
       }
 
-      const org = data.organization;
+      // Format data to match exactly what the UI expects
+      const org = { ...orgData };
+      if (org.services) {
+        org.services = org.services.map(service => {
+          const activePeriod = service.service_contract_periods?.find(p => p.status === 'active') || null;
+          const closedPeriods = service.service_contract_periods?.filter(p => p.status === 'closed') || [];
+          
+          const mappedItems = (service.service_items || []).map(item => ({
+            ...item,
+            provider_company_name: item.provider_companies?.name || ''
+          }));
+
+          const latestSuspension = service.service_suspensions?.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0] || null;
+
+          return {
+            ...service,
+            active_contract_period: activePeriod,
+            closed_contract_periods: closedPeriods,
+            service_items: mappedItems,
+            latest_suspension: latestSuspension
+          };
+        });
+      }
+
       setOrganization(org);
 
       setOrgForm({
@@ -480,24 +515,21 @@ const DetailPage = () => {
       setSaving(true);
       setError('');
 
-      const orgRes = await fetch(`${API}/organizations/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orgForm),
-      });
+      const { error: orgError } = await supabase
+        .from('organizations')
+        .update(orgForm)
+        .eq('id', id);
 
-      const orgData = await orgRes.json();
-      if (!orgRes.ok) {
-        throw new Error(orgData.error || 'فشل تحديث بيانات الجهة');
+      if (orgError) {
+        throw new Error(orgError.message || 'فشل تحديث بيانات الجهة');
       }
 
       for (const serviceId of Object.keys(serviceEdits)) {
         const service = serviceEdits[serviceId];
 
-        const res = await fetch(`${API}/organization-services/${serviceId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        const { error: svcError } = await supabase
+          .from('organization_services')
+          .update({
             service_type: service.service_type,
             payment_method: service.payment_method,
             payment_interval_days:
@@ -512,22 +544,20 @@ const DetailPage = () => {
             due_date: service.due_date || null,
             notes: service.notes || '',
             is_active: !!service.is_active,
-          }),
-        });
+          })
+          .eq('id', serviceId);
 
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || `فشل تحديث الخدمة ${serviceId}`);
+        if (svcError) {
+          throw new Error(svcError.message || `فشل تحديث الخدمة ${serviceId}`);
         }
       }
 
       for (const itemId of Object.keys(itemEdits)) {
         const item = itemEdits[itemId];
 
-        const res = await fetch(`${API}/service-items/${itemId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        const { error: itemError } = await supabase
+          .from('service_items')
+          .update({
             item_category: item.item_category,
             provider_company_id: item.provider_company_id || null,
             item_name: item.item_name,
@@ -536,12 +566,11 @@ const DetailPage = () => {
             quantity: Number(item.quantity || 0),
             unit_price: Number(item.unit_price || 0),
             notes: item.notes || '',
-          }),
-        });
+          })
+          .eq('id', itemId);
 
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || `فشل تحديث العنصر ${itemId}`);
+        if (itemError) {
+          throw new Error(itemError.message || `فشل تحديث العنصر ${itemId}`);
         }
       }
 
@@ -884,13 +913,13 @@ const DetailPage = () => {
     if (!ok) return;
 
     try {
-      const res = await fetch(`${API}/organization-services/${serviceId}`, {
-        method: 'DELETE',
-      });
+      const { error } = await supabase
+        .from('organization_services')
+        .delete()
+        .eq('id', serviceId);
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'فشل حذف الخدمة');
+      if (error) {
+        throw new Error(error.message || 'فشل حذف الخدمة');
       }
 
       await loadDetails();
@@ -906,13 +935,13 @@ const DetailPage = () => {
     if (!ok) return;
 
     try {
-      const res = await fetch(`${API}/service-items/${itemId}`, {
-        method: 'DELETE',
-      });
+      const { error } = await supabase
+        .from('service_items')
+        .delete()
+        .eq('id', itemId);
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'فشل حذف العنصر');
+      if (error) {
+        throw new Error(error.message || 'فشل حذف العنصر');
       }
 
       await loadDetails();
@@ -966,22 +995,48 @@ const DetailPage = () => {
 
     try {
       setSuspending(true);
-      const res = await fetch(`${API}/organization-services/${service.id}/suspend`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const { data: userResponse } = await supabase.auth.getUser();
+      const currentUserId = userResponse?.user?.id || null;
+
+      // 1. Update service status
+      const { error: svcError } = await supabase
+        .from('organization_services')
+        .update({
+          service_status: form.is_immediate ? 'suspended' : 'scheduled_suspend',
+          scheduled_suspend_at: form.is_immediate ? null : form.suspend_date,
+          suspension_refund_amount: refundAmount,
+          suspension_note: form.note || ''
+        })
+        .eq('id', service.id);
+
+      if (svcError) throw new Error(svcError.message || 'فشل تحديث حالة الخدمة');
+
+      // 2. Insert suspension log
+      const { error: suspError } = await supabase
+        .from('service_suspensions')
+        .insert({
+          service_id: service.id,
+          effective_date: form.is_immediate ? new Date().toISOString().split('T')[0] : form.suspend_date,
+          status: form.is_immediate ? 'active' : 'scheduled',
           official_book_date: form.official_book_date,
           official_book_description: String(form.official_book_description || '').trim(),
-          is_immediate: !!form.is_immediate,
-          suspend_date: form.is_immediate ? null : form.suspend_date,
           refund_amount: refundAmount,
           note: form.note || '',
-        }),
-      });
+          created_by: currentUserId
+        });
+        
+      if (suspError) throw new Error(suspError.message || 'فشل إنشاء سجل الإيقاف');
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'فشل إيقاف الخدمة');
+      // 3. Close active period if immediate
+      if (form.is_immediate && service.active_contract_period) {
+        await supabase
+          .from('service_contract_periods')
+          .update({
+            status: 'closed',
+            closed_reason: 'suspension',
+            end_date: new Date().toISOString().split('T')[0]
+          })
+          .eq('id', service.active_contract_period.id);
       }
 
       await loadDetails();
@@ -1020,21 +1075,41 @@ const DetailPage = () => {
     }
 
     try {
-      const res = await fetch(`${API}/organization-services/${serviceId}/payments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const { data: userResponse } = await supabase.auth.getUser();
+      const currentUserId = userResponse?.user?.id || null;
+
+      const activePeriod = organization.services.find(s => s.id === serviceId)?.active_contract_period;
+      const contractPeriodId = activePeriod ? activePeriod.id : null;
+
+      const { error: payError } = await supabase
+        .from('payments')
+        .insert({
+          service_id: serviceId,
+          contract_period_id: contractPeriodId,
           amount,
           payment_date: form.payment_date,
           note: form.note || '',
           official_book_date: form.official_book_date,
           official_book_description: String(form.official_book_description || '').trim(),
-        }),
-      });
+          created_by: currentUserId
+        });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'فشل تسجيل الدفعة');
+      if (payError) {
+        throw new Error(payError.message || 'فشل تسجيل الدفعة');
+      }
+
+      // Update paid amount and due amount on the active period just in case there are no backend triggers
+      if (activePeriod) {
+        const newPaidAmount = Number(activePeriod.paid_amount || 0) + amount;
+        const newDueAmount = Number(activePeriod.due_amount || 0) - amount;
+
+        await supabase
+          .from('service_contract_periods')
+          .update({
+            paid_amount: newPaidAmount,
+            due_amount: newDueAmount
+          })
+          .eq('id', contractPeriodId);
       }
 
       setPaymentForms((prev) => ({
