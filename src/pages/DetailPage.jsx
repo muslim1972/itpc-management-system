@@ -236,6 +236,7 @@ const DetailPage = () => {
       setLoading(true);
       setError('');
 
+      console.log('Fetching organization data for ID:', id);
       const { data: orgData, error: orgError } = await supabase
         .from('organizations')
         .select(`
@@ -243,17 +244,38 @@ const DetailPage = () => {
           services:organization_services(
             *,
             service_contract_periods(*),
-            service_items(*, provider_companies(name)),
-            payments(*),
-            service_suspensions(*)
+            service_items(*, provider_companies(name))
           )
         `)
         .eq('id', id)
         .single();
 
       if (orgError) {
-        throw new Error(orgError.message || 'فشل تحميل تفاصيل الجهة');
+        throw new Error(`خطأ في جلب البيانات الأساسية: ${orgError.message}`);
       }
+
+      if (!orgData) {
+        throw new Error('لم يتم العثور على هذه الجهة في قاعدة البيانات');
+      }
+
+      // جلب الدفعات والإيقافات بشكل منفصل لتجنب مشاكل العلاقات في الـ Schema Cache
+      const serviceIds = orgData.services.map(s => s.id);
+      
+      if (serviceIds.length > 0) {
+        const [paymentsRes, suspensionsRes] = await Promise.all([
+          supabase.from('payments').select('*').in('service_id', serviceIds),
+          supabase.from('service_suspensions').select('*').in('service_id', serviceIds)
+        ]);
+
+        // دمج البيانات يدوياً في كائن الـ organization
+        orgData.services = orgData.services.map(service => ({
+          ...service,
+          payments: (paymentsRes.data || []).filter(p => p.service_id === service.id),
+          service_suspensions: (suspensionsRes.data || []).filter(s => s.service_id === service.id)
+        }));
+      }
+
+      console.log('Data processed successfully');
 
       // Format data to match exactly what the UI expects
       const org = { ...orgData };
@@ -1855,6 +1877,7 @@ const DetailPage = () => {
 
   return (
     <div dir="rtl" className="app-shell min-h-screen bg-slate-50 text-right">
+      <div className="bg-red-600 text-white text-[10px] text-center py-1 font-bold">نسخة تصحيح المسار v1.1 - جاري فحص البيانات</div>
       <Navbar onMenuClick={() => setIsMenuOpen(true)} />
       <SlideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
