@@ -1890,16 +1890,6 @@ const DetailPage = () => {
       <SlideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
       <main className="page-container space-y-6">
-        {/* Floating Back Button - Left Side */}
-        <div className="fixed top-[88px] left-8 z-[60]">
-          <button
-            onClick={() => navigate(-1)}
-            className="group flex items-center gap-2 rounded-2xl bg-white/90 backdrop-blur-md px-4 py-2.5 text-[13px] font-bold text-slate-700 shadow-xl border border-slate-200 transition-all hover:bg-white hover:border-slate-300 hover:scale-105 active:scale-95"
-          >
-            رجوع للخلف
-            <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-          </button>
-        </div>
 
         <div className="space-y-6">
           <section className="rounded-[28px] bg-emerald-600 px-6 py-5 shadow-lg text-white">

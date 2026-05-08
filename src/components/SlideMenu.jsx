@@ -17,14 +17,7 @@ const SlideMenu = ({ isOpen, onClose }) => {
   const isAdmin = user?.role === 'admin';
 
   const handleNavigation = (path) => {
-    if (path === '/') {
-      const ok = window.confirm('هل أنت متأكد من تسجيل الخروج؟');
-      if (!ok) return;
-      logout();
-      navigate('/');
-    } else {
-      navigate(path);
-    }
+    navigate(path);
     onClose();
   };
 

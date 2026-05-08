@@ -10,9 +10,17 @@ const Navbar = ({ onMenuClick }) => {
   const is_admin = isAdmin();
   const isAdminPath = location.pathname.startsWith('/admin');
 
-  const handleBackToMain = () => {
-    // Navigate back to the parent application's dashboard
-    window.location.href = '/'; 
+  const handleBackAction = () => {
+    // If we are on the main landing page of the sub-app, go back to the parent app dashboard
+    const isMainPage = location.pathname === '/main' || location.pathname === '/admin';
+    
+    if (isMainPage) {
+      // Send message to parent app to close iframe/go back
+      window.parent.postMessage({ type: 'BACK_TO_DASHBOARD' }, '*');
+    } else {
+      // Internal navigation: go back one step
+      navigate(-1);
+    }
   };
 
   return (
@@ -51,12 +59,14 @@ const Navbar = ({ onMenuClick }) => {
             )}
 
             <button
-              onClick={handleBackToMain}
+              onClick={handleBackAction}
               className="mr-auto flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all border border-slate-200 shadow-sm text-xs font-bold"
-              title="رجوع للوحة التحكم"
+              title={location.pathname === '/main' || location.pathname === '/admin' ? "رجوع للوحة التحكم" : "رجوع للخلف"}
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>رجوع للوحة التحكم</span>
+              <span>
+                {location.pathname === '/main' || location.pathname === '/admin' ? "رجوع للوحة التحكم" : "رجوع للخلف"}
+              </span>
             </button>
           </div>
         </div>
