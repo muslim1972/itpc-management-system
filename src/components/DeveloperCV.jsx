@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, BookOpen, Code, Rocket, Cpu, Briefcase, GraduationCap, ShieldCheck, Youtube } from 'lucide-react';
+import { X, Mail, BookOpen, Code, Rocket, Cpu, Briefcase, GraduationCap, ShieldCheck, Play } from 'lucide-react';
 
 const DeveloperCV = ({ isOpen, onClose }) => {
     return (
@@ -122,7 +122,7 @@ const DeveloperCV = ({ isOpen, onClose }) => {
                                     rel="noopener noreferrer"
                                     className="flex items-center gap-3 bg-red-500/10 p-3 rounded-xl border border-red-500/20 hover:bg-red-500/20 transition-all group"
                                 >
-                                    <Youtube size={18} className="text-red-500 shrink-0 group-hover:scale-110 transition-transform" />
+                                    <Play size={18} className="text-red-500 shrink-0 group-hover:scale-110 transition-transform" />
                                     <span className="text-sm opacity-90 font-mono">@culturalkarbala4671</span>
                                 </a>
                             </div>
