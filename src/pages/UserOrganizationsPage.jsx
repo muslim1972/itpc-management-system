@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import SlideMenu from '../components/SlideMenu';
 import PageFooter from '../components/PageFooter';
+import DeveloperCV from '../components/DeveloperCV';
 import { supabase } from '../lib/supabase';
 import { getUser } from '../utils/auth';
 
@@ -23,6 +24,7 @@ const statusMap = {
 
 const UserOrganizationsPage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCVOpen, setIsCVOpen] = useState(false);
   const [organizations, setOrganizations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -408,7 +410,8 @@ const UserOrganizationsPage = () => {
           )}
         </section>
       </main>
-      <PageFooter />
+      <PageFooter onDeveloperClick={() => setIsCVOpen(true)} />
+      <DeveloperCV isOpen={isCVOpen} onClose={() => setIsCVOpen(false)} />
     </div>
   );
 };

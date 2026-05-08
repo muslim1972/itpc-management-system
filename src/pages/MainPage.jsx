@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import SlideMenu from '../components/SlideMenu';
 import PageFooter from '../components/PageFooter';
+import DeveloperCV from '../components/DeveloperCV';
 import { getUser, logout } from '../utils/auth';
 
 const getStatusClasses = (status) => {
@@ -23,6 +24,7 @@ import { supabase } from '../lib/supabase';
 const MainPage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const [isCVOpen, setIsCVOpen] = useState(false);
   const user = getUser();
 
   const [organizations, setOrganizations] = useState([]);
@@ -82,7 +84,7 @@ const MainPage = () => {
                 // The parent app handles its own "Back" now, but the user asked to keep this button
                 // inside the main interface of the sub-app.
                 if (window.parent !== window) {
-                  window.parent.postMessage({ type: 'navigate_back' }, '*');
+                  window.parent.postMessage({ type: 'BACK_TO_DASHBOARD' }, '*');
                 } else {
                   window.location.href = '/';
                 }
@@ -275,7 +277,8 @@ const MainPage = () => {
           </div>
         </section>
       </main>
-      <PageFooter />
+      <PageFooter onDeveloperClick={() => setIsCVOpen(true)} />
+      <DeveloperCV isOpen={isCVOpen} onClose={() => setIsCVOpen(false)} />
     </div>
   );
 };

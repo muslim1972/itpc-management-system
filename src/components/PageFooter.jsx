@@ -1,13 +1,9 @@
 import React, { useState } from 'react';
 import { Code2 } from 'lucide-react';
 import TipsMarquee from './TipsMarquee';
-import DeveloperCV from './DeveloperCV';
 
 const PageFooter = ({ onDeveloperClick }) => {
-  const [isCVOpen, setIsCVOpen] = useState(false);
-
   const handleLogoClick = () => {
-    setIsCVOpen(true);
     if (onDeveloperClick) onDeveloperClick();
   };
 
@@ -84,8 +80,6 @@ const PageFooter = ({ onDeveloperClick }) => {
           animation: ripple 3s ease-in-out infinite;
         }
       `}</style>
-
-      <DeveloperCV isOpen={isCVOpen} onClose={() => setIsCVOpen(false)} />
     </footer>
   );
 };

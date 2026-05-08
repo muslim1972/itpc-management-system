@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Navbar from '../components/Navbar';
 import SlideMenu from '../components/SlideMenu';
 import PageFooter from '../components/PageFooter';
+import DeveloperCV from '../components/DeveloperCV';
 import { supabase } from '../lib/supabase';
 
 const TABS = [
@@ -76,6 +77,7 @@ const EmptyState = ({ text }) => (
 const StatisticsPage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('providers');
+  const [isCVOpen, setIsCVOpen] = useState(false);
 
   const [providers, setProviders] = useState([]);
   const [providersLoading, setProvidersLoading] = useState(true);
@@ -1398,7 +1400,8 @@ const StatisticsPage = () => {
         {activeTab === 'payments' && renderPaymentsTab()}
         {activeTab === 'books' && renderBooksTab()}
       </main>
-      <PageFooter />
+      <PageFooter onDeveloperClick={() => setIsCVOpen(true)} />
+      <DeveloperCV isOpen={isCVOpen} onClose={() => setIsCVOpen(false)} />
     </div>
   );
 };

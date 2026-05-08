@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import SlideMenu from '../components/SlideMenu';
 import PageFooter from '../components/PageFooter';
+import DeveloperCV from '../components/DeveloperCV';
 import PriceHistoryDropdown from '../components/PriceHistoryDropdown';
 import { logout } from '../utils/auth';
 
@@ -1840,6 +1841,7 @@ const AdminPage = () => {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('organizations');
+  const [isCVOpen, setIsCVOpen] = useState(false);
 
   const currentUser = getCurrentUser();
 
@@ -1867,18 +1869,29 @@ const AdminPage = () => {
   return (
     <div className="app-shell" dir="rtl">
       <div className="page-container">
-        <div className="page-hero mb-8 relative overflow-hidden min-h-[110px] sm:min-h-[160px] flex flex-col justify-center">
-          {/* Back Button */}
-          <div className="absolute top-4 right-4 z-20">
+        <div className="page-hero mb-8 relative overflow-hidden min-h-[110px] sm:min-h-[160px] flex flex-col justify-center px-4 sm:px-6">
+          <div className="absolute inset-0 pointer-events-none opacity-20">
+            <div className="absolute -top-10 -left-10 h-40 w-40 rounded-full bg-white/20 blur-3xl" />
+            <div className="absolute bottom-0 right-0 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
+          </div>
+
+          <div className="relative z-20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="pointer-events-none">
+              <h1 className="hero-title">لوحة تحكم الإدارة</h1>
+              <p className="hero-subtitle">
+                مرحباً <span className="font-bold text-white underline decoration-white/30 underline-offset-4">{currentUser?.username || 'Admin'}</span>
+              </p>
+            </div>
+
             <button
               onClick={() => {
                 if (window.parent !== window) {
-                  window.parent.postMessage({ type: 'navigate_back' }, '*');
+                  window.parent.postMessage({ type: 'BACK_TO_DASHBOARD' }, '*');
                 } else {
                   window.location.href = '/';
                 }
               }}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all border border-white/10 shadow-sm text-xs font-bold"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all border border-white/10 shadow-sm text-xs font-bold w-fit"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -1886,19 +1899,6 @@ const AdminPage = () => {
               <span>رجوع للوحة التحكم</span>
             </button>
           </div>
-
-          <div className="absolute inset-0 pointer-events-none opacity-20">
-            <div className="absolute -top-10 -left-10 h-40 w-40 rounded-full bg-white/20 blur-3xl" />
-            <div className="absolute bottom-0 right-0 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
-          </div>
-
-          <div className="relative z-10 flex flex-col gap-4 sm:gap-6">
-            <div className="pointer-events-none">
-              <h1 className="hero-title">لوحة تحكم الإدارة</h1>
-              <p className="hero-subtitle">
-                مرحباً <span className="font-bold text-white underline decoration-white/30 underline-offset-4">{currentUser?.username || 'Admin'}</span>
-              </p>
-            </div>
 
             <div className="relative z-20 flex flex-nowrap items-center gap-1.5 bg-black/15 p-1 rounded-full w-full overflow-x-auto scrollbar-hide backdrop-blur-md border border-white/10 sm:w-fit">
               <button
@@ -1934,26 +1934,26 @@ const AdminPage = () => {
               </button>
             </div>
           </div>
+
+          <div className="relative z-0">
+            {activeSection === 'organizations' && <OrganizationsSection />}
+
+            {activeSection === 'companies' && (
+              <CompaniesSection
+                onDetails={(company) => {
+                  navigate(`/admin/company/${company.id}`);
+                }}
+              />
+            )}
+
+            {activeSection === 'packages' && <PackagesSection />}
+
+            {activeSection === 'users' && <UsersSection />}
+          </div>
         </div>
-
-        <div className="relative z-0">
-          {activeSection === 'organizations' && <OrganizationsSection />}
-
-          {activeSection === 'companies' && (
-            <CompaniesSection
-              onDetails={(company) => {
-                navigate(`/admin/company/${company.id}`);
-              }}
-            />
-          )}
-
-          {activeSection === 'packages' && <PackagesSection />}
-
-          {activeSection === 'users' && <UsersSection />}
-        </div>
+        <PageFooter onDeveloperClick={() => setIsCVOpen(true)} />
+        <DeveloperCV isOpen={isCVOpen} onClose={() => setIsCVOpen(false)} />
       </div>
-      <PageFooter />
-    </div>
   );
 };
 

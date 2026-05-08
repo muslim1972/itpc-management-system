@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import SlideMenu from '../components/SlideMenu';
 import PageFooter from '../components/PageFooter';
+import DeveloperCV from '../components/DeveloperCV';
 
 import { ChevronDown, ChevronUp, FileText, Download, Edit, Printer } from 'lucide-react';
 
@@ -202,6 +203,7 @@ const DetailPage = () => {
   const navigate = useNavigate();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCVOpen, setIsCVOpen] = useState(false);
   const [isOrgDataOpen, setIsOrgDataOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -2187,8 +2189,6 @@ const DetailPage = () => {
         </div>
 
       </main>
-      <PageFooter />
-
       {/* Suspend Modal - طبقة مستقلة فوق كل شيء */}
       {suspendModalService && (
         <div className="fixed inset-0 z-[9999] flex items-start justify-center bg-black/50 backdrop-blur-sm overflow-y-auto py-8 px-4">
@@ -2332,6 +2332,8 @@ const DetailPage = () => {
           </div>
         </div>
       )}
+      <PageFooter onDeveloperClick={() => setIsCVOpen(true)} />
+      <DeveloperCV isOpen={isCVOpen} onClose={() => setIsCVOpen(false)} />
     </div>
   );
 };

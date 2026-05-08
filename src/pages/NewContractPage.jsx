@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import SlideMenu from '../components/SlideMenu';
 import PageFooter from '../components/PageFooter';
+import DeveloperCV from '../components/DeveloperCV';
 
 import { supabase } from '../lib/supabase';
 
@@ -143,6 +144,7 @@ const rowTotal = (quantity, unitPrice) => toNumber(quantity) * toNumber(unitPric
 
 const NewContractPage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCVOpen, setIsCVOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -1855,7 +1857,8 @@ const NewContractPage = () => {
         )}
       </div>
     </main>
-      <PageFooter />
+      <PageFooter onDeveloperClick={() => setIsCVOpen(true)} />
+      <DeveloperCV isOpen={isCVOpen} onClose={() => setIsCVOpen(false)} />
     </div>
   );
 };
