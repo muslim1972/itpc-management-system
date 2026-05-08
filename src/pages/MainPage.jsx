@@ -80,9 +80,6 @@ const MainPage = () => {
           <div className="mb-4">
             <button
               onClick={() => {
-                // Since this app is in an iframe, we need to communicate with parent or handle locally
-                // The parent app handles its own "Back" now, but the user asked to keep this button
-                // inside the main interface of the sub-app.
                 if (window.parent !== window) {
                   window.parent.postMessage({ type: 'BACK_TO_DASHBOARD' }, '*');
                 } else {
@@ -94,7 +91,7 @@ const MainPage = () => {
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              <span>رجوع للوحة التحكم</span>
+              <span>الرجوع للقائمة الرئيسية</span>
             </button>
           </div>
 
