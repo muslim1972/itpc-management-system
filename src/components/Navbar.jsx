@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowRightLeft, LogOut } from 'lucide-react';
+import { ArrowRightLeft, ArrowLeft } from 'lucide-react';
 import BrandLogo from './BrandLogo';
 import { isAdmin, logout } from '../utils/auth';
 
@@ -10,12 +10,9 @@ const Navbar = ({ onMenuClick }) => {
   const is_admin = isAdmin();
   const isAdminPath = location.pathname.startsWith('/admin');
 
-  const handleLogout = () => {
-    const ok = window.confirm('هل أنت متأكد من تسجيل الخروج؟');
-    if (ok) {
-      logout();
-      navigate('/');
-    }
+  const handleBackToMain = () => {
+    // Navigate back to the parent application's dashboard
+    window.location.href = '/'; 
   };
 
   return (
@@ -54,11 +51,12 @@ const Navbar = ({ onMenuClick }) => {
             )}
 
             <button
-              onClick={handleLogout}
-              className="ml-0 flex items-center justify-center p-2 rounded-xl text-rose-600 hover:bg-rose-50 transition-all border border-transparent hover:border-rose-100"
-              title="تسجيل الخروج"
+              onClick={handleBackToMain}
+              className="mr-auto flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all border border-slate-200 shadow-sm text-xs font-bold"
+              title="رجوع للوحة التحكم"
             >
-              <LogOut className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
+              <span>رجوع للوحة التحكم</span>
             </button>
           </div>
         </div>

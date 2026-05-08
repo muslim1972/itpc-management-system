@@ -38,7 +38,6 @@ const SlideMenu = ({ isOpen, onClose }) => {
     { label: 'إضافة عقد', hint: 'إنشاء عقد جديد', path: '/add', icon: '➕' },
     { label: 'الإحصاءات', hint: 'تقارير عامة ومزودين ودفعات', path: '/statistics', icon: '📊' },
     { label: 'السجل', hint: 'تتبع العمليات والدفعات', path: '/history', icon: '🕘' },
-    { label: 'تسجيل الخروج', hint: 'إنهاء الجلسة الحالية', path: '/', icon: '↩️', danger: true },
   ];
 
   return (
