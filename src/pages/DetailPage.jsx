@@ -236,7 +236,6 @@ const DetailPage = () => {
       setLoading(true);
       setError('');
 
-      console.log('Fetching organization data for ID:', id);
       const { data: orgData, error: orgError } = await supabase
         .from('organizations')
         .select(`
