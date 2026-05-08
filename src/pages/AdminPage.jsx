@@ -1875,7 +1875,7 @@ const AdminPage = () => {
             <div className="absolute bottom-0 right-0 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
           </div>
 
-          <div className="relative z-20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="relative z-20 flex flex-col sm:flex-row sm:items-center justify-between gap-4 min-h-[80px]">
             <div className="pointer-events-none">
               <h1 className="hero-title">لوحة تحكم الإدارة</h1>
               <p className="hero-subtitle">
@@ -1891,12 +1891,12 @@ const AdminPage = () => {
                   window.location.href = '/';
                 }
               }}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all border border-white/10 shadow-sm text-xs font-bold w-fit sm:order-last order-first"
+              className="absolute left-4 top-4 sm:relative sm:top-auto sm:left-auto flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all border border-white/10 shadow-sm text-xs font-bold"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              <span>الرجوع للقائمة الرئيسية</span>
+              <span>القائمة الرئيسية</span>
             </button>
           </div>
 
