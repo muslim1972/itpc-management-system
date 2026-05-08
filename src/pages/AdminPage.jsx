@@ -1866,19 +1866,27 @@ const AdminPage = () => {
 
   return (
     <div className="app-shell" dir="rtl">
-      <Navbar onMenuClick={() => setMenuOpen(true)} />
-
-      <SlideMenu
-        isOpen={menuOpen}
-        onClose={() => setMenuOpen(false)}
-        onNavigate={(path) => {
-          setMenuOpen(false);
-          navigate(path);
-        }}
-      />
-
       <div className="page-container">
         <div className="page-hero mb-8 relative overflow-hidden min-h-[110px] sm:min-h-[160px] flex flex-col justify-center">
+          {/* Back Button */}
+          <div className="absolute top-4 right-4 z-20">
+            <button
+              onClick={() => {
+                if (window.parent !== window) {
+                  window.parent.postMessage({ type: 'navigate_back' }, '*');
+                } else {
+                  window.location.href = '/';
+                }
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all border border-white/10 shadow-sm text-xs font-bold"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              <span>رجوع للوحة التحكم</span>
+            </button>
+          </div>
+
           <div className="absolute inset-0 pointer-events-none opacity-20">
             <div className="absolute -top-10 -left-10 h-40 w-40 rounded-full bg-white/20 blur-3xl" />
             <div className="absolute bottom-0 right-0 h-40 w-40 rounded-full bg-white/10 blur-3xl" />

@@ -72,11 +72,30 @@ const MainPage = () => {
 
   return (
     <div className="app-shell">
-      <Navbar onMenuClick={() => setIsMenuOpen(true)} />
-      <SlideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
-
       <main className="page-container space-y-6">
         <section className="page-hero page-reveal">
+          {/* Back Button */}
+          <div className="mb-4">
+            <button
+              onClick={() => {
+                // Since this app is in an iframe, we need to communicate with parent or handle locally
+                // The parent app handles its own "Back" now, but the user asked to keep this button
+                // inside the main interface of the sub-app.
+                if (window.parent !== window) {
+                  window.parent.postMessage({ type: 'navigate_back' }, '*');
+                } else {
+                  window.location.href = '/';
+                }
+              }}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all border border-white/10 shadow-sm text-xs font-bold"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              <span>رجوع للوحة التحكم</span>
+            </button>
+          </div>
+
           <div className="relative z-10 flex flex-col gap-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <h1 className="text-xl sm:text-2xl font-bold text-white">الجهات واشتراكاتها</h1>

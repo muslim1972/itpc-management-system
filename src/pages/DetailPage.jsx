@@ -1939,8 +1939,6 @@ const DetailPage = () => {
   if (error) {
     return (
       <div className="app-shell min-h-screen bg-slate-50">
-        <Navbar onMenuClick={() => setIsMenuOpen(true)} />
-        <SlideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
         <main className="mx-auto max-w-7xl px-4 py-10">
           <div className="rounded-3xl border border-red-200 bg-red-50 p-10 text-center text-red-600 shadow-sm">
             <h2 className="text-xl font-bold mb-2">حدث خطأ</h2>
@@ -1954,11 +1952,19 @@ const DetailPage = () => {
 
   return (
     <div dir="rtl" className="app-shell min-h-screen bg-slate-50 text-right">
-
-      <Navbar onMenuClick={() => setIsMenuOpen(true)} />
-      <SlideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
-
       <main className="page-container space-y-6">
+        {/* Compact Back Button */}
+        <div className="mb-2">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-600 transition-all border border-slate-200 shadow-sm text-xs font-bold"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span>رجوع للخلف</span>
+          </button>
+        </div>
 
         <div className="space-y-6">
           <section className="rounded-[28px] bg-emerald-600 px-6 py-5 shadow-lg text-white">
