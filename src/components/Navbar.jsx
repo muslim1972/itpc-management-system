@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowRightLeft, ArrowLeft } from 'lucide-react';
 import BrandLogo from './BrandLogo';
-import { isAdmin, logout } from '../utils/auth';
+import { isAdmin } from '../utils/auth';
 
 const Navbar = ({ onMenuClick }) => {
   const navigate = useNavigate();

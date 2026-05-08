@@ -4,7 +4,7 @@ import Navbar from '../components/Navbar';
 import SlideMenu from '../components/SlideMenu';
 import PageFooter from '../components/PageFooter';
 
-import { ChevronDown, ChevronUp, FileText, Download, Edit, Printer, ArrowRight } from 'lucide-react';
+import { ChevronDown, ChevronUp, FileText, Download, Edit, Printer } from 'lucide-react';
 
 import { supabase } from '../lib/supabase';
 
