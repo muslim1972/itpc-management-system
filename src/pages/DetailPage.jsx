@@ -346,6 +346,8 @@ const DetailPage = () => {
           due_date: dueDate || '',
           notes: service.notes || '',
           is_active: !!service.is_active,
+          official_book_date: new Date().toISOString().split('T')[0],
+          official_book_description: '',
         };
 
         paymentMap[service.id] = {
@@ -569,6 +571,22 @@ const DetailPage = () => {
 
         if (svcError) {
           throw new Error(svcError.message || `فشل تحديث الخدمة ${serviceId}`);
+        }
+
+        // Check if price changed or other major change and log official book
+        const originalService = organization.services.find(s => s.id === serviceId);
+        const oldPrice = Number(originalService?.active_contract_period?.base_amount ?? originalService?.annual_amount ?? 0);
+        const newPrice = Number(service.annual_amount || 0);
+
+        if (oldPrice !== newPrice) {
+          await supabase.from('official_book_records').insert({
+            organization_id: organization.id,
+            service_id: serviceId,
+            operation_type: 'تغيير سعر',
+            official_book_date: service.official_book_date,
+            official_book_description: String(service.official_book_description || 'تحديث بيانات العقد').trim(),
+            created_by: (await supabase.auth.getUser()).data.user?.id || null
+          });
         }
       }
 
@@ -1055,6 +1073,16 @@ const DetailPage = () => {
         
       if (suspError) throw new Error(suspError.message || 'فشل إنشاء سجل الإيقاف');
 
+      // Log official book record
+      await supabase.from('official_book_records').insert({
+        organization_id: organization?.id || null,
+        service_id: service.id,
+        operation_type: 'إيقاف خدمة',
+        official_book_date: form.official_book_date,
+        official_book_description: String(form.official_book_description || '').trim(),
+        created_by: currentUserId
+      });
+
       // 3. إغلاق فترة العقد النشطة في حالة الإيقاف الفوري
       if (form.is_immediate && service.active_contract_period) {
         const droppedDue = Number(service.active_contract_period.due_amount || 0);
@@ -1127,6 +1155,16 @@ const DetailPage = () => {
       if (payError) {
         throw new Error(payError.message || 'فشل تسجيل الدفعة');
       }
+
+      // Log official book record
+      await supabase.from('official_book_records').insert({
+        organization_id: organization?.id || null,
+        service_id: serviceId,
+        operation_type: 'تسديد دفعة',
+        official_book_date: form.official_book_date,
+        official_book_description: String(form.official_book_description || '').trim(),
+        created_by: currentUserId
+      });
 
       // Update paid amount and due amount on the active period just in case there are no backend triggers
       if (activePeriod) {
@@ -1480,6 +1518,38 @@ const DetailPage = () => {
                   className={editMode ? shellInput : shellReadOnly}
                 />
               </Field>
+
+              {editMode && (
+                <>
+                  <Field label="تاريخ الكتاب الرسمي (للتعديل)">
+                    <input
+                      type="date"
+                      value={edit.official_book_date || ''}
+                      onChange={(e) =>
+                        setServiceEdits((prev) => ({
+                          ...prev,
+                          [service.id]: { ...prev[service.id], official_book_date: e.target.value },
+                        }))
+                      }
+                      className={shellInput}
+                    />
+                  </Field>
+
+                  <Field label="وصف الكتاب الرسمي (للتعديل)">
+                    <input
+                      type="text"
+                      value={edit.official_book_description || ''}
+                      onChange={(e) =>
+                        setServiceEdits((prev) => ({
+                          ...prev,
+                          [service.id]: { ...prev[service.id], official_book_description: e.target.value },
+                        }))
+                      }
+                      className={shellInput}
+                    />
+                  </Field>
+                </>
+              )}
 
               <Field label="وحدة مدة العقد">
                 <select

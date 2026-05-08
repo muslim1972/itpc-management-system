@@ -678,6 +678,16 @@ const NewContractPage = () => {
           wirelessAmount
         );
 
+        // Log official book record for new contract
+        await supabase.from('official_book_records').insert({
+          organization_id: organizationId,
+          service_id: wirelessService.id,
+          operation_type: 'عقد جديد',
+          official_book_date: officialBookDate,
+          official_book_description: officialBookDescription,
+          created_by: (await supabase.auth.getUser()).data.user?.id || null
+        });
+
         if (wirelessLine) {
           for (const row of wirelessLineRows) {
             const companyId = row.provider_company_id;
@@ -735,6 +745,16 @@ const NewContractPage = () => {
           calculateContractTotal(ftthTotal, contractDurationUnit, contractDurationValue)
         );
 
+        // Log official book record
+        await supabase.from('official_book_records').insert({
+          organization_id: organizationId,
+          service_id: ftthService.id,
+          operation_type: 'عقد جديد',
+          official_book_date: officialBookDate,
+          official_book_description: officialBookDescription,
+          created_by: (await supabase.auth.getUser()).data.user?.id || null
+        });
+
         for (const row of ftthLineRows) {
           const companyId = row.provider_company_id;
           const sub = (subscriptionCache[companyId] || []).find(
@@ -760,6 +780,16 @@ const NewContractPage = () => {
           calculateContractTotal(opticalTotal, contractDurationUnit, contractDurationValue)
         );
 
+        // Log official book record
+        await supabase.from('official_book_records').insert({
+          organization_id: organizationId,
+          service_id: opticalService.id,
+          operation_type: 'عقد جديد',
+          official_book_date: officialBookDate,
+          official_book_description: officialBookDescription,
+          created_by: (await supabase.auth.getUser()).data.user?.id || null
+        });
+
         for (const row of opticalLineRows) {
           const companyId = row.provider_company_id;
           const sub = (subscriptionCache[companyId] || []).find(
@@ -784,6 +814,16 @@ const NewContractPage = () => {
           'Other',
           calculateContractTotal(otherTotal, contractDurationUnit, contractDurationValue)
         );
+
+        // Log official book record
+        await supabase.from('official_book_records').insert({
+          organization_id: organizationId,
+          service_id: otherService.id,
+          operation_type: 'عقد جديد',
+          official_book_date: officialBookDate,
+          official_book_description: officialBookDescription,
+          created_by: (await supabase.auth.getUser()).data.user?.id || null
+        });
 
         for (const row of otherRows) {
           await createServiceItem(otherService.id, {
