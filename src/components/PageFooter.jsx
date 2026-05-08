@@ -1,8 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Code2 } from 'lucide-react';
 import TipsMarquee from './TipsMarquee';
+import DeveloperCV from './DeveloperCV';
 
 const PageFooter = ({ onDeveloperClick }) => {
+  const [isCVOpen, setIsCVOpen] = useState(false);
+
+  const handleLogoClick = () => {
+    setIsCVOpen(true);
+    if (onDeveloperClick) onDeveloperClick();
+  };
+
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-xl shadow-[0_-4px_20px_rgba(0,0,0,0.4)] flex flex-col">
       {/* Line 1: News Ticker */}
@@ -32,15 +40,15 @@ const PageFooter = ({ onDeveloperClick }) => {
 
           {/* Line 3: Credits & Version */}
           <div className="grid grid-cols-[1fr_auto_1fr] items-center text-[clamp(9px,2.2vw,11px)] md:text-xs text-white/50 font-mono relative pt-0.5 gap-1">
-            {/* Left: Credits */}
+            {/* Right: Credits */}
             <div className="flex items-center gap-1">
               <Code2 className="w-3 h-3 shrink-0" />
-              <span className="whitespace-nowrap">اعداد: علي علاء</span>
+              <span className="whitespace-nowrap">اعداد م. مسلم عقيل</span>
             </div>
 
             {/* Center: Signature Image */}
             <div
-              onClick={onDeveloperClick}
+              onClick={handleLogoClick}
               className="flex items-center justify-center w-14 h-14 md:w-20 md:h-20 cursor-pointer group active:scale-95 transition-all z-[60] -mt-6 -mb-2"
             >
               {/* Halo Effect */}
@@ -55,9 +63,9 @@ const PageFooter = ({ onDeveloperClick }) => {
               />
             </div>
 
-            {/* Right: Credits 2 */}
+            {/* Left: Version */}
             <div className="tracking-widest opacity-70 text-left flex justify-end overflow-hidden">
-              <span className="truncate">اعداد: كرار حيدر</span>
+              <span className="truncate">V-v{__APP_VERSION__}</span>
             </div>
           </div>
         </div>
@@ -76,6 +84,8 @@ const PageFooter = ({ onDeveloperClick }) => {
           animation: ripple 3s ease-in-out infinite;
         }
       `}</style>
+
+      <DeveloperCV isOpen={isCVOpen} onClose={() => setIsCVOpen(false)} />
     </footer>
   );
 };
