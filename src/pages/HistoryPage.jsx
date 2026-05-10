@@ -715,24 +715,26 @@ const HistoryPage = () => {
               />
             </div>
 
-            <div className="xl:col-span-3">
-              <label className="block text-sm font-medium text-slate-700 mb-2">من تاريخ</label>
-              <input
-                type="date"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-                className="input-modern"
-              />
-            </div>
+            <div className="grid grid-cols-2 gap-4 xl:col-span-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">من تاريخ</label>
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className="input-modern"
+                />
+              </div>
 
-            <div className="xl:col-span-3">
-              <label className="block text-sm font-medium text-slate-700 mb-2">إلى تاريخ</label>
-              <input
-                type="date"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-                className="input-modern"
-              />
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">إلى تاريخ</label>
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  className="input-modern"
+                />
+              </div>
             </div>
 
             <div className="xl:col-span-2">
