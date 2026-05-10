@@ -676,47 +676,47 @@ const HistoryPage = () => {
               className="xl:col-span-2"
             />
 
-            <FilterSelect
-              label="الخدمة"
-              value={serviceFilter}
-              onChange={setServiceFilter}
-              options={serviceOptions}
-              className="xl:col-span-2"
-            />
+            <div className="grid grid-cols-2 gap-4 xl:col-span-4">
+              <FilterSelect
+                label="الخدمة"
+                value={serviceFilter}
+                onChange={setServiceFilter}
+                options={serviceOptions}
+              />
 
-            <FilterSelect
-              label="المستخدم"
-              value={userFilter}
-              onChange={setUserFilter}
-              options={userOptions}
-              className="xl:col-span-2"
-            />
+              <FilterSelect
+                label="المستخدم"
+                value={userFilter}
+                onChange={setUserFilter}
+                options={userOptions}
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-4">
-            <FilterSelect
-              label="الترتيب"
-              value={sortOrder}
-              onChange={setSortOrder}
-              options={[
-                { value: 'desc', label: 'الأحدث أولاً' },
-                { value: 'asc', label: 'الأقدم أولاً' },
-              ]}
-              className="xl:col-span-2"
-            />
+            <div className="grid grid-cols-2 gap-4 xl:col-span-4">
+              <FilterSelect
+                label="الترتيب"
+                value={sortOrder}
+                onChange={setSortOrder}
+                options={[
+                  { value: 'desc', label: 'الأحدث أولاً' },
+                  { value: 'asc', label: 'الأقدم أولاً' },
+                ]}
+              />
 
-            <FilterSelect
-              label="عدد السجلات المحمّلة"
-              value={String(limit)}
-              onChange={(value) => setLimit(Number(value))}
-              options={[
-                { value: '50', label: '50' },
-                { value: '100', label: '100' },
-                { value: '200', label: '200' },
-                { value: '500', label: '500' },
-              ]}
-              className="xl:col-span-2"
-            />
+              <FilterSelect
+                label="عدد السجلات المحمّلة"
+                value={String(limit)}
+                onChange={(value) => setLimit(Number(value))}
+                options={[
+                  { value: '50', label: '50' },
+                  { value: '100', label: '100' },
+                  { value: '200', label: '200' },
+                  { value: '500', label: '500' },
+                ]}
+              />
+            </div>
 
             <div className="xl:col-span-3">
               <label className="block text-sm font-medium text-slate-700 mb-2">من تاريخ</label>
