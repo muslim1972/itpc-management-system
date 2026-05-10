@@ -73,7 +73,9 @@ const MainPage = () => {
   }), [organizations]);
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" dir="rtl">
+      <Navbar onMenuClick={() => setIsMenuOpen(true)} />
+      <SlideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
       <main className="page-container space-y-6">
         <section className="page-hero page-reveal">
           {/* Back Button */}

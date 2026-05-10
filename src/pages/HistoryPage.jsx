@@ -550,17 +550,14 @@ const HistoryPage = () => {
   };
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" dir="rtl">
       <Navbar onMenuClick={() => setIsMenuOpen(true)} />
       <SlideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
       <main className="page-container space-y-6">
         <section className="page-hero">
           <div className="relative z-10 flex flex-col xl:flex-row xl:items-start xl:justify-between gap-5 mb-6">
-            <div className="max-w-3xl">
-              <div className="brand-chip mb-4">
-                سجل موحد لكل العمليات
-              </div>
+            <div className="max-w-3xl text-right">
               <h1 className="hero-title">السجل والتتبع</h1>
               <p className="hero-subtitle">
                 صفحة متابعة أوضح وأسهل. تعرض الدفعات، التعديلات، الكتب الرسمية، إنشاء العقود، وعمليات إيقاف الخدمة مع فلاتر أدق وملخصات أسرع.
@@ -584,7 +581,7 @@ const HistoryPage = () => {
             </div>
           </div>
 
-          <div className="relative grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8 gap-3">
+          <div className="relative grid grid-cols-2 gap-4">
             <StatCard title="إجمالي السجلات" value={stats.total} tone="blue" />
             <StatCard title="عدد الدفعات" value={stats.payments} tone="purple" />
             <StatCard title="إجمالي الدفعات" value={formatMoney(stats.paymentTotal)} tone="green" />

@@ -101,7 +101,7 @@ const SSOCatcher = () => {
             const finalUser = await syncAndGetUser(authData.user);
             if (!finalUser) {
               localStorage.clear();
-              window.location.href = 'https://inf-tele-karbala.vercel.app/';
+              window.location.href = 'https://itpc-hr.vercel.app/';
               return;
             }
 
@@ -124,15 +124,15 @@ const SSOCatcher = () => {
               localStorage.setItem('user', JSON.stringify(finalUser));
               navigate(finalUser.role === 'admin' ? '/admin' : '/main', { replace: true });
             } else {
-              window.location.href = 'https://inf-tele-karbala.vercel.app/';
+              window.location.href = 'https://itpc-hr.vercel.app/';
             }
           }
         } else {
-          window.location.href = 'https://inf-tele-karbala.vercel.app/';
+          window.location.href = 'https://itpc-hr.vercel.app/';
         }
       } catch (err) {
         console.error('SSO Error:', err);
-        window.location.href = 'https://inf-tele-karbala.vercel.app/';
+        window.location.href = 'https://itpc-hr.vercel.app/';
       } finally {
         setLoading(false);
       }
@@ -166,7 +166,7 @@ const getStoredUser = () => {
 const RequireAuth = ({ children }) => {
   const user = getStoredUser();
   if (!user) {
-    window.location.href = 'https://inf-tele-karbala.vercel.app/';
+    window.location.href = 'https://itpc-hr.vercel.app/';
     return null;
   }
   return children;
@@ -175,7 +175,7 @@ const RequireAuth = ({ children }) => {
 const RequireAdmin = ({ children }) => {
   const user = getStoredUser();
   if (!user) {
-    window.location.href = 'https://inf-tele-karbala.vercel.app/';
+    window.location.href = 'https://itpc-hr.vercel.app/';
     return null;
   }
   if (user.role !== 'admin') return <Navigate to="/main" replace />;
@@ -185,7 +185,7 @@ const RequireAdmin = ({ children }) => {
 const RequireUser = ({ children }) => {
   const user = getStoredUser();
   if (!user) {
-    window.location.href = 'https://inf-tele-karbala.vercel.app/';
+    window.location.href = 'https://itpc-hr.vercel.app/';
     return null;
   }
   if (user.role !== 'user') return <Navigate to="/admin" replace />;

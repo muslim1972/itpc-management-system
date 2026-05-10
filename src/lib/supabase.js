@@ -23,7 +23,7 @@ export const handleSupabaseResponse = (result) => {
     console.error('Session expired or invalid');
     localStorage.clear();
     // توجيه المستخدم للعودة إلى التطبيق العام للتسجيل مجدداً
-    window.location.href = 'https://inf-tele-karbala.vercel.app/'; 
+    window.location.href = 'https://itpc-hr.vercel.app/'; 
     return true;
   }
   return false;

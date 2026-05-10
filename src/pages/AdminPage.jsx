@@ -1868,6 +1868,8 @@ const AdminPage = () => {
 
   return (
     <div className="app-shell" dir="rtl">
+      <Navbar onMenuClick={() => setMenuOpen(true)} />
+      <SlideMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
       <div className="page-container">
         <div className="page-hero mb-8 relative overflow-hidden min-h-[110px] sm:min-h-[160px] flex flex-col justify-center px-4 sm:px-6">
           <div className="absolute inset-0 pointer-events-none opacity-20">
