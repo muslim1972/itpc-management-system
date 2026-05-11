@@ -46,6 +46,7 @@ const HistoryPage = () => {
   const [onlyWithOrganization, setOnlyWithOrganization] = useState(false);
   const [quickRange, setQuickRange] = useState('all');
   const [viewMode, setViewMode] = useState('detailed');
+  const [expandedOrg, setExpandedOrg] = useState(null);
   const [expandedIds, setExpandedIds] = useState({});
 
   const fetchTimeline = async () => {
@@ -378,6 +379,23 @@ const HistoryPage = () => {
     onlyWithOrganization,
     quickRange,
   ]);
+
+  const organizedTimeline = useMemo(() => {
+    const groups = new Map();
+    filteredTimeline.forEach((item) => {
+      const orgName = item.organization_name || 'سجلات عامة';
+      if (!groups.has(orgName)) {
+        groups.set(orgName, { name: orgName, items: [], id: item.organization_id });
+      }
+      groups.get(orgName).items.push(item);
+    });
+
+    return Array.from(groups.values()).sort((a, b) => {
+      if (a.name === 'سجلات عامة') return 1;
+      if (b.name === 'سجلات عامة') return -1;
+      return a.name.localeCompare(b.name, 'ar');
+    });
+  }, [filteredTimeline]);
 
   const groupedTimeline = useMemo(() => {
     const groups = [];
@@ -798,75 +816,112 @@ const HistoryPage = () => {
           ) : filteredTimeline.length === 0 ? (
             <div className="px-6 sm:px-8 py-16 text-center text-slate-500">لا توجد نتائج مطابقة للفلاتر الحالية.</div>
           ) : (
-            <div className="p-4 sm:p-6 space-y-6">
-              {groupedTimeline.map((group) => (
-                <div key={group.dateKey} className="space-y-3">
-                  <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-slate-100/90 backdrop-blur border border-slate-200">
-                    <div className="text-sm sm:text-base font-bold text-slate-900">{group.dateKey}</div>
-                    <div className="text-xs sm:text-sm text-slate-500">عدد السجلات: {group.items.length}</div>
-                  </div>
+            <div className="p-4 sm:p-6 space-y-4">
+              {organizedTimeline.map((group) => {
+                const isOrgExpanded = expandedOrg === group.name;
+                
+                return (
+                  <div key={group.name} className="space-y-3">
+                    {/* Accordion Header */}
+                    <div 
+                      onClick={() => setExpandedOrg(isOrgExpanded ? null : group.name)}
+                      className={`cursor-pointer flex items-center justify-between gap-3 px-5 py-4 rounded-[22px] border transition-all duration-300 ${
+                        isOrgExpanded 
+                        ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200' 
+                        : 'bg-white border-slate-200 text-slate-900 hover:border-blue-300 hover:shadow-md'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`flex items-center justify-center w-10 h-10 rounded-xl shrink-0 ${
+                          isOrgExpanded ? 'bg-white/20' : 'bg-blue-50 text-blue-600'
+                        }`}>
+                          {group.id ? '🏢' : '📋'}
+                        </div>
+                        <div className="font-bold text-base sm:text-lg truncate">{group.name}</div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className={`hidden sm:inline-block px-3 py-1 rounded-full text-xs font-medium border ${
+                          isOrgExpanded 
+                          ? 'bg-white/20 border-white/30 text-white' 
+                          : 'bg-slate-100 border-slate-200 text-slate-600'
+                        }`}>
+                          عدد السجلات: {group.items.length}
+                        </span>
+                        <span className={`text-[10px] sm:hidden px-2 py-0.5 rounded-full border ${
+                          isOrgExpanded ? 'bg-white/20 border-white/30' : 'bg-slate-100 border-slate-200'
+                        }`}>
+                          {group.items.length}
+                        </span>
+                        <span className={`text-xs transition-transform duration-300 ${isOrgExpanded ? 'rotate-180' : ''}`}>
+                          ▼
+                        </span>
+                      </div>
+                    </div>
 
-                  <div className="space-y-3">
-                    {group.items.map((item) => {
-                      const expanded = isExpanded(item);
-                      const tone = getKindTone(item);
-                      const summary = getSummaryLine(item);
+                    {/* Accordion Content */}
+                    {isOrgExpanded && (
+                      <div className="space-y-3 pr-4 sm:pr-6 border-r-2 border-blue-100/50 mr-4 sm:mr-6 py-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                        {group.items.map((item) => {
+                          const expanded = isExpanded(item);
+                          const tone = getKindTone(item);
+                          const summary = getSummaryLine(item);
 
-                      return (
-                        <article
-                          key={`${item.kind}-${item.id}-${item.created_at}`}
-                          className="rounded-3xl border border-slate-200 bg-white overflow-hidden hover:shadow-md transition"
-                        >
-                          <div className="p-4 sm:p-5">
-                            <div className="flex flex-col gap-4">
-                              <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-3">
-                                <div className="space-y-3 min-w-0">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${getBadgeClass(item)}`}>
-                                      {getActionLabel(item)}
-                                    </span>
+                          return (
+                            <article
+                              key={`${item.kind}-${item.id}-${item.created_at}`}
+                              className="rounded-3xl border border-slate-200 bg-white overflow-hidden hover:shadow-sm transition"
+                            >
+                              <div className="p-4 sm:p-5">
+                                <div className="flex flex-col gap-4">
+                                  <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-3">
+                                    <div className="space-y-3 min-w-0">
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${getBadgeClass(item)}`}>
+                                          {getActionLabel(item)}
+                                        </span>
 
-                                    <span className="px-3 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                                      {getEntityLabel(item.entity_type, item.kind)}
-                                    </span>
+                                        <span className="px-3 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                                          {getEntityLabel(item.entity_type, item.kind)}
+                                        </span>
 
-                                    {item.organization_name ? (
-                                      <span className="px-3 py-1 text-xs font-medium rounded-full bg-white text-slate-700 border border-slate-200">
-                                        {item.organization_name}
-                                      </span>
-                                    ) : null}
+                                        {item.service_type ? (
+                                          <span className="px-3 py-1 text-xs font-medium rounded-full bg-white text-slate-700 border border-slate-200">
+                                            {item.service_type}
+                                          </span>
+                                        ) : null}
+                                        
+                                        <span className="text-[10px] text-slate-400 font-medium">
+                                          {formatDateOnly(item.created_at)}
+                                        </span>
+                                      </div>
 
-                                    {item.service_type ? (
-                                      <span className="px-3 py-1 text-xs font-medium rounded-full bg-white text-slate-700 border border-slate-200">
-                                        {item.service_type}
-                                      </span>
-                                    ) : null}
+                                      <div className="text-sm sm:text-base text-slate-800 leading-7 break-words">{summary}</div>
+                                    </div>
+
+                                    <div className="flex flex-col sm:flex-row xl:flex-col items-start sm:items-center xl:items-end gap-2 shrink-0">
+                                      <div className="text-sm text-slate-500">{formatDateTime(item.created_at)}</div>
+                                      <button
+                                        type="button"
+                                        onClick={() => toggleExpanded(item)}
+                                        className={`px-4 py-2 text-sm font-medium rounded-xl border transition ${toneButtonClass(tone, expanded)}`}
+                                      >
+                                        {viewMode === 'compact' && !expanded ? 'عرض التفاصيل' : expanded ? 'إخفاء التفاصيل' : 'التفاصيل'}
+                                      </button>
+                                    </div>
                                   </div>
 
-                                  <div className="text-sm sm:text-base text-slate-800 leading-7 break-words">{summary}</div>
-                                </div>
-
-                                <div className="flex flex-col sm:flex-row xl:flex-col items-start sm:items-center xl:items-end gap-2 shrink-0">
-                                  <div className="text-sm text-slate-500">{formatDateTime(item.created_at)}</div>
-                                  <button
-                                    type="button"
-                                    onClick={() => toggleExpanded(item)}
-                                    className={`px-4 py-2 text-sm font-medium rounded-xl border transition ${toneButtonClass(tone, expanded)}`}
-                                  >
-                                    {viewMode === 'compact' && !expanded ? 'عرض التفاصيل' : expanded ? 'إخفاء التفاصيل' : 'التفاصيل'}
-                                  </button>
+                                  {(viewMode === 'detailed' || expanded) && renderRecordBody(item)}
                                 </div>
                               </div>
-
-                              {(viewMode === 'detailed' || expanded) && renderRecordBody(item)}
-                            </div>
-                          </div>
-                        </article>
-                      );
-                    })}
+                            </article>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>
