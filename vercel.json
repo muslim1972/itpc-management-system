@@ -1,11 +1,22 @@
 {
   "version": 2,
-  "builds": [
-    { "src": "api/index.py", "use": "@vercel/python" },
-    { "src": "package.json", "use": "@vercel/static-build", "config": { "distDir": "dist" } }
+  "cleanUrls": true,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.onesignal.com https://onesignal.com https://api.onesignal.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.onesignal.com; frame-ancestors 'self' https://itpc-hr.vercel.app;" }
+      ]
+    }
   ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "api/index.py" },
+    { "source": "/(.*)\\.map", "destination": "/404" },
+    { "source": "/(admin|dashboard|staff|config|settings|api/v1)", "destination": "/404" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

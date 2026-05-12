@@ -32,6 +32,25 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    // ===== تحصين أمني: تعطيل Source Maps نهائياً في الإنتاج =====
+    sourcemap: false,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn', 'console.error'],
+        passes: 3,
+      },
+      mangle: {
+        toplevel: true,
+      },
+      format: {
+        comments: false,
+      }
+    }
+  },
   server: {
     proxy: {
       '/api': {
