@@ -2,6 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { supabase, publicSupabase } from './lib/supabase';
 
+// دالة ذكية للتوجيه: إذا كنا داخل iframe نرسل رسالة للتطبيق الأب بدل تحويل الصفحة
+const safeRedirectToParent = () => {
+  if (window.parent !== window) {
+    // داخل iframe — أرسل رسالة للتطبيق الأب
+    window.parent.postMessage({ type: 'BACK_TO_DASHBOARD' }, '*');
+  } else {
+    // تشغيل مستقل — حول الصفحة مباشرة
+    window.location.href = 'https://itpc-hr.vercel.app/';
+  }
+};
+
 import MainPage from './pages/MainPage';
 import AdminPage from './pages/AdminPage';
 import CompanyDetailsPage from './pages/CompanyDetailsPage';
@@ -101,7 +112,7 @@ const SSOCatcher = () => {
             const finalUser = await syncAndGetUser(authData.user);
             if (!finalUser) {
               localStorage.clear();
-              window.location.href = 'https://itpc-hr.vercel.app/';
+              safeRedirectToParent();
               return;
             }
 
@@ -124,15 +135,15 @@ const SSOCatcher = () => {
               localStorage.setItem('user', JSON.stringify(finalUser));
               navigate(finalUser.role === 'admin' ? '/admin' : '/main', { replace: true });
             } else {
-              window.location.href = 'https://itpc-hr.vercel.app/';
+              safeRedirectToParent();
             }
           }
         } else {
-          window.location.href = 'https://itpc-hr.vercel.app/';
+          safeRedirectToParent();
         }
       } catch (err) {
         console.error('SSO Error:', err);
-        window.location.href = 'https://itpc-hr.vercel.app/';
+        safeRedirectToParent();
       } finally {
         setLoading(false);
       }
@@ -166,7 +177,7 @@ const getStoredUser = () => {
 const RequireAuth = ({ children }) => {
   const user = getStoredUser();
   if (!user) {
-    window.location.href = 'https://itpc-hr.vercel.app/';
+    safeRedirectToParent();
     return null;
   }
   return children;
@@ -175,7 +186,7 @@ const RequireAuth = ({ children }) => {
 const RequireAdmin = ({ children }) => {
   const user = getStoredUser();
   if (!user) {
-    window.location.href = 'https://itpc-hr.vercel.app/';
+    safeRedirectToParent();
     return null;
   }
   if (user.role !== 'admin') return <Navigate to="/main" replace />;
@@ -185,7 +196,7 @@ const RequireAdmin = ({ children }) => {
 const RequireUser = ({ children }) => {
   const user = getStoredUser();
   if (!user) {
-    window.location.href = 'https://itpc-hr.vercel.app/';
+    safeRedirectToParent();
     return null;
   }
   if (user.role !== 'user') return <Navigate to="/admin" replace />;

@@ -23,7 +23,11 @@ export const handleSupabaseResponse = (result) => {
     console.error('Session expired or invalid');
     localStorage.clear();
     // توجيه المستخدم للعودة إلى التطبيق العام للتسجيل مجدداً
-    window.location.href = 'https://itpc-hr.vercel.app/'; 
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: 'BACK_TO_DASHBOARD' }, '*');
+    } else {
+      window.location.href = 'https://itpc-hr.vercel.app/';
+    }
     return true;
   }
   return false;
