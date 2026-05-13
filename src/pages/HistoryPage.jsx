@@ -518,25 +518,32 @@ const HistoryPage = () => {
   const renderRecordBody = (item) => {
     const commonTop = (
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-        {item.kind !== 'activity' ? (
-          <InfoBox label="الجهة" value={item.organization_name || '-'} />
-        ) : (
-          <InfoBox label="نوع العملية" value={getActionLabel(item)} />
-        )}
-        <InfoBox label="نوع السجل" value={getEntityLabel(item.entity_type, item.kind)} />
-        <InfoBox label="نوع الخدمة" value={item.service_type || '-'} />
-        <InfoBox label="المستخدم" value={item.username || '-'} />
-        <InfoBox label="رقم السجل" value={item.entity_id ?? item.service_id ?? '-'} />
-        <InfoBox label="رقم العملية" value={item.id ?? '-'} />
-        <InfoBox label="وقت التسجيل" value={formatDateTime(item.created_at)} />
+        <DoubleInfoBox 
+          label1={item.kind !== 'activity' ? "الجهة" : "نوع العملية"} 
+          value1={item.kind !== 'activity' ? (item.organization_name || '-') : getActionLabel(item)} 
+          label2="نوع السجل" 
+          value2={getEntityLabel(item.entity_type, item.kind)} 
+        />
+        <DoubleInfoBox 
+          label1="نوع الخدمة" 
+          value1={item.service_type || '-'} 
+          label2="المستخدم" 
+          value2={item.username || '-'} 
+        />
+        <DoubleInfoBox 
+          label1="رقم السجل" 
+          value1={item.entity_id ?? item.service_id ?? '-'} 
+          label2="رقم العملية" 
+          value2={item.id ?? '-'} 
+        />
         {item.kind === 'payment' ? (
-          <InfoBox label="المبلغ" value={formatMoney(item.payment_amount)} highlight tone="purple" />
+          <DoubleInfoBox label1="وقت التسجيل" value1={formatDateTime(item.created_at)} label2="المبلغ" value2={formatMoney(item.payment_amount)} highlight2 tone2="purple" />
         ) : item.kind === 'service_suspension' ? (
-          <InfoBox label="المبلغ الراجع" value={formatMoney(item.refund_amount)} highlight tone="red" />
+          <DoubleInfoBox label1="وقت التسجيل" value1={formatDateTime(item.created_at)} label2="المبلغ الراجع" value2={formatMoney(item.refund_amount)} highlight2 tone2="red" />
         ) : item.kind === 'official_book' ? (
-          <InfoBox label="تاريخ الكتاب" value={formatDateOnly(item.official_book_date)} highlight tone="cyan" />
+          <DoubleInfoBox label1="وقت التسجيل" value1={formatDateTime(item.created_at)} label2="تاريخ الكتاب" value2={formatDateOnly(item.official_book_date)} highlight2 tone2="cyan" />
         ) : (
-          <InfoBox label="الجهة" value={item.organization_name || '-'} />
+          <DoubleInfoBox label1="وقت التسجيل" value1={formatDateTime(item.created_at)} label2="الجهة" value2={item.organization_name || '-'} />
         )}
       </div>
     );
@@ -962,6 +969,28 @@ const InfoBox = ({ label, value, highlight = false, tone = 'green' }) => {
     <div className={`rounded-2xl border p-3 ${highlight ? tones[tone] || tones.green : 'bg-white border-slate-200'}`}>
       <div className="text-[10px] text-slate-500 mb-1 uppercase tracking-wider">{label}</div>
       <div className={`text-[13px] font-semibold break-words ${highlight ? '' : 'text-slate-900'}`}>{value}</div>
+    </div>
+  );
+};
+
+const DoubleInfoBox = ({ label1, value1, label2, value2, highlight2 = false, tone2 = 'green' }) => {
+  const highlightTones = {
+    green: 'text-green-700 bg-green-50',
+    purple: 'text-purple-700 bg-purple-50',
+    red: 'text-red-700 bg-red-50',
+    cyan: 'text-cyan-700 bg-cyan-50',
+  };
+
+  return (
+    <div className="rounded-2xl border bg-white border-slate-200 p-0 flex divide-x divide-x-reverse divide-slate-100 overflow-hidden">
+      <div className="flex-1 p-3 min-w-0">
+        <div className="text-[10px] text-slate-500 mb-1 uppercase tracking-wider truncate">{label1}</div>
+        <div className="text-[13px] font-semibold break-words text-slate-900">{value1}</div>
+      </div>
+      <div className={`flex-1 p-3 min-w-0 ${highlight2 ? highlightTones[tone2] || highlightTones.green : ''}`}>
+        <div className={`text-[10px] uppercase tracking-wider mb-1 truncate ${highlight2 ? '' : 'text-slate-500'}`}>{label2}</div>
+        <div className={`text-[13px] font-semibold break-words ${highlight2 ? '' : 'text-slate-900'}`}>{value2}</div>
+      </div>
     </div>
   );
 };
