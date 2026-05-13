@@ -879,27 +879,27 @@ const HistoryPage = () => {
                                 onClick={() => toggleService(group.name, service.name)}
                                 className={`cursor-pointer flex items-center justify-between gap-3 px-4 py-3 rounded-[18px] border-2 transition-all duration-300 ${
                                   isSrvExpanded 
-                                  ? 'bg-cyan-50 border-cyan-300 shadow-sm' 
-                                  : 'bg-slate-100 border-slate-200 shadow-sm hover:border-cyan-300 hover:bg-slate-50'
+                                  ? 'bg-gradient-to-r from-violet-600 to-purple-600 border-transparent text-white shadow-md' 
+                                  : 'bg-violet-50 border-violet-200 shadow-sm hover:border-violet-400 hover:bg-violet-100'
                                 }`}
                               >
                                 <div className="flex items-center gap-3">
                                   <div className={`flex items-center justify-center w-8 h-8 rounded-lg shadow-sm border ${
-                                    isSrvExpanded ? 'bg-white border-cyan-200 text-cyan-600' : 'bg-white border-slate-200 text-slate-500'
+                                    isSrvExpanded ? 'bg-white/20 border-white/30 text-white' : 'bg-white border-violet-200 text-violet-600'
                                   }`}>
                                     {service.name === 'سجلات عامة' ? '📌' : '📡'}
                                   </div>
                                   <div className={`font-semibold text-sm sm:text-base ${
-                                    isSrvExpanded ? 'text-cyan-900' : 'text-slate-700'
+                                    isSrvExpanded ? 'text-white' : 'text-violet-900'
                                   }`}>{service.name}</div>
                                 </div>
                                 <div className="flex items-center gap-3">
                                   <span className={`px-2 py-1 rounded-full border text-xs font-medium ${
-                                    isSrvExpanded ? 'bg-white border-cyan-200 text-cyan-700' : 'bg-white border-slate-200 text-slate-500'
+                                    isSrvExpanded ? 'bg-white/20 border-white/30 text-white' : 'bg-white border-violet-200 text-violet-700'
                                   }`}>
                                     {service.items.length} سجل
                                   </span>
-                                  <span className={`text-xs transition-transform duration-300 ${isSrvExpanded ? 'rotate-180 text-cyan-600' : 'text-slate-400'}`}>
+                                  <span className={`text-xs transition-transform duration-300 ${isSrvExpanded ? 'rotate-180 text-white' : 'text-violet-400'}`}>
                                     ▼
                                   </span>
                                 </div>
