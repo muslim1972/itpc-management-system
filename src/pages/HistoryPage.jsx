@@ -877,23 +877,29 @@ const HistoryPage = () => {
                               {/* Service Accordion Header */}
                               <div 
                                 onClick={() => toggleService(group.name, service.name)}
-                                className={`cursor-pointer flex items-center justify-between gap-3 px-4 py-3 rounded-[18px] border transition-all duration-300 ${
+                                className={`cursor-pointer flex items-center justify-between gap-3 px-4 py-3 rounded-[18px] border-2 transition-all duration-300 ${
                                   isSrvExpanded 
-                                  ? 'bg-blue-50 border-blue-200 shadow-sm' 
-                                  : 'bg-white border-slate-200 hover:border-blue-200'
+                                  ? 'bg-cyan-50 border-cyan-300 shadow-sm' 
+                                  : 'bg-slate-50 border-slate-200 hover:border-cyan-300'
                                 }`}
                               >
                                 <div className="flex items-center gap-3">
-                                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-white shadow-sm border border-slate-100 text-blue-600">
+                                  <div className={`flex items-center justify-center w-8 h-8 rounded-lg shadow-sm border ${
+                                    isSrvExpanded ? 'bg-white border-cyan-200 text-cyan-600' : 'bg-white border-slate-200 text-slate-500'
+                                  }`}>
                                     {service.name === 'سجلات عامة' ? '📌' : '📡'}
                                   </div>
-                                  <div className="font-semibold text-sm sm:text-base text-slate-800">{service.name}</div>
+                                  <div className={`font-semibold text-sm sm:text-base ${
+                                    isSrvExpanded ? 'text-cyan-900' : 'text-slate-700'
+                                  }`}>{service.name}</div>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                  <span className="px-2 py-1 rounded-full bg-white border border-slate-200 text-xs text-slate-500 font-medium">
+                                  <span className={`px-2 py-1 rounded-full border text-xs font-medium ${
+                                    isSrvExpanded ? 'bg-white border-cyan-200 text-cyan-700' : 'bg-white border-slate-200 text-slate-500'
+                                  }`}>
                                     {service.items.length} سجل
                                   </span>
-                                  <span className={`text-xs text-slate-400 transition-transform duration-300 ${isSrvExpanded ? 'rotate-180' : ''}`}>
+                                  <span className={`text-xs transition-transform duration-300 ${isSrvExpanded ? 'rotate-180 text-cyan-600' : 'text-slate-400'}`}>
                                     ▼
                                   </span>
                                 </div>
