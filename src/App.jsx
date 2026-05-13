@@ -9,7 +9,7 @@ const safeRedirectToParent = () => {
     window.parent.postMessage({ type: 'BACK_TO_DASHBOARD' }, '*');
   } else {
     // تشغيل مستقل — حول الصفحة مباشرة
-    window.location.href = 'https://itpc-hr.vercel.app/';
+    window.location.href = 'https://khr-itpc.egov.iq/';
   }
 };
 
