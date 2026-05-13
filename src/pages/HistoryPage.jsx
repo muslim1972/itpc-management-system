@@ -907,7 +907,7 @@ const HistoryPage = () => {
                               
                               {/* Service Content */}
                               {isSrvExpanded && (
-                                <div className="space-y-3 pr-4 sm:pr-5 border-r border-slate-200 mr-4 sm:mr-5 py-2 animate-in fade-in duration-300">
+                                <div className="space-y-4 pr-4 sm:pr-6 border-r-2 border-violet-200/50 mr-4 sm:mr-6 py-2 animate-in fade-in duration-300">
                                   
                                   {group.id && (
                                     <div className="flex justify-end mb-2">
@@ -921,52 +921,57 @@ const HistoryPage = () => {
                                     </div>
                                   )}
 
-                                  {service.items.map((item) => {
-                                    const summary = getSummaryLine(item);
+                                  <div className="space-y-5 bg-slate-100/50 p-4 sm:p-5 rounded-[32px] border border-slate-200/60 shadow-inner">
+                                    {service.items.map((item) => {
+                                      const summary = getSummaryLine(item);
 
-                                    return (
-                                      <article
-                                        key={`${item.kind}-${item.id}-${item.created_at}`}
-                                        className="rounded-3xl border border-slate-200 bg-white overflow-hidden hover:shadow-sm transition"
-                                      >
-                                        <div className="p-4 sm:p-5">
-                                          <div className="flex flex-col gap-4">
-                                            <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-3">
-                                              <div className="space-y-3 min-w-0">
-                                                <div className="flex flex-wrap items-center gap-2">
-                                                  <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${getBadgeClass(item)}`}>
-                                                    {getActionLabel(item)}
-                                                  </span>
-
-                                                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                                                    {getEntityLabel(item.entity_type, item.kind)}
-                                                  </span>
-
-                                                  {item.service_type ? (
-                                                    <span className="px-3 py-1 text-xs font-medium rounded-full bg-white text-slate-700 border border-slate-200">
-                                                      {item.service_type}
+                                      return (
+                                        <article
+                                          key={`${item.kind}-${item.id}-${item.created_at}`}
+                                          className="rounded-[26px] border-2 border-slate-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 relative group"
+                                        >
+                                          {/* Visual accent linking to the service color */}
+                                          <div className="absolute top-0 right-0 bottom-0 w-1.5 bg-violet-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                          
+                                          <div className="p-4 sm:p-5">
+                                            <div className="flex flex-col gap-4">
+                                              <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-3">
+                                                <div className="space-y-3 min-w-0">
+                                                  <div className="flex flex-wrap items-center gap-2">
+                                                    <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${getBadgeClass(item)}`}>
+                                                      {getActionLabel(item)}
                                                     </span>
-                                                  ) : null}
-                                                  
-                                                  <span className="text-[10px] text-slate-400 font-medium">
-                                                    {formatDateOnly(item.created_at)}
-                                                  </span>
+
+                                                    <span className="px-3 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                                                      {getEntityLabel(item.entity_type, item.kind)}
+                                                    </span>
+
+                                                    {item.service_type ? (
+                                                      <span className="px-3 py-1 text-xs font-medium rounded-full bg-white text-slate-700 border border-slate-200">
+                                                        {item.service_type}
+                                                      </span>
+                                                    ) : null}
+                                                    
+                                                    <span className="text-[10px] text-slate-400 font-medium">
+                                                      {formatDateOnly(item.created_at)}
+                                                    </span>
+                                                  </div>
+
+                                                  <div className="text-sm sm:text-base text-slate-800 leading-7 break-words">{summary}</div>
                                                 </div>
 
-                                                <div className="text-sm sm:text-base text-slate-800 leading-7 break-words">{summary}</div>
+                                                <div className="flex flex-col sm:flex-row xl:flex-col items-start sm:items-center xl:items-end gap-2 shrink-0">
+                                                  <div className="text-sm text-slate-500">{formatDateTime(item.created_at)}</div>
+                                                </div>
                                               </div>
 
-                                              <div className="flex flex-col sm:flex-row xl:flex-col items-start sm:items-center xl:items-end gap-2 shrink-0">
-                                                <div className="text-sm text-slate-500">{formatDateTime(item.created_at)}</div>
-                                              </div>
+                                              {viewMode === 'detailed' && renderRecordBody(item)}
                                             </div>
-
-                                            {viewMode === 'detailed' && renderRecordBody(item)}
                                           </div>
-                                        </div>
-                                      </article>
-                                    );
-                                  })}
+                                        </article>
+                                      );
+                                    })}
+                                  </div>
                                 </div>
                               )}
                             </div>
