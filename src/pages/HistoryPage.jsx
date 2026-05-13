@@ -880,7 +880,7 @@ const HistoryPage = () => {
                                 className={`cursor-pointer flex items-center justify-between gap-3 px-4 py-3 rounded-[18px] border-2 transition-all duration-300 ${
                                   isSrvExpanded 
                                   ? 'bg-cyan-50 border-cyan-300 shadow-sm' 
-                                  : 'bg-slate-50 border-slate-200 hover:border-cyan-300'
+                                  : 'bg-slate-100 border-slate-200 shadow-sm hover:border-cyan-300 hover:bg-slate-50'
                                 }`}
                               >
                                 <div className="flex items-center gap-3">
