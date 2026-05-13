@@ -27,7 +27,7 @@ export const handleSupabaseResponse = (result) => {
     if (window.parent !== window) {
       window.parent.postMessage({ type: 'BACK_TO_DASHBOARD' }, '*');
     } else {
-      window.location.href = 'https://khr-itpc.egov.iq/';
+      window.location.href = 'https://itpc-hr.vercel.app/';
     }
     return true;
   }
