@@ -47,7 +47,7 @@ const HistoryPage = () => {
   const [quickRange, setQuickRange] = useState('all');
   const [viewMode, setViewMode] = useState('detailed');
   const [expandedOrg, setExpandedOrg] = useState(null);
-  const [expandedIds, setExpandedIds] = useState({});
+  const [expandedServices, setExpandedServices] = useState({});
 
   const fetchTimeline = async () => {
     try {
@@ -385,12 +385,29 @@ const HistoryPage = () => {
     filteredTimeline.forEach((item) => {
       const orgName = item.organization_name || 'سجلات عامة';
       if (!groups.has(orgName)) {
-        groups.set(orgName, { name: orgName, items: [], id: item.organization_id });
+        groups.set(orgName, { name: orgName, itemsCount: 0, id: item.organization_id, services: new Map() });
       }
-      groups.get(orgName).items.push(item);
+      
+      const orgGroup = groups.get(orgName);
+      orgGroup.itemsCount++;
+
+      const serviceName = item.service_type || 'سجلات عامة';
+      if (!orgGroup.services.has(serviceName)) {
+         orgGroup.services.set(serviceName, { name: serviceName, items: [] });
+      }
+      orgGroup.services.get(serviceName).items.push(item);
     });
 
-    return Array.from(groups.values()).sort((a, b) => {
+    return Array.from(groups.values()).map(org => ({
+      name: org.name,
+      id: org.id,
+      itemsCount: org.itemsCount,
+      services: Array.from(org.services.values()).sort((a, b) => {
+         if (a.name === 'سجلات عامة') return 1;
+         if (b.name === 'سجلات عامة') return -1;
+         return a.name.localeCompare(b.name, 'ar');
+      })
+    })).sort((a, b) => {
       if (a.name === 'سجلات عامة') return 1;
       if (b.name === 'سجلات عامة') return -1;
       return a.name.localeCompare(b.name, 'ar');
@@ -489,18 +506,12 @@ const HistoryPage = () => {
     setQuickRange('all');
   };
 
-  const goToOrganization = (item) => {
-    if (item.organization_id) {
-      navigate(`/detail/${item.organization_id}`);
-    }
+  const toggleService = (orgName, serviceName) => {
+    const key = `${orgName}-${serviceName}`;
+    setExpandedServices(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const toggleExpanded = (item) => {
-    const key = `${item.kind}-${item.id}-${item.created_at}`;
-    setExpandedIds((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const isExpanded = (item) => Boolean(expandedIds[`${item.kind}-${item.id}-${item.created_at}`]);
+  const isServiceExpanded = (orgName, serviceName) => Boolean(expandedServices[`${orgName}-${serviceName}`]);
 
   const getSummaryLine = (item) => {
     if (item.kind === 'payment') {
@@ -559,17 +570,6 @@ const HistoryPage = () => {
           {detailText || 'لا توجد تفاصيل إضافية'}
         </DetailPanel>
 
-        {item.organization_id ? (
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => goToOrganization(item)}
-              className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition"
-            >
-              فتح الجهة
-            </button>
-          </div>
-        ) : null}
       </div>
     );
   };
@@ -853,12 +853,12 @@ const HistoryPage = () => {
                           ? 'bg-white/20 border-white/30 text-white' 
                           : 'bg-slate-100 border-slate-200 text-slate-600'
                         }`}>
-                          عدد السجلات: {group.items.length}
+                          عدد السجلات: {group.itemsCount}
                         </span>
                         <span className={`text-[10px] sm:hidden px-2 py-0.5 rounded-full border ${
                           isOrgExpanded ? 'bg-white/20 border-white/30' : 'bg-slate-100 border-slate-200'
                         }`}>
-                          {group.items.length}
+                          {group.itemsCount}
                         </span>
                         <span className={`text-xs transition-transform duration-300 ${isOrgExpanded ? 'rotate-180' : ''}`}>
                           ▼
@@ -868,60 +868,102 @@ const HistoryPage = () => {
 
                     {/* Accordion Content */}
                     {isOrgExpanded && (
-                      <div className="space-y-3 pr-4 sm:pr-6 border-r-2 border-blue-100/50 mr-4 sm:mr-6 py-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                        {group.items.map((item) => {
-                          const expanded = isExpanded(item);
-                          const tone = getKindTone(item);
-                          const summary = getSummaryLine(item);
-
+                      <div className="space-y-4 pr-4 sm:pr-6 border-r-2 border-blue-100/50 mr-4 sm:mr-6 py-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                        {group.services.map((service) => {
+                          const isSrvExpanded = isServiceExpanded(group.name, service.name);
+                          
                           return (
-                            <article
-                              key={`${item.kind}-${item.id}-${item.created_at}`}
-                              className="rounded-3xl border border-slate-200 bg-white overflow-hidden hover:shadow-sm transition"
-                            >
-                              <div className="p-4 sm:p-5">
-                                <div className="flex flex-col gap-4">
-                                  <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-3">
-                                    <div className="space-y-3 min-w-0">
-                                      <div className="flex flex-wrap items-center gap-2">
-                                        <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${getBadgeClass(item)}`}>
-                                          {getActionLabel(item)}
-                                        </span>
-
-                                        <span className="px-3 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                                          {getEntityLabel(item.entity_type, item.kind)}
-                                        </span>
-
-                                        {item.service_type ? (
-                                          <span className="px-3 py-1 text-xs font-medium rounded-full bg-white text-slate-700 border border-slate-200">
-                                            {item.service_type}
-                                          </span>
-                                        ) : null}
-                                        
-                                        <span className="text-[10px] text-slate-400 font-medium">
-                                          {formatDateOnly(item.created_at)}
-                                        </span>
-                                      </div>
-
-                                      <div className="text-sm sm:text-base text-slate-800 leading-7 break-words">{summary}</div>
-                                    </div>
-
-                                    <div className="flex flex-col sm:flex-row xl:flex-col items-start sm:items-center xl:items-end gap-2 shrink-0">
-                                      <div className="text-sm text-slate-500">{formatDateTime(item.created_at)}</div>
-                                      <button
-                                        type="button"
-                                        onClick={() => toggleExpanded(item)}
-                                        className={`px-4 py-2 text-sm font-medium rounded-xl border transition ${toneButtonClass(tone, expanded)}`}
-                                      >
-                                        {viewMode === 'compact' && !expanded ? 'عرض التفاصيل' : expanded ? 'إخفاء التفاصيل' : 'التفاصيل'}
-                                      </button>
-                                    </div>
+                            <div key={service.name} className="space-y-3">
+                              {/* Service Accordion Header */}
+                              <div 
+                                onClick={() => toggleService(group.name, service.name)}
+                                className={`cursor-pointer flex items-center justify-between gap-3 px-4 py-3 rounded-[18px] border transition-all duration-300 ${
+                                  isSrvExpanded 
+                                  ? 'bg-blue-50 border-blue-200 shadow-sm' 
+                                  : 'bg-white border-slate-200 hover:border-blue-200'
+                                }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-white shadow-sm border border-slate-100 text-blue-600">
+                                    {service.name === 'سجلات عامة' ? '📌' : '📡'}
                                   </div>
-
-                                  {(viewMode === 'detailed' || expanded) && renderRecordBody(item)}
+                                  <div className="font-semibold text-sm sm:text-base text-slate-800">{service.name}</div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <span className="px-2 py-1 rounded-full bg-white border border-slate-200 text-xs text-slate-500 font-medium">
+                                    {service.items.length} سجل
+                                  </span>
+                                  <span className={`text-xs text-slate-400 transition-transform duration-300 ${isSrvExpanded ? 'rotate-180' : ''}`}>
+                                    ▼
+                                  </span>
                                 </div>
                               </div>
-                            </article>
+                              
+                              {/* Service Content */}
+                              {isSrvExpanded && (
+                                <div className="space-y-3 pr-4 sm:pr-5 border-r border-slate-200 mr-4 sm:mr-5 py-2 animate-in fade-in duration-300">
+                                  
+                                  {group.id && (
+                                    <div className="flex justify-end mb-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => navigate(`/detail/${group.id}`)}
+                                        className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition"
+                                      >
+                                        فتح الجهة
+                                      </button>
+                                    </div>
+                                  )}
+
+                                  {service.items.map((item) => {
+                                    const summary = getSummaryLine(item);
+
+                                    return (
+                                      <article
+                                        key={`${item.kind}-${item.id}-${item.created_at}`}
+                                        className="rounded-3xl border border-slate-200 bg-white overflow-hidden hover:shadow-sm transition"
+                                      >
+                                        <div className="p-4 sm:p-5">
+                                          <div className="flex flex-col gap-4">
+                                            <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-3">
+                                              <div className="space-y-3 min-w-0">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                  <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${getBadgeClass(item)}`}>
+                                                    {getActionLabel(item)}
+                                                  </span>
+
+                                                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                                                    {getEntityLabel(item.entity_type, item.kind)}
+                                                  </span>
+
+                                                  {item.service_type ? (
+                                                    <span className="px-3 py-1 text-xs font-medium rounded-full bg-white text-slate-700 border border-slate-200">
+                                                      {item.service_type}
+                                                    </span>
+                                                  ) : null}
+                                                  
+                                                  <span className="text-[10px] text-slate-400 font-medium">
+                                                    {formatDateOnly(item.created_at)}
+                                                  </span>
+                                                </div>
+
+                                                <div className="text-sm sm:text-base text-slate-800 leading-7 break-words">{summary}</div>
+                                              </div>
+
+                                              <div className="flex flex-col sm:flex-row xl:flex-col items-start sm:items-center xl:items-end gap-2 shrink-0">
+                                                <div className="text-sm text-slate-500">{formatDateTime(item.created_at)}</div>
+                                              </div>
+                                            </div>
+
+                                            {viewMode === 'detailed' && renderRecordBody(item)}
+                                          </div>
+                                        </div>
+                                      </article>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
                           );
                         })}
                       </div>
