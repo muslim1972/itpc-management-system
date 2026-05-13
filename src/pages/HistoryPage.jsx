@@ -47,7 +47,7 @@ const HistoryPage = () => {
   const [quickRange, setQuickRange] = useState('all');
   const [viewMode, setViewMode] = useState('detailed');
   const [expandedOrg, setExpandedOrg] = useState(null);
-  const [expandedServices, setExpandedServices] = useState({});
+  const [expandedService, setExpandedService] = useState(null);
 
   const fetchTimeline = async () => {
     try {
@@ -508,10 +508,10 @@ const HistoryPage = () => {
 
   const toggleService = (orgName, serviceName) => {
     const key = `${orgName}-${serviceName}`;
-    setExpandedServices(prev => ({ ...prev, [key]: !prev[key] }));
+    setExpandedService(prev => prev === key ? null : key);
   };
 
-  const isServiceExpanded = (orgName, serviceName) => Boolean(expandedServices[`${orgName}-${serviceName}`]);
+  const isServiceExpanded = (orgName, serviceName) => expandedService === `${orgName}-${serviceName}`;
 
   const getSummaryLine = (item) => {
     if (item.kind === 'payment') {
