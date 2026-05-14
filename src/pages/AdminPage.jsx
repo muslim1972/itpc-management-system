@@ -1295,6 +1295,7 @@ const UsersSection = () => {
   const [success, setSuccess] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingUserId, setEditingUserId] = useState(null);
+  const currentUser = getCurrentUser();
 
   const { query, setQuery, results, isSearching } = useEmployeeSearch();
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -1305,14 +1306,14 @@ const UsersSection = () => {
     try {
       const { data, error } = await supabase
           .from('users')
-          .select('id, username, role, last_login, created_at')
+          .select('id, user_id, username, role, last_login, created_at')
           .order('username', { ascending: true });
 
       if (error) throw error;
       setUsers(data || []);
     } catch (e) {
       setUsers([]);
-      setError('خطأ في تحميل المستخدمين من قاعدة البيانات');
+      setError('تعذر تحميل البيانات. يرجى المحاولة لاحقاً.');
     } finally {
       setLoading(false);
     }
@@ -1353,7 +1354,7 @@ const UsersSection = () => {
       setSuccess('تمت إضافة المستخدم بنجاح');
       load();
     } catch (e) {
-      setError(e.message || 'فشل إضافة المستخدم في قاعدة البيانات');
+      setError(e.message === 'هذا الموظف مضاف مسبقاً' ? e.message : 'حدث خطأ أثناء حفظ البيانات.');
     } finally {
       setSaving(false);
     }
@@ -1378,7 +1379,7 @@ const UsersSection = () => {
       setSuccess('تم حذف المستخدم بنجاح');
       load();
     } catch (e) {
-      setError('فشل حذف المستخدم من قاعدة البيانات');
+      setError('تعذر تنفيذ الإجراء المطلوب.');
     }
   };
 
@@ -1400,7 +1401,7 @@ const UsersSection = () => {
       setSuccess(`تم تحديث صلاحية ${user.username} بنجاح`);
       load();
     } catch (e) {
-      setError('فشل تحديث صلاحية المستخدم');
+      setError('حدث خطأ أثناء تحديث الصلاحيات.');
     }
   };
 
@@ -1434,10 +1435,10 @@ const UsersSection = () => {
         </div>
       </div>
 
-      {error && <p className="text-red-500 text-sm mb-3 bg-red-50 p-3 rounded-xl border border-red-100">{error}</p>}
-      {success && <p className="text-emerald-600 text-sm mb-3 bg-emerald-50 p-3 rounded-xl border border-emerald-100 font-bold">{success}</p>}
+      {error ? <p className="text-red-500 text-sm mb-3 bg-red-50 p-3 rounded-xl border border-red-100">{error}</p> : null}
+      {success ? <p className="text-emerald-600 text-sm mb-3 bg-emerald-50 p-3 rounded-xl border border-emerald-100 font-bold">{success}</p> : null}
 
-      {showAddForm && (
+      {showAddForm ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-slate-50/80 rounded-[22px] border border-slate-200 mb-6 animate-in slide-in-from-top-2 duration-300">
           <div className="space-y-2 relative">
             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-2">البحث عن موظف (بالاسم أو الرقم الوظيفي)</label>
@@ -1465,7 +1466,7 @@ const UsersSection = () => {
             </div>
 
             {/* Suggestions */}
-            {showSuggestions && query.trim() && !selectedEmployee && (
+            {showSuggestions && query.trim() && !selectedEmployee ? (
               <div className="absolute z-[100] top-full mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-xl max-h-60 overflow-y-auto">
                 {results.length > 0 ? (
                   results.map((emp) => (
@@ -1486,20 +1487,20 @@ const UsersSection = () => {
                       </div>
                     </button>
                   ))
-                ) : !isSearching && (
+                ) : (!isSearching ? (
                   <div className="p-4 text-center text-slate-400 text-sm">لا توجد نتائج</div>
-                )}
+                ) : null)}
               </div>
-            )}
+            ) : null}
             
-            {selectedEmployee && (
+            {selectedEmployee ? (
               <button 
                 onClick={() => setSelectedEmployee(null)}
                 className="text-[10px] text-rose-500 font-bold mt-1 mr-2 hover:underline"
               >
                 إلغاء الاختيار وتغيير الموظف
               </button>
-            )}
+            ) : null}
           </div>
 
           <div className="space-y-2">
@@ -1523,7 +1524,7 @@ const UsersSection = () => {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
       {loading ? (
         <div className="py-12 text-center">
@@ -1539,6 +1540,7 @@ const UsersSection = () => {
           {users.map((u) => {
             const isAdmin = u.role === 'admin';
             const isEditing = editingUserId === u.id;
+            const isCurrentUser = currentUser?.id === u.user_id;
 
             return (
               <div key={u.id} className="surface-card p-5 border border-slate-100 hover:border-emerald-200 hover:shadow-md transition-all group relative overflow-hidden">
@@ -1593,7 +1595,7 @@ const UsersSection = () => {
                   </div>
                   
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {!isEditing && (
+                    {!isEditing && !isCurrentUser ? (
                       <button
                         onClick={() => setEditingUserId(u.id)}
                         className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
@@ -1603,16 +1605,24 @@ const UsersSection = () => {
                           <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                         </svg>
                       </button>
+                    ) : null}
+                    {!isCurrentUser ? (
+                      <button
+                        onClick={() => handleDeleteUser(u)}
+                        className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                        title="حذف المستخدم"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    ) : (
+                      <span className="p-2 text-slate-300 cursor-not-allowed" title="هذا حسابك الحالي">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                        </svg>
+                      </span>
                     )}
-                    <button
-                      onClick={() => handleDeleteUser(u)}
-                      className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
-                      title="حذف المستخدم"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                    </button>
                   </div>
                 </div>
 
@@ -1623,11 +1633,11 @@ const UsersSection = () => {
                       {u.last_login ? new Date(u.last_login).toLocaleDateString('ar-EG') : 'لم يسجل دخول بعد'}
                     </span>
                   </div>
-                  {u.last_login && (
+                  {u.last_login ? (
                     <p className="text-[10px] text-slate-400 text-left dir-ltr">
                       {new Date(u.last_login).toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' })}
                     </p>
-                  )}
+                  ) : null}
                 </div>
               </div>
             );
