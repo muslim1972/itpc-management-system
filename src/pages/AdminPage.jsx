@@ -1294,6 +1294,7 @@ const UsersSection = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingUserId, setEditingUserId] = useState(null);
 
   const { query, setQuery, results, isSearching } = useEmployeeSearch();
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -1378,6 +1379,28 @@ const UsersSection = () => {
       load();
     } catch (e) {
       setError('فشل حذف المستخدم من قاعدة البيانات');
+    }
+  };
+
+  const handleUpdateRole = async (user, newRole) => {
+    setEditingUserId(null);
+    if (user.role === newRole) return;
+
+    setError('');
+    setSuccess('');
+
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ role: newRole })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      setSuccess(`تم تحديث صلاحية ${user.username} بنجاح`);
+      load();
+    } catch (e) {
+      setError('فشل تحديث صلاحية المستخدم');
     }
   };
 
@@ -1515,6 +1538,8 @@ const UsersSection = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {users.map((u) => {
             const isAdmin = u.role === 'admin';
+            const isEditing = editingUserId === u.id;
+
             return (
               <div key={u.id} className="surface-card p-5 border border-slate-100 hover:border-emerald-200 hover:shadow-md transition-all group relative overflow-hidden">
                 {/* Role Badge Decor */}
@@ -1527,23 +1552,68 @@ const UsersSection = () => {
                     </div>
                     <div>
                       <h3 className="font-bold text-slate-900">{u.username}</h3>
-                      <div className="flex items-center gap-1.5">
-                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${isAdmin ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                          {isAdmin ? 'مدير نظام' : 'مستخدم'}
-                        </span>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        {isEditing ? (
+                          <div className="flex items-center gap-3 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-200">
+                            <label className="flex items-center gap-1.5 cursor-pointer">
+                              <input 
+                                type="radio" 
+                                name={`role-${u.id}`} 
+                                value="admin" 
+                                defaultChecked={isAdmin}
+                                onChange={() => handleUpdateRole(u, 'admin')}
+                                className="w-3.5 h-3.5 text-emerald-600 border-slate-300 focus:ring-emerald-500 cursor-pointer"
+                              />
+                              <span className="text-[10px] font-bold text-slate-700">Admin</span>
+                            </label>
+                            <label className="flex items-center gap-1.5 cursor-pointer">
+                              <input 
+                                type="radio" 
+                                name={`role-${u.id}`} 
+                                value="user" 
+                                defaultChecked={!isAdmin}
+                                onChange={() => handleUpdateRole(u, 'user')}
+                                className="w-3.5 h-3.5 text-emerald-600 border-slate-300 focus:ring-emerald-500 cursor-pointer"
+                              />
+                              <span className="text-[10px] font-bold text-slate-700">User</span>
+                            </label>
+                            <button onClick={() => setEditingUserId(null)} className="ml-1 text-[10px] text-slate-400 hover:text-rose-500 transition-colors">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                              </svg>
+                            </button>
+                          </div>
+                        ) : (
+                          <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${isAdmin ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                            {isAdmin ? 'مدير نظام' : 'مستخدم'}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
                   
-                  <button
-                    onClick={() => handleDeleteUser(u)}
-                    className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
-                    title="حذف المستخدم"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                  </button>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {!isEditing && (
+                      <button
+                        onClick={() => setEditingUserId(u.id)}
+                        className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                        title="تعديل الصلاحية"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                        </svg>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleDeleteUser(u)}
+                      className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                      title="حذف المستخدم"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-2 mt-auto">
