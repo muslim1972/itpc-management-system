@@ -7,7 +7,7 @@ import DeveloperCV from '../components/DeveloperCV';
 import PriceHistoryDropdown from '../components/PriceHistoryDropdown';
 import { logout } from '../utils/auth';
 
-import { supabase, publicSupabase } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import { useEmployeeSearch } from '../hooks/useEmployeeSearch';
 
 const getCurrentUser = () => {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { supabase, publicSupabase } from './lib/supabase';
+import { supabase } from './lib/supabase';
 
 // دالة ذكية للتوجيه: إذا كنا داخل iframe نرسل رسالة للتطبيق الأب بدل تحويل الصفحة
 const safeRedirectToParent = () => {
@@ -34,7 +34,7 @@ const SSOCatcher = () => {
       try {
         const syncAndGetUser = async (authUser) => {
           // 1. جلب بيانات الموظف من السكيما العامة للتحقق من الاستحقاق والاسم
-          const { data: profile, error: profileErr } = await publicSupabase
+          const { data: profile, error: profileErr } = await supabase.schema('public')
             .from('available_profiles')
             .select('id, username, dept_text, role, admin_role, department_id')
             .eq('id', authUser.id)
@@ -101,15 +101,24 @@ const SSOCatcher = () => {
           const refreshToken = params.get('refresh_token');
 
           if (accessToken && refreshToken) {
+            let finalSession = null;
             const { data: authData, error: authError } = await supabase.auth.setSession({
               access_token: accessToken,
               refresh_token: refreshToken
             });
 
-            if (authError) throw authError;
+            if (authError) {
+              console.warn('Manual setSession failed, attempting fallback...', authError);
+              const { data: { session } } = await supabase.auth.getSession();
+              if (!session) throw authError;
+              finalSession = session;
+            } else {
+              finalSession = authData.session;
+            }
+
             window.history.replaceState({}, document.title, location.pathname);
 
-            const finalUser = await syncAndGetUser(authData.user);
+            const finalUser = await syncAndGetUser(finalSession.user);
             if (!finalUser) {
               localStorage.clear();
               safeRedirectToParent();

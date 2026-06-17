@@ -237,7 +237,7 @@ const NewContractPage = () => {
         setError('');
 
         const [companiesRes, rangesRes] = await Promise.all([
-          supabase.from('provider_companies').select('*').eq('is_active', true),
+          supabase.from('provider_companies').select('*').eq('is_active', 1),
           supabase.from('service_ranges').select('*'),
         ]);
 

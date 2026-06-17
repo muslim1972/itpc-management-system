@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { supabase, publicSupabase } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 
 export function useEmployeeSearch(options = {}) {
     const {
@@ -45,12 +45,12 @@ export function useEmployeeSearch(options = {}) {
                 // In Int-Karbala, it seems it's configured for 'itpc'.
                 // So we use .from('public.available_profiles')
                 
-                let queryBuilder = publicSupabase
-                    .from(usePublicView ? 'available_profiles' : 'profiles')
-                    .select(selectFields)
-                    .or(orClause)
-                    .order('full_name')
-                    .limit(limit);
+                let queryBuilder = supabase.schema('public')
+                  .from(usePublicView ? 'available_profiles' : 'profiles')
+                  .select(selectFields)
+                  .or(orClause)
+                  .order('full_name')
+                  .limit(limit);
 
                 const { data, error } = await queryBuilder;
 

@@ -11,12 +11,7 @@ export const supabase = createClient(_u, _k, {
   }
 });
 
-// عميل للوصول للسكيما العامة (profiles, departments, etc)
-export const publicSupabase = createClient(_u, _k, {
-  db: {
-    schema: 'public'
-  }
-});
+
 
 // دالة مركزية لمعالجة أخطاء انتهاء الجلسة
 export const handleSupabaseResponse = (result) => {
