@@ -3,7 +3,11 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavig
 import { supabase } from './lib/supabase';
 
 // دالة ذكية للتوجيه: إذا كنا داخل iframe نرسل رسالة للتطبيق الأب بدل تحويل الصفحة
-const safeRedirectToParent = () => {
+const safeRedirectToParent = (message = null) => {
+  if (message) {
+    // Show alert inside the iframe before redirecting
+    alert(message);
+  }
   if (window.parent !== window) {
     // داخل iframe — أرسل رسالة للتطبيق الأب
     window.parent.postMessage({ type: 'BACK_TO_DASHBOARD' }, '*');
@@ -49,9 +53,33 @@ const SSOCatcher = () => {
           const CAPACITIES_DEPT_ID = '33333333-2222-2222-2222-222222222222';
 
           // 2. فحص الاستحقاق: مطابقة الرمز الإداري أو امتلاك صلاحية مطور/عام
-          const isEligible = 
+          let isEligible = 
             profile.department_id === CAPACITIES_DEPT_ID || 
             ['developer', 'general'].includes(profile.admin_role);
+
+          // فحص الأقسام الفرعية (الشعب التابعة للقسم)
+          if (!isEligible && profile.department_id) {
+            const { data: dept } = await supabase.schema('public')
+              .rpc('get_departments_bypass_rls')
+              .select('parent_id')
+              .eq('id', profile.department_id)
+              .single();
+            if (dept && dept.parent_id === CAPACITIES_DEPT_ID) {
+              isEligible = true;
+            }
+          }
+
+          // فحص الصلاحية الاستثنائية الممنوحة من زر الصلاحيات
+          if (!isEligible) {
+            const { data: fullProfile } = await supabase.schema('public')
+              .from('profiles')
+              .select('has_capacities_access')
+              .eq('id', authUser.id)
+              .single();
+            if (fullProfile && fullProfile.has_capacities_access) {
+              isEligible = true;
+            }
+          }
 
           // 3. جلب أو إنشاء حساب في سكيما itpc (التطبيق الفرعي)
           const { data: itpcUser, error: userError } = await supabase
@@ -78,7 +106,7 @@ const SSOCatcher = () => {
               if (insertError) throw insertError;
               finalRole = 'user';
             } else {
-              return null;
+              throw new Error('عذراً، أنت غير مصرح لك بالدخول إلى نظام قسم تجهيز خدمات المعلوماتية.');
             }
           } else {
             // تحديث الاسم وآخر ظهور
@@ -152,7 +180,8 @@ const SSOCatcher = () => {
         }
       } catch (err) {
         console.error('SSO Error:', err);
-        safeRedirectToParent();
+        const errorMessage = err instanceof Error ? err.message : 'حدث خطأ أثناء تسجيل الدخول';
+        safeRedirectToParent(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -212,7 +241,7 @@ const RequireUser = ({ children }) => {
   return children;
 };
 
-import logo from './assets/itpc-logo.png';
+import logo from './assets/itpc-logo.webp';
 
 function App() {
   return (

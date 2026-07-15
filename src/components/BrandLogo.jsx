@@ -1,5 +1,5 @@
 import React from 'react';
-import logo from '../assets/itpc-logo.png';
+import logo from '../assets/itpc-logo.webp';
 
 const BrandLogo = ({ className = '', imageClassName = '', showRing = true }) => {
   return (
