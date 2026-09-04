@@ -249,8 +249,9 @@ const RequireUser = ({ children }) => {
 import logo from './assets/itpc-logo.webp';
 
 function App() {
+  const basename = window.location.pathname.startsWith('/band') ? '/band' : '/';
   return (
-    <Router>
+    <Router basename={basename}>
       <div 
         style={{
           position: 'fixed',
