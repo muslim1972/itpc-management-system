@@ -15,8 +15,16 @@ const Navbar = ({ onMenuClick }) => {
     const isMainPage = location.pathname === '/main' || location.pathname === '/admin';
     
     if (isMainPage) {
-      // Send message to parent app to close iframe/go back
-      window.parent.postMessage({ type: 'BACK_TO_DASHBOARD' }, '*');
+      if (window.parent !== window) {
+        window.parent.postMessage({ type: 'BACK_TO_DASHBOARD' }, '*');
+      } else if (window.opener && !window.opener.closed) {
+        window.close();
+        if (!window.closed) {
+          window.location.href = 'https://khr-itpc.egov.iq/';
+        }
+      } else {
+        window.location.href = 'https://khr-itpc.egov.iq/';
+      }
     } else {
       // Internal navigation: go back one step
       navigate(-1);

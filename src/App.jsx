@@ -11,6 +11,11 @@ const safeRedirectToParent = (message = null) => {
   if (window.parent !== window) {
     // داخل iframe — أرسل رسالة للتطبيق الأب
     window.parent.postMessage({ type: 'BACK_TO_DASHBOARD' }, '*');
+  } else if (window.opener && !window.opener.closed) {
+    window.close();
+    if (!window.closed) {
+      window.location.href = 'https://khr-itpc.egov.iq/';
+    }
   } else {
     // تشغيل مستقل — حول الصفحة مباشرة
     window.location.href = 'https://khr-itpc.egov.iq/';

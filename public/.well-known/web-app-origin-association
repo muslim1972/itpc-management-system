@@ -1,0 +1,7 @@
+{
+  "web_apps": [
+    {
+      "manifest": "https://khr-itpc.egov.iq/manifest.json"
+    }
+  ]
+}

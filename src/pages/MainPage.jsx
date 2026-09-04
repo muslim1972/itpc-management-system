@@ -84,8 +84,13 @@ const MainPage = () => {
               onClick={() => {
                 if (window.parent !== window) {
                   window.parent.postMessage({ type: 'BACK_TO_DASHBOARD' }, '*');
+                } else if (window.opener && !window.opener.closed) {
+                  window.close();
+                  if (!window.closed) {
+                    window.location.href = 'https://khr-itpc.egov.iq/';
+                  }
                 } else {
-                  window.location.href = '/';
+                  window.location.href = 'https://khr-itpc.egov.iq/';
                 }
               }}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all border border-white/10 shadow-sm text-xs font-bold"
