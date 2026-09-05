@@ -114,6 +114,15 @@ const SSOCatcher = () => {
               throw new Error('عذراً، أنت غير مصرح لك بالدخول إلى نظام قسم تجهيز خدمات المعلوماتية.');
             }
           } else {
+            // فحص هل لا يزال الموظف يمتلك الصلاحية أم تم نقله خارج القسم؟
+            if (!isEligible && itpcUser?.username !== 'مسلم' && itpcUser?.role !== 'admin') {
+              await supabase
+                .from('users')
+                .delete()
+                .eq('user_id', authUser.id);
+              throw new Error('عذراً، تم نقل حسابك أو إلغاء صلاحية الوصول إلى نظام قسم تجهيز خدمات المعلوماتية.');
+            }
+
             // تحديث الاسم وآخر ظهور
             await supabase
               .from('users')

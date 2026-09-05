@@ -9,6 +9,7 @@ import { logout } from '../utils/auth';
 
 import { supabase } from '../lib/supabase';
 import { useEmployeeSearch } from '../hooks/useEmployeeSearch';
+import { fetchWithCache, invalidateCache } from '../utils/dataCache';
 
 const getCurrentUser = () => {
   try {
@@ -54,17 +55,20 @@ const OrganizationsSection = () => {
     setLoading(true);
     setError('');
     try {
-      const { data, error } = await supabase
-        .from('organizations')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const data = await fetchWithCache('admin_orgs', async () => {
+        const { data, error } = await supabase
+          .from('organizations')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
-      }
+        if (error) {
+          console.error('Supabase error:', error);
+          throw error;
+        }
+        return data || [];
+      }, 120000);
       
-      setOrganizations(data || []);
+      setOrganizations(data);
     } catch (e) {
       console.error('Fetch catch error:', e);
       setOrganizations([]);
@@ -111,6 +115,8 @@ const OrganizationsSection = () => {
         notes: '',
       });
       setShowAddForm(false);
+      invalidateCache('organizations');
+      invalidateCache('admin_orgs');
       load();
     } catch (e) {
       setError('خطأ غير متوقع أثناء الحفظ');
@@ -155,6 +161,8 @@ const OrganizationsSection = () => {
       }
 
       setEditingId(null);
+      invalidateCache('organizations');
+      invalidateCache('admin_orgs');
       load();
     } catch (e) {
       setError('خطأ غير متوقع أثناء التحديث');
@@ -176,6 +184,8 @@ const OrganizationsSection = () => {
         return;
       }
 
+      invalidateCache('organizations');
+      invalidateCache('admin_orgs');
       load();
     } catch (e) {
       setError('خطأ غير متوقع أثناء الحذف');
@@ -469,13 +479,17 @@ const CompaniesSection = ({ onDetails }) => {
     setLoading(true);
     setError('');
     try {
-      const { data, error } = await supabase
-        .from('provider_companies')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const data = await fetchWithCache('admin_companies', async () => {
+        const { data, error } = await supabase
+          .from('provider_companies')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setCompanies(data || []);
+        if (error) throw error;
+        return data || [];
+      }, 120000);
+
+      setCompanies(data);
     } catch (e) {
       setCompanies([]);
       setError('خطأ في تحميل الشركات');
@@ -513,6 +527,9 @@ const CompaniesSection = ({ onDetails }) => {
         is_active: 1,
       });
       setShowAddForm(false);
+      invalidateCache('admin_companies');
+      invalidateCache('companies');
+      invalidateCache('provider_companies');
       load();
     } catch (e) {
       setError('فشل في حفظ بيانات الشركة');
@@ -550,6 +567,9 @@ const CompaniesSection = ({ onDetails }) => {
       if (error) throw error;
 
       setEditingId(null);
+      invalidateCache('admin_companies');
+      invalidateCache('companies');
+      invalidateCache('provider_companies');
       load();
     } catch (e) {
       setError('فشل تحديث بيانات الشركة');
@@ -568,6 +588,9 @@ const CompaniesSection = ({ onDetails }) => {
         .eq('id', company.id);
 
       if (error) throw error;
+      invalidateCache('admin_companies');
+      invalidateCache('companies');
+      invalidateCache('provider_companies');
       load();
     } catch (e) {
       setError('فشل حذف الشركة');

@@ -20,6 +20,7 @@ const getStatusLabel = (status) => {
 };
 
 import { supabase } from '../lib/supabase';
+import { fetchWithCache } from '../utils/dataCache';
 
 const MainPage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -40,14 +41,17 @@ const MainPage = () => {
         setLoading(true);
         setError('');
 
-        const { data, error: fetchError } = await supabase
-          .from('organizations')
-          .select('*')
-          .order('name', { ascending: true });
+        const data = await fetchWithCache('organizations_list', async () => {
+          const { data, error: fetchError } = await supabase
+            .from('organizations')
+            .select('*')
+            .order('name', { ascending: true });
 
-        if (fetchError) throw fetchError;
+          if (fetchError) throw fetchError;
+          return data || [];
+        }, 120000);
 
-        setOrganizations(data || []);
+        setOrganizations(data);
       } catch (err) {
         console.error('Fetch error:', err);
         setError('فشل في تحميل الجهات من قاعدة البيانات');
