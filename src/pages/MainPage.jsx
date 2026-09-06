@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AlertTriangle, Scale, Clock, FileText } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import SlideMenu from '../components/SlideMenu';
 import PageFooter from '../components/PageFooter';
@@ -35,6 +36,13 @@ const MainPage = () => {
   const [filter, setFilter] = useState('all');
   const [expandedId, setExpandedId] = useState(null);
 
+  const [alertsSummary, setAlertsSummary] = useState({
+    dueSoon: 0,
+    demand2: 0,
+    legal: 0,
+    orgAlertsMap: {}
+  });
+
   useEffect(() => {
     const fetchOrganizations = async () => {
       try {
@@ -61,6 +69,45 @@ const MainPage = () => {
     };
 
     fetchOrganizations();
+
+    const fetchAlerts = async () => {
+      try {
+        const { data } = await supabase.rpc('get_installment_schedule_and_alerts');
+        if (!data) return;
+
+        let dueSoon = 0;
+        let demand2 = 0;
+        let legal = 0;
+        const orgMap = {};
+
+        data.forEach((item) => {
+          if (!item.alert_level || item.alert_level === 'none' || Number(item.installment_balance || 0) <= 0) return;
+
+          if (item.alert_level === 'critical' || item.action_required === 'refer_to_legal') {
+            legal++;
+          } else if (item.alert_level === 'danger' || item.action_required === 'send_demand_2') {
+            demand2++;
+          } else if (item.alert_level === 'info' || item.days_diff < 0) {
+            dueSoon++;
+          }
+
+          if (!orgMap[item.organization_id]) {
+            orgMap[item.organization_id] = {
+              level: item.alert_level,
+              title: item.alert_title,
+              count: 0
+            };
+          }
+          orgMap[item.organization_id].count++;
+        });
+
+        setAlertsSummary({ dueSoon, demand2, legal, orgAlertsMap: orgMap });
+      } catch (e) {
+        console.error('Error fetching alerts in MainPage:', e);
+      }
+    };
+
+    fetchAlerts();
   }, []);
 
   const filteredOrganizations = useMemo(() => organizations.filter((org) => {
@@ -134,6 +181,50 @@ const MainPage = () => {
             </div>
           </div>
         </section>
+
+        {/* KPI Strip for Installments & Demand Letters */}
+        {(alertsSummary.dueSoon > 0 || alertsSummary.demand2 > 0 || alertsSummary.legal > 0) && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 page-reveal stagger-1">
+            <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200 text-blue-900 flex items-center justify-between shadow-xs">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-blue-800">استحقاق وشيك (خلال 4 أيام)</div>
+                  <div className="text-[11px] text-blue-600">توجيه كتاب رسمي بالمطالبة</div>
+                </div>
+              </div>
+              <span className="text-xl font-black text-blue-700">{alertsSummary.dueSoon}</span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-orange-50 border border-orange-200 text-orange-900 flex items-center justify-between shadow-xs">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-orange-800">تأخر لأسبوع (كتاب مطالبة 2)</div>
+                  <div className="text-[11px] text-orange-600">إنذار ثانٍ بعد مرور أسبوع</div>
+                </div>
+              </div>
+              <span className="text-xl font-black text-orange-700">{alertsSummary.demand2}</span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 flex items-center justify-between shadow-xs">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center text-rose-600">
+                  <Scale className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-rose-800">إحالة للشعبة القانونية</div>
+                  <div className="text-[11px] text-rose-600">تأخر لأسبوعين (متابعة قضائية)</div>
+                </div>
+              </div>
+              <span className="text-xl font-black text-rose-700">{alertsSummary.legal}</span>
+            </div>
+          </div>
+        )}
 
         <section className="filter-panel page-reveal stagger-1">
           <div className="flex flex-col gap-6">
@@ -224,9 +315,28 @@ const MainPage = () => {
                         onClick={() => setExpandedId(isExpanded ? null : org.id)}
                         className="flex items-center justify-between p-4 gap-3 cursor-pointer hover:bg-slate-50 transition-colors"
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
                           <div className={`w-2 h-2 rounded-full shrink-0 ${org.status === 'active' ? 'bg-emerald-500' : org.status === 'inactive' ? 'bg-rose-500' : 'bg-amber-500'}`} />
                           <h3 className="font-bold text-slate-800 text-xs sm:text-sm leading-tight truncate">{org.name}</h3>
+                          {alertsSummary.orgAlertsMap[org.id] && (
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${
+                              alertsSummary.orgAlertsMap[org.id].level === 'critical'
+                                ? 'bg-rose-100 text-rose-800 border-rose-300'
+                                : alertsSummary.orgAlertsMap[org.id].level === 'danger'
+                                ? 'bg-orange-100 text-orange-800 border-orange-300'
+                                : alertsSummary.orgAlertsMap[org.id].level === 'warning'
+                                ? 'bg-amber-100 text-amber-800 border-amber-300'
+                                : 'bg-blue-100 text-blue-800 border-blue-300'
+                            }`}>
+                              {alertsSummary.orgAlertsMap[org.id].level === 'critical'
+                                ? 'إحالة قانونية'
+                                : alertsSummary.orgAlertsMap[org.id].level === 'danger'
+                                ? 'مطلوب كتاب 2'
+                                : alertsSummary.orgAlertsMap[org.id].level === 'warning'
+                                ? 'مطالبة مستحقة'
+                                : 'استحقاق وشيك'}
+                            </span>
+                          )}
                         </div>
                         
                         <svg 

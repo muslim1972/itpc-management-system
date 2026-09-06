@@ -5,6 +5,7 @@ import SlideMenu from '../components/SlideMenu';
 import PageFooter from '../components/PageFooter';
 import DeveloperCV from '../components/DeveloperCV';
 import PriceHistoryDropdown from '../components/PriceHistoryDropdown';
+import DemandLettersSection from '../components/DemandLettersSection';
 import { logout } from '../utils/auth';
 
 import { supabase } from '../lib/supabase';
@@ -2042,6 +2043,14 @@ const AdminPage = () => {
               >
                 المستخدمون
               </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveSection('demand_letters')}
+                className={sectionButtonClass('demand_letters')}
+              >
+                الكتب الرسمية والديون
+              </button>
             </div>
           </div>
 
@@ -2059,6 +2068,8 @@ const AdminPage = () => {
             {activeSection === 'packages' && <PackagesSection />}
 
             {activeSection === 'users' && <UsersSection />}
+
+            {activeSection === 'demand_letters' && <DemandLettersSection />}
           </div>
         </div>
         <PageFooter onDeveloperClick={() => setIsCVOpen(true)} />

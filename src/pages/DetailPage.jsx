@@ -5,9 +5,10 @@ import SlideMenu from '../components/SlideMenu';
 import PageFooter from '../components/PageFooter';
 import DeveloperCV from '../components/DeveloperCV';
 
-import { ChevronDown, ChevronUp, FileText, Download, Edit, Printer } from 'lucide-react';
+import { ChevronDown, ChevronUp, FileText, Download, Edit, Printer, AlertTriangle, Scale, Clock, History, CheckCircle2 } from 'lucide-react';
 
 import { supabase } from '../lib/supabase';
+import DemandLetterModal from '../components/DemandLetterModal';
 
 const PAYMENT_METHODS = ['يومي', 'شهري', 'كل 3 أشهر', 'سنوي'];
 const CONTRACT_DURATION_UNITS = ['يومي', 'شهري', 'سنوي'];
@@ -168,12 +169,13 @@ const Block = ({ title, subtitle, actions, children, className = '' }) => (
 );
 
 
-const ServiceViewTabs = ({ activeView, onChange, paymentCount, historyCount, itemCount }) => {
+const ServiceViewTabs = ({ activeView, onChange, paymentCount, historyCount, itemCount, installmentCount, alertCount }) => {
   const tabs = [
     { key: 'summary', label: 'ملخص' },
     { key: 'contract', label: 'العقد' },
     { key: 'items', label: `العناصر${itemCount ? ` (${itemCount})` : ''}` },
     { key: 'payments', label: `الدفعات${paymentCount ? ` (${paymentCount})` : ''}` },
+    { key: 'installments', label: `الأقساط والمطالبات${installmentCount ? ` (${installmentCount})` : ''}` },
     { key: 'history', label: `السجل${historyCount ? ` (${historyCount})` : ''}` },
   ];
 
@@ -186,9 +188,14 @@ const ServiceViewTabs = ({ activeView, onChange, paymentCount, historyCount, ite
             key={tab.key}
             type="button"
             onClick={() => onChange(tab.key)}
-            className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${isActive ? 'bg-slate-900 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}
+            className={`rounded-xl px-3 py-2 text-sm font-semibold transition flex items-center gap-1.5 ${
+              isActive ? 'bg-slate-900 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+            }`}
           >
-            {tab.label}
+            <span>{tab.label}</span>
+            {tab.key === 'installments' && alertCount > 0 && (
+              <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+            )}
           </button>
         );
       })}
@@ -232,6 +239,10 @@ const DetailPage = () => {
   const [exportingPdf, setExportingPdf] = useState(false);
   const [activeServiceViews, setActiveServiceViews] = useState({});
   const [expandedServiceId, setExpandedServiceId] = useState(null);
+
+  const [installmentsByService, setInstallmentsByService] = useState({});
+  const [selectedInstallmentForModal, setSelectedInstallmentForModal] = useState(null);
+  const [isDemandModalOpen, setIsDemandModalOpen] = useState(false);
 
   const loadDetails = async () => {
     try {
@@ -298,6 +309,21 @@ const DetailPage = () => {
             latest_suspension: latestSuspension
           };
         });
+      }
+
+      // جلب جدول الأقساط والمطالبات
+      try {
+        const { data: instData } = await supabase.rpc('get_installment_schedule_and_alerts');
+        const instMap = {};
+        (instData || []).forEach((inst) => {
+          if (String(inst.organization_id) === String(id)) {
+            if (!instMap[inst.service_id]) instMap[inst.service_id] = [];
+            instMap[inst.service_id].push(inst);
+          }
+        });
+        setInstallmentsByService(instMap);
+      } catch (instErr) {
+        console.error('Error fetching installments in DetailPage:', instErr);
       }
 
       setOrganization(org);
@@ -680,60 +706,156 @@ const DetailPage = () => {
       });
 
       const title = `تقرير تفاصيل الجهة - ${organization.name || ''}`.trim();
-      const html = `
-        <html xmlns:o="urn:schemas-microsoft-com:office:office"
-              xmlns:x="urn:schemas-microsoft-com:office:excel"
-              xmlns="http://www.w3.org/TR/REC-html40">
-          <head>
-            <meta charset="UTF-8" />
-            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-            <style>
-              table, th, td { border: 1px solid #000; border-collapse: collapse; }
-              th, td { padding: 8px; text-align: center; white-space: nowrap; }
-              table { direction: rtl; }
-              .title { font-size: 18px; font-weight: bold; text-align: center; }
-            </style>
-          </head>
-          <body>
-            <table>
-              <tr><th class="title" colspan="9">${escapeHtml(title)}</th></tr>
-              <tr>
-                <th>ت</th>
-                <th>اسم الجهة</th>
-                <th>اسم الشركة</th>
-                <th>نوع الخدمة</th>
-                <th>مقدار الخدمة</th>
-                <th>عدد الخطوط</th>
-                <th>العدد</th>
-                <th>المبلغ الشهري للخدمة</th>
-                <th>الملاحظات</th>
-              </tr>
-              ${rows.map((row) => `
-                <tr>
-                  <td>${escapeHtml(row.sequence)}</td>
-                  <td>${escapeHtml(row.organization_name)}</td>
-                  <td>${escapeHtml(row.provider_name)}</td>
-                  <td>${escapeHtml(row.service_type)}</td>
-                  <td>${escapeHtml(row.service_amount)}</td>
-                  <td>${escapeHtml(row.lines_count)}</td>
-                  <td>${escapeHtml(row.count)}</td>
-                  <td>${escapeHtml(formatMoney(row.monthly_amount))}</td>
-                  <td>${escapeHtml(row.notes)}</td>
-                </tr>
-              `).join('') || '<tr><td colspan="9">لا توجد بيانات</td></tr>'}
-            </table>
-          </body>
-        </html>
-      `;
+      const ExcelJS = (await import('exceljs')).default || (await import('exceljs'));
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'ITPC Management System';
+      workbook.created = new Date();
 
-      const blob = new Blob(['﻿', html], {
-        type: 'application/vnd.ms-excel;charset=utf-8;',
+      // الورقة 1: تفاصيل الخدمات والعناصر
+      const worksheet = workbook.addWorksheet('تفاصيل الخدمات والعناصر', {
+        views: [{ rtl: true }]
+      });
+
+      // العنوان الرئيسي
+      worksheet.mergeCells('A1:I1');
+      const titleCell = worksheet.getCell('A1');
+      titleCell.value = title;
+      titleCell.font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+      titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
+      titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      worksheet.getRow(1).height = 32;
+
+      // العناوين الفرعية
+      const headers = ['ت', 'اسم الجهة', 'اسم الشركة', 'نوع الخدمة', 'مقدار الخدمة', 'عدد الخطوط', 'العدد', 'المبلغ الشهري للخدمة (د.ع)', 'الملاحظات'];
+      const headerRow = worksheet.addRow(headers);
+      headerRow.height = 26;
+      headerRow.eachCell((cell) => {
+        cell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF334155' } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+          bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+          left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+          right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+        };
+      });
+
+      rows.forEach((row, idx) => {
+        const r = worksheet.addRow([
+          row.sequence, row.organization_name, row.provider_name, row.service_type,
+          row.service_amount, row.lines_count, row.count, row.monthly_amount, row.notes
+        ]);
+        r.height = 22;
+        r.eachCell((cell, colNum) => {
+          cell.font = { name: 'Arial', size: 10 };
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+            bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+            left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+            right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+          };
+          if (idx % 2 === 1) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+          }
+          if (colNum === 8) {
+            cell.numFmt = '#,##0.00';
+          }
+        });
+      });
+
+      worksheet.columns.forEach((col) => {
+        let maxLen = 12;
+        col.eachCell({ includeEmpty: false }, (c) => {
+          const s = c.value ? String(c.value) : '';
+          if (s.length > maxLen) maxLen = Math.min(s.length + 3, 40);
+        });
+        col.width = maxLen;
+      });
+
+      // الورقة 2: جدول الأقساط والمطالبات الرسمية
+      const instSheet = workbook.addWorksheet('جدول الأقساط والديون', {
+        views: [{ rtl: true }]
+      });
+
+      instSheet.mergeCells('A1:J1');
+      const instTitle = instSheet.getCell('A1');
+      instTitle.value = `جدول الأقساط والديون والكتب الرسمية - ${organization.name || ''}`;
+      instTitle.font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+      instTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
+      instTitle.alignment = { horizontal: 'center', vertical: 'middle' };
+      instSheet.getRow(1).height = 32;
+
+      const instHeaders = ['ت', 'نوع الخدمة', 'الدفعة', 'تاريخ الاستحقاق', 'مبلغ الدفعة', 'المدفوع', 'المتبقي', 'الحالة الإدارية', 'كتاب المطالبة 1', 'كتاب المطالبة 2 / الإحالة'];
+      const instHeaderRow = instSheet.addRow(instHeaders);
+      instHeaderRow.height = 26;
+      instHeaderRow.eachCell((cell) => {
+        cell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF334155' } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+          bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+          left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+          right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+        };
+      });
+
+      let instSeq = 1;
+      const allOrgInsts = Object.values(installmentsByService).flat();
+      allOrgInsts.forEach((inst, idx) => {
+        const d1Text = inst.demand_1_book_number ? `رقم ${inst.demand_1_book_number} في ${inst.demand_1_book_date}` : 'لا يوجد';
+        const d2Text = inst.legal_book_number ? `إحالة قضائية: ${inst.legal_book_number} في ${inst.legal_book_date}` : inst.demand_2_book_number ? `رقم ${inst.demand_2_book_number} في ${inst.demand_2_book_date}` : 'لا يوجد';
+        const r = instSheet.addRow([
+          instSeq++,
+          inst.service_type,
+          inst.installment_label || `القسط ${inst.installment_number}`,
+          inst.installment_due_date,
+          Number(inst.installment_amount || 0),
+          Number(inst.installment_paid_amount || 0),
+          Number(inst.installment_balance || 0),
+          inst.alert_title || inst.installment_status,
+          d1Text,
+          d2Text
+        ]);
+        r.height = 22;
+        r.eachCell((cell, colNum) => {
+          cell.font = { name: 'Arial', size: 10 };
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+            bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+            left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+            right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+          };
+          if (idx % 2 === 1) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+          }
+          if (colNum >= 5 && colNum <= 7) {
+            cell.numFmt = '#,##0.00';
+          }
+        });
+      });
+
+      instSheet.columns.forEach((col) => {
+        let maxLen = 14;
+        col.eachCell({ includeEmpty: false }, (c) => {
+          const s = c.value ? String(c.value) : '';
+          if (s.length > maxLen) maxLen = Math.min(s.length + 3, 40);
+        });
+        col.width = maxLen;
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       });
 
       const safeName = String(organization.name || `organization_${id}`)
         .replace(/[\/:*?"<>|]/g, '_')
         .trim();
-      const filename = `detail_report_${safeName || id}.xls`;
+      const filename = `detail_report_${safeName || id}.xlsx`;
 
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -1407,6 +1529,8 @@ const DetailPage = () => {
                   paymentCount={payments.length}
                   historyCount={closedPeriods.length}
                   itemCount={items.length}
+                  installmentCount={(installmentsByService[service.id] || []).length}
+                  alertCount={(installmentsByService[service.id] || []).filter(i => i.alert_level && i.alert_level !== 'none' && Number(i.installment_balance || 0) > 0).length}
                 />
               </div>
             </div>
@@ -1901,6 +2025,170 @@ const DetailPage = () => {
           </Block>
           )}
 
+          {activeView === 'installments' && (
+            <Block
+              title="جدول الأقساط ومتابعة المطالبات والديون"
+              subtitle="متابعة استحقاق الدفعات والكتب الرسمية الصادرة والتصعيد القانوني"
+              className="border-indigo-200 bg-white"
+            >
+              {(() => {
+                const serviceInsts = installmentsByService[service.id] || [];
+                if (serviceInsts.length === 0) {
+                  return (
+                    <div className="rounded-2xl border border-dashed border-slate-300 p-6 text-center text-slate-500">
+                      لا توجد دفعات أو أقساط محسوبة لهذه الخدمة حالياً.
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-4">
+                    {serviceInsts.map((inst, idx) => {
+                      const isSettled = inst.installment_status === 'settled' || Number(inst.installment_balance || 0) <= 0;
+                      const isCritical = inst.alert_level === 'critical';
+                      const isDanger = inst.alert_level === 'danger';
+                      const isWarning = inst.alert_level === 'warning';
+                      const isInfo = inst.alert_level === 'info';
+
+                      const borderTone = isSettled
+                        ? 'border-emerald-200 bg-emerald-50/30'
+                        : isCritical
+                        ? 'border-rose-300 bg-rose-50/40'
+                        : isDanger
+                        ? 'border-orange-300 bg-orange-50/40'
+                        : isWarning
+                        ? 'border-amber-300 bg-amber-50/40'
+                        : isInfo
+                        ? 'border-blue-300 bg-blue-50/40'
+                        : 'border-slate-200 bg-white';
+
+                      const badgeClass = isSettled
+                        ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                        : isCritical
+                        ? 'bg-rose-100 text-rose-800 border-rose-300'
+                        : isDanger
+                        ? 'bg-orange-100 text-orange-800 border-orange-300'
+                        : isWarning
+                        ? 'bg-amber-100 text-amber-800 border-amber-300'
+                        : isInfo
+                        ? 'bg-blue-100 text-blue-800 border-blue-300'
+                        : 'bg-slate-100 text-slate-700 border-slate-300';
+
+                      return (
+                        <div
+                          key={`${service.id}-inst-${inst.installment_number || idx}`}
+                          className={`rounded-2xl border p-4 sm:p-5 transition-all shadow-xs ${borderTone}`}
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-200/80 pb-3 mb-3">
+                            <div className="flex items-center gap-2.5">
+                              <span className="text-sm font-bold text-slate-900">
+                                {inst.installment_label || `الدفعة ${inst.installment_number}`}
+                              </span>
+                              <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${badgeClass}`}>
+                                {inst.alert_title || (isSettled ? 'مسدد بالكامل' : 'مستحق')}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-4 text-xs">
+                              <div>
+                                <span className="text-slate-500">تاريخ الاستحقاق:</span>{' '}
+                                <span className="font-bold text-slate-800">{inst.installment_due_date || '-'}</span>
+                              </div>
+                              {inst.days_diff != null && !isSettled && (
+                                <div className={`font-bold ${inst.days_diff > 0 ? 'text-rose-600' : 'text-blue-600'}`}>
+                                  {inst.days_diff > 0 ? `متأخر ${inst.days_diff} يوم` : `يستحق بعد ${Math.abs(inst.days_diff)} يوم`}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Financial row */}
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3 text-xs">
+                            <div className="bg-white/80 p-2.5 rounded-xl border border-slate-200/70">
+                              <div className="text-slate-400 text-[10px]">مبلغ الدفعة الإجمالي</div>
+                              <div className="text-sm font-bold text-slate-800 mt-0.5">
+                                {Number(inst.installment_amount || 0).toLocaleString()} د.ع
+                              </div>
+                            </div>
+                            <div className="bg-white/80 p-2.5 rounded-xl border border-slate-200/70">
+                              <div className="text-slate-400 text-[10px]">المسدد حتى الآن</div>
+                              <div className="text-sm font-bold text-emerald-600 mt-0.5">
+                                {Number(inst.installment_paid_amount || 0).toLocaleString()} د.ع
+                              </div>
+                            </div>
+                            <div className="bg-white/80 p-2.5 rounded-xl border border-slate-200/70">
+                              <div className="text-slate-400 text-[10px]">المتبقي المطلوب</div>
+                              <div className="text-sm font-bold text-rose-600 mt-0.5">
+                                {Number(inst.installment_balance || 0).toLocaleString()} د.ع
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Alert message banner if not settled */}
+                          {!isSettled && inst.alert_message && (
+                            <div className="p-2.5 rounded-xl bg-white/90 border border-slate-200 text-xs text-slate-700 flex items-start gap-2 mb-3">
+                              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                              <span className="leading-relaxed">{inst.alert_message}</span>
+                            </div>
+                          )}
+
+                          {/* Registered Books Strip */}
+                          <div className="bg-slate-100/80 p-3 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-slate-500 font-semibold">الكتب الموثقة:</span>
+                              {inst.demand_1_book_number ? (
+                                <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 font-semibold">
+                                  كتاب 1: #{inst.demand_1_book_number} ({inst.demand_1_book_date})
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-md bg-white text-slate-400 border border-slate-200">
+                                  لم يوجه كتاب 1
+                                </span>
+                              )}
+
+                              {inst.demand_2_book_number && (
+                                <span className="px-2 py-0.5 rounded-md bg-orange-100 text-orange-900 border border-orange-300 font-semibold">
+                                  كتاب 2: #{inst.demand_2_book_number} ({inst.demand_2_book_date})
+                                </span>
+                              )}
+
+                              {inst.legal_book_number && (
+                                <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-900 border border-rose-300 font-bold flex items-center gap-1">
+                                  <Scale className="w-3 h-3" />
+                                  <span>إحالة قانونية: #{inst.legal_book_number} ({inst.legal_book_date})</span>
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2 self-end sm:self-auto">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedInstallmentForModal({
+                                    ...inst,
+                                    organization_id: organization.id,
+                                    organization_name: organization.name,
+                                    service_id: service.id,
+                                    service_type: service.service_type
+                                  });
+                                  setIsDemandModalOpen(true);
+                                }}
+                                className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors"
+                              >
+                                <FileText className="w-3.5 h-3.5" />
+                                <span>توثيق / متابعة الكتب الرسمية</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </Block>
+          )}
+
           {activeView === 'history' && (
           <Block
             title="سجل الفترات السابقة"
@@ -2336,6 +2624,17 @@ const DetailPage = () => {
           </div>
         </div>
       )}
+
+      {/* Demand Letter Modal */}
+      <DemandLetterModal
+        isOpen={isDemandModalOpen}
+        onClose={() => setIsDemandModalOpen(false)}
+        installmentData={selectedInstallmentForModal}
+        onSuccess={() => {
+          loadDetails();
+        }}
+      />
+
       <PageFooter onDeveloperClick={() => setIsCVOpen(true)} />
       <DeveloperCV isOpen={isCVOpen} onClose={() => setIsCVOpen(false)} />
     </div>

@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowRightLeft, ArrowLeft } from 'lucide-react';
 import BrandLogo from './BrandLogo';
+import NotificationHub from './NotificationHub';
 import { isAdmin } from '../utils/auth';
 
 const Navbar = ({ onMenuClick }) => {
@@ -53,29 +54,33 @@ const Navbar = ({ onMenuClick }) => {
               نظام قسم تجهيز خدمات المعلوماتية
             </h1>
 
-            {is_admin && (
+            <div className="mr-auto flex items-center gap-2">
+              <NotificationHub />
+
+              {is_admin && (
+                <button
+                  onClick={() => navigate(isAdminPath ? '/main' : '/admin')}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition-all border border-indigo-200 shadow-sm text-[10px] sm:text-xs font-bold whitespace-nowrap"
+                  title={isAdminPath ? "التحويل لوضع المستخدم" : "التحويل لوضع المسؤول"}
+                >
+                  <ArrowRightLeft className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">
+                    {isAdminPath ? "وضع المستخدم" : "وضع المسؤول"}
+                  </span>
+                </button>
+              )}
+
               <button
-                onClick={() => navigate(isAdminPath ? '/main' : '/admin')}
-                className="mr-auto ml-2 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition-all border border-indigo-200 shadow-sm text-[10px] sm:text-xs font-bold whitespace-nowrap"
-                title={isAdminPath ? "التحويل لوضع المستخدم" : "التحويل لوضع المسؤول"}
+                onClick={handleBackAction}
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all border border-slate-200 shadow-sm text-xs font-bold"
+                title={location.pathname === '/main' || location.pathname === '/admin' ? "رجوع للوحة التحكم" : "رجوع للخلف"}
               >
-                <ArrowRightLeft className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">
-                  {isAdminPath ? "وضع المستخدم" : "وضع المسؤول"}
+                <ArrowLeft className="w-4 h-4" />
+                <span>
+                  {location.pathname === '/main' || location.pathname === '/admin' ? "رجوع للوحة التحكم" : "رجوع للخلف"}
                 </span>
               </button>
-            )}
-
-            <button
-              onClick={handleBackAction}
-              className="mr-auto flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all border border-slate-200 shadow-sm text-xs font-bold"
-              title={location.pathname === '/main' || location.pathname === '/admin' ? "رجوع للوحة التحكم" : "رجوع للخلف"}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>
-                {location.pathname === '/main' || location.pathname === '/admin' ? "رجوع للوحة التحكم" : "رجوع للخلف"}
-              </span>
-            </button>
+            </div>
           </div>
         </div>
       </div>

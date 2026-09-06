@@ -570,27 +570,112 @@ const StatisticsPage = () => {
         };
       }
 
-      const html = `
-        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-          <head><meta charset="UTF-8" /><style>table{direction:rtl;border-collapse:collapse;} th,td{border:1px solid #000;padding:5px;text-align:center;}</style></head>
-          <body>
-            <h2>${escapeHtml(doc.title)}</h2>
-            ${doc.sections.map(s => `
-              <h3>${escapeHtml(s.title || '')}</h3>
-              <table>
-                <thead><tr>${s.headers.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead>
-                <tbody>${s.rows.map(r => `<tr>${r.map(c => `<td>${escapeHtml(String(c))}</td>`).join('')}</tr>`).join('')}</tbody>
-              </table>
-            `).join('<br/>')}
-          </body>
-        </html>
-      `;
-      const blob = new Blob(['\ufeff', html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+      const ExcelJS = (await import('exceljs')).default || (await import('exceljs'));
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'ITPC Management System';
+      workbook.created = new Date();
+
+      const worksheet = workbook.addWorksheet(doc.title.slice(0, 30), {
+        views: [{ rtl: true }]
+      });
+
+      let currentRow = 1;
+
+      // Title
+      worksheet.mergeCells(`A${currentRow}:E${currentRow}`);
+      const titleCell = worksheet.getCell(`A${currentRow}`);
+      titleCell.value = doc.title;
+      titleCell.font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+      titleCell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF1E293B' }
+      };
+      titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      worksheet.getRow(currentRow).height = 32;
+      currentRow += 2;
+
+      for (const section of doc.sections) {
+        if (section.title) {
+          const sectionTitleRow = worksheet.getRow(currentRow);
+          sectionTitleRow.getCell(1).value = section.title;
+          sectionTitleRow.getCell(1).font = { name: 'Arial', size: 12, bold: true, color: { argb: 'FF0F172A' } };
+          currentRow++;
+        }
+
+        // Headers
+        const headerRow = worksheet.getRow(currentRow);
+        section.headers.forEach((headerText, colIdx) => {
+          const cell = headerRow.getCell(colIdx + 1);
+          cell.value = headerText;
+          cell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF334155' }
+          };
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+            bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+            left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+            right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+          };
+        });
+        headerRow.height = 25;
+        currentRow++;
+
+        // Data Rows
+        section.rows.forEach((rowValues, rowIdx) => {
+          const dataRow = worksheet.getRow(currentRow);
+          rowValues.forEach((val, colIdx) => {
+            const cell = dataRow.getCell(colIdx + 1);
+            cell.value = val ?? '-';
+            cell.font = { name: 'Arial', size: 10 };
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            cell.border = {
+              top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+              bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+              left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+              right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+            };
+            if (rowIdx % 2 === 1) {
+              cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFF8FAFC' }
+              };
+            }
+          });
+          dataRow.height = 22;
+          currentRow++;
+        });
+
+        currentRow += 1; // spacing between sections
+      }
+
+      // Auto-fit column widths
+      worksheet.columns.forEach((col) => {
+        let maxLen = 12;
+        col.eachCell({ includeEmpty: false }, (cell) => {
+          const valStr = cell.value ? String(cell.value) : '';
+          if (valStr.length > maxLen) maxLen = Math.min(valStr.length + 4, 40);
+        });
+        col.width = maxLen;
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+      const xlsxFilename = doc.filename.replace(/\.xls$/, '.xlsx');
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = doc.filename;
+      link.download = xlsxFilename;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error(err);
