@@ -268,7 +268,7 @@ function App() {
           left: '50%',
           transform: 'translate(-50%, -50%)',
           width: 'min(500px, 80vw)',
-          opacity: 0.06,
+          opacity: 0.04,
           zIndex: 9999,
           pointerEvents: 'none',
           userSelect: 'none',
