@@ -60,7 +60,7 @@ const SSOCatcher = () => {
           // 2. فحص الاستحقاق: مطابقة الرمز الإداري أو امتلاك صلاحية مطور/عام
           let isEligible = 
             profile.department_id === CAPACITIES_DEPT_ID || 
-            ['developer', 'general'].includes(profile.admin_role);
+            ['developer', 'general', 'it_supervisor'].includes(profile.admin_role);
 
           // فحص الأقسام الفرعية (الشعب التابعة للقسم)
           if (!isEligible && profile.department_id) {
