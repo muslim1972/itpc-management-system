@@ -97,19 +97,20 @@ const SSOCatcher = () => {
 
           if (userError || !itpcUser) {
             if (isEligible) {
+              const initialRole = ['developer', 'general', 'it_supervisor'].includes(profile.admin_role) ? 'admin' : 'user';
               const { data: newUser, error: insertError } = await supabase
                 .from('users')
                 .insert([{
                   user_id: authUser.id,
                   username: profile.username,
-                  role: 'user',
+                  role: initialRole,
                   created_at: new Date().toISOString()
                 }])
                 .select()
                 .single();
               
               if (insertError) throw insertError;
-              finalRole = 'user';
+              finalRole = initialRole;
             } else {
               throw new Error('عذراً، أنت غير مصرح لك بالدخول إلى نظام قسم تجهيز خدمات المعلوماتية.');
             }
